@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+	{% load static %}
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" type="text/css" href="{% static 'css/uikit.min.css' %}">
+	{% block style %}{% endblock style %}
+</head>
+
+<body>
+
+	{% include "includes/header.html" %}
+
+	<div class="content" class="uk-container">
+		{% block content %}{% endblock content %}	
+	</div>
+	
+	<script type="text/javascript" src="{% static 'js/uikit.min.js' %}"></script>
+
+	{% block script %}{% endblock script %}
+	
+</body>
+</html>
