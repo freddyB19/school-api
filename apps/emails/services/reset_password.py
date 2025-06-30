@@ -1,3 +1,7 @@
+import os
+
+from dotenv import load_dotenv
+load_dotenv()
 
 from .send_email import SendEmail
 from .send_email import ConfigEmail
@@ -5,10 +9,10 @@ from .send_email import ContentHTMLMessage
 
 
 class EmailResetPassword:
-	from_email = "freddy@gmail.com"
+	from_email = os.getenv("EMAIL_HOST_USER")
 	subject = "Restableciendo contraseña"
 	
-	def __init__(self, user_name:str, plain_password:str,  emails_to: list[str] | tuple[str]) -> None:
+	def __init__(self, user_name:str, plain_password:str,  emails_to: list[str] | tuple[str] = []) -> None:
 		if not isinstance(emails_to, list) or not isinstance(emails_to, tuple):
 			raise ValueError("Debes pasar una lista o tupla con los emails")
 		if not emails_to:
