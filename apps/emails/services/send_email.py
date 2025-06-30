@@ -1,32 +1,5 @@
 from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
-"""
-subject = "Restableciendo contraseña"
-from_email = "freddy@gmail.com"
-to = []
-
-to.append(email)
-
-html_content =  render_to_string(
-	"emails/reset_user_password.html",
-	context={"name": user_name, "password": plain_password}
-)
-
-email = EmailMultiAlternatives(
-	subject,
-	html_content,
-	from_email, 
-	to
-)
-
-email.content_subtype = "html"
-
-try:
-	email.send()
-except Exception as e:
-	raise e
-"""
-
 
 class ContentHTMLMessage:
 	BASIC_TEMPLATE = "template_email_basic.html"
@@ -50,19 +23,28 @@ class ContentHTMLMessage:
 			context=context
 		)
 
+
 class ConfigEmail:
 	SUBTYPE_TEXT = "text"
 	SUBTYPE_HTML = "html"
+	SUBTYPES = [
+		SUBTYPE_TEXT,
+		SUBTYPE_HTML
+	]
+	SUBJECT = "De parte de Yetic"
+	DEFAULT_CONTENT = "Gracias por considerar usar nuestro servicio"
 
 	@classmethod
-	def set_config(cls, subject:str, from_email:str, to: list[str] | tuple[str], content:str, subtype = SUBTYPE_TEXT) -> EmailMultiAlternatives:
-		if subtype != cls.SUBTYPE_TEXT and subtype != cls.SUBTYPE_HTML:
-			raise ValueError(f"Debe ser un subtype correcto: [{cls.SUBTYPE_TEXT} | {cls.SUBTYPE_HTML}]")
+	def set_config(cls, subject:str = SUBJECT, from_email:str = None, to: list[str] | tuple[str] = [], content:str = DEFAULT_CONTENT, subtype = SUBTYPE_TEXT) -> EmailMultiAlternatives:
+		if not from_email:
+			raise ValueError(f"Debe indicar de parte de quien será enviado el email")
+		if subtype not in cls.SUBTYPES:
+			raise ValueError(f"Debe ser un subtype correcto: {cls.SUBTYPES}")
 		if not to:
-			raise ValueError("Debe pasar un email en lista de 'to' ")
+			raise ValueError("Debe pasar una lista correos distinatario(s)")
 		
 		if not isinstance(to, list) and not isinstance(to, tuple):
-			raise ValueError("Debes pasar una lista o tupla con los emails")
+			raise ValueError("Debes pasar una lista o tupla con los correos destinatarios")
 
 		email = EmailMultiAlternatives(
 			subject,
