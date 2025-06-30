@@ -194,3 +194,20 @@ if not DEBUG:
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         }
     } 
+
+
+
+# Email Settings
+EMAIL_DEBUG = os.getenv('EMAIL_DEBUG')
+
+if EMAIL_DEBUG:
+    EMAIL_HOST = os.getenv("TEST_EMAIL_HOST")
+    EMAIL_HOST_USER = os.getenv("TEST_EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("TEST_EMAIL_HOST_PASSWORD")
+    EMAIL_PORT = os.getenv("TEST_EMAIL_PORT")
+else:
+    EMAIL_HOST = os.getenv("EMAIL_HOST")
+    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
+    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+    EMAIL_PORT = os.getenv("EMAIL_PORT")
+    EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
