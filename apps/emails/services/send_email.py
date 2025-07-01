@@ -68,11 +68,11 @@ class ConfigEmail:
 class SendEmail:
 
 	@classmethod
-	def send(cls, email: EmailMultiAlternatives) -> None:
+	def send(cls, email: EmailMultiAlternatives) -> int:
 		if not isinstance(email, EmailMultiAlternatives):
 			raise ValueError("Debe ser una instancia de: [ EmailMultiAlternatives ]")
 
 		try:
-			email.send()
+			return email.send()
 		except Exception as e:
 			raise e
