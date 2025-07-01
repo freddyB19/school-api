@@ -180,9 +180,9 @@ class UserUpdatePasswordAPIView(views.APIView):
 
 
 class UserResetPasswordAPIView(views.APIView):
+    permission_classes = [IsAuthenticated, IsUserOrReadOnly]
 
     @extend_schema(
-        request=serializers.UserChangePassword,
         responses={
             200: ResponseSuccess, 
             400: ResponseError
@@ -190,7 +190,7 @@ class UserResetPasswordAPIView(views.APIView):
         methods=["PATCH"]
     )
     def patch(self, request, pk):
-        #signal = SignalResetPassword()
+        signal = SignalResetPassword()
 
         command = get_user(pk = pk)
 
@@ -208,15 +208,12 @@ class UserResetPasswordAPIView(views.APIView):
 
         plain_password = command_password.query
 
-        """
-        
         signal.send(
             plain_password = plain_password,
             name = user.name,
             email = user.email
         )
-        """
-
+        
         return response.Response(
             data=ResponseSuccess(
                 success = [{"message": "Su contraseña se ha restablecido"}]
