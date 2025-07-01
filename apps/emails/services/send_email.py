@@ -1,12 +1,19 @@
+from django.template.loader import render_to_string, get_template
 from django.core.mail import EmailMultiAlternatives
-from django.template.loader import render_to_string
+from django.template.exceptions import TemplateDoesNotExist
 
 class ContentHTMLMessage:
 	BASIC_TEMPLATE = "template_email_basic.html"
-	
+	PATH_TEMPLATES = "emails/"
 	
 	@classmethod
 	def set_message(cls, template_name:str = BASIC_TEMPLATE, context:dict = {}) -> str:
+		try:
+			path_template = f"{cls.PATH_TEMPLATES}{template_name}"
+			template = get_template(path_template)
+		except TemplateDoesNotExist as e:
+			raise ValueError(f"No existe este template: {cls.PATH_TEMPLATES}{template_name}")
+
 		if not template_name:
 			raise ValueError("Debe indicar el nombre del template")
 
@@ -16,13 +23,13 @@ class ContentHTMLMessage:
 		if not isinstance(context, dict):
 			raise ValueError("Debe pasar un diccionario con los valores para el template")
 
-
-		template = f"emails/{template_name}"
+		
+		template = f"{cls.PATH_TEMPLATES}{template_name}"
+		
 		return render_to_string(
 			template,
 			context=context
 		)
-
 
 class ConfigEmail:
 	SUBTYPE_TEXT = "text"
