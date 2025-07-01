@@ -71,6 +71,19 @@ class EmailsServiceSendEmailTest(TestCase):
 		self.assertTrue(isinstance(content_html, str))
 		self.assertHTMLEqual(content_html, self.basic_email_template)
 
+	
+	def test_set_content_html_message_with_no_existent_template(self):
+		"""
+			Genearar un error por pasar un template que no existe
+		"""
+		template_name = "does_not_exist.html"
+		with self.assertRaisesMessage(ValueError, f"No existe este template: emails/{template_name}"):
+		
+			content_html = ContentHTMLMessage.set_message(
+				template_name = template_name
+			)
+
+
 	def test_set_config_email(self):
 		"""
 			Validar configuraciones para un simple email
