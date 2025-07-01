@@ -42,7 +42,7 @@ class UserAPITest(TransactionTestCase):
 		self.URL_USER = reverse("user:user", kwargs = {"pk": self.user.id})
 		self.URL_UPDATE_PASSWORD = reverse("user:update-password", kwargs = {"pk": self.user.id})
 		self.URL_NAME_UPDATE_ROLE = "user:update-role"
-
+		self.URL_RESET_PASSWORD = reverse("user:reset-password", kwargs={"pk": self.user.id})
 
 	def test_create_user(self):
 		"""
@@ -515,14 +515,14 @@ class UserAPITest(TransactionTestCase):
 
 		self.assertTrue(self.user.check_password(self.password))
 
-	@unittest.skip("Aun no está definda")
+	
 	def test_reset_password(self):
 		"""
 			Validar que se ha resetado el password del usuario
 		"""
-		response = self.client.patch(
-			reverse("user:reset-password", kwargs={"pk": self.user.pk})
-		)
+		self.client.force_authenticate(user = self.user)
+
+		response = self.client.patch(self.URL_RESET_PASSWORD)
 
 		responseJson = response.data
 		responseStatus = response.status_code
