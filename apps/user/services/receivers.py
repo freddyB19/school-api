@@ -12,12 +12,12 @@ to = []
 def reset_password_receiver(sender, **kwargs):
 	if "plain_password" in kwargs and "name" in kwargs and "email" in kwargs:
 
-		data_for_email = {
-			"user_name": kwargs.get("name"),
-			"plain_password": kwargs.get("plain_password"),
-			"emails_to": [kwargs.get("email")],
-		}
-
-		email = EmailResetPassword(**data_for_email)
+		email = EmailResetPassword(
+			data_message = {
+				"name_user": kwargs.get("name"),
+				"password": kwargs.get("plain_password")
+			},
+			emails_to = [kwargs.get("email")]
+		)
 		
-		#email.send()
+		email.send()
