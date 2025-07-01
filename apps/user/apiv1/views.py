@@ -208,6 +208,11 @@ class UserResetPasswordAPIView(views.APIView):
 
         plain_password = command_password.query
 
+        change_password(
+            pk = user.id,
+            new_password = plain_password
+        )
+
         signal.send(
             plain_password = plain_password,
             name = user.name,
