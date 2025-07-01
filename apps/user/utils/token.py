@@ -12,6 +12,6 @@ class Token:
 		token = RefreshToken.for_user(user)
 
 		return {
-			"access": str(token),
-			"refresh": str(token.access_token)
+			"access": str(token.access_token),
+			"refresh": str(token)
 		}
