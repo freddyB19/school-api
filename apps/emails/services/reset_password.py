@@ -52,8 +52,9 @@ class EmailResetPassword:
 			subtype = "html"
 		)
 
-	def send(self) -> None:
-		SendEmail.send(email = self.email)
+	def send(self) -> int:
+		result = SendEmail.send(email = self.email)
+		return result
 
 """
 	def set_content_message(self) -> str:
