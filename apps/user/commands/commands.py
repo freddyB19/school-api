@@ -106,9 +106,7 @@ def change_password(new_password: PropPassword, pk: int = None, errors: Optional
 	user.save()
 	return ResultCommand(status = True)
 
-
-def generate_password() -> ResultCommand:
-	size = SIZE_PASSWORD_GENERATE
+def generate_password(size:int = SIZE_PASSWORD_GENERATE) -> ResultCommand:
 
 	chars = "abcdefghijklmnñopqrstuvwxyz"
 	simbols = "·|?¿¡,.:[]{}$#@!()/=;&%<>-_+*"
