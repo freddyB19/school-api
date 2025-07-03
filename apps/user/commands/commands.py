@@ -106,6 +106,21 @@ def change_password(new_password: PropPassword, pk: int = None, errors: Optional
 	user.save()
 	return ResultCommand(status = True)
 
+@validate_call
+def get_user_by_email(email: str = None) -> ResultCommand:
+	if not email:
+		raise ValueError("Se necesita un valor tipo (str) para el parametro 'email'")
+
+	has_user = models.User.objects.filter(email = email)
+
+	if not has_user.exists():
+		return ResultCommand(
+			status = False,
+			errors = [{"message": f"No existe un usuario con ese email: {email}"}]
+		)
+
+	return ResultCommand(status = True, query = has_user.first())
+
 def generate_password(size:int = SIZE_PASSWORD_GENERATE) -> ResultCommand:
 
 	chars = "abcdefghijklmnñopqrstuvwxyz"
