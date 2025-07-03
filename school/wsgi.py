@@ -10,12 +10,12 @@ https://docs.djangoproject.com/en/5.2/howto/deployment/wsgi/
 import os, sys
 
 from django.core.wsgi import get_wsgi_application
+from django.conf import settings
 
-from dotenv import load_dotenv
-load_dotenv()
+from school.settings import env
 
-if not os.getenv("DEBUG"):
-	PATH_PROD_WSGI = os.getenv('PATH_PROD_WSGI')
+if not settings.DEBUG:
+	PATH_PROD_WSGI = env('PATH_PROD_WSGI')
 	sys.path.append(PATH_PROD_WSGI)
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'school.settings')
