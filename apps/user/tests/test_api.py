@@ -42,7 +42,7 @@ class UserAPITest(TransactionTestCase):
 		self.URL_USER = reverse("user:user", kwargs = {"pk": self.user.id})
 		self.URL_UPDATE_PASSWORD = reverse("user:update-password", kwargs = {"pk": self.user.id})
 		self.URL_NAME_UPDATE_ROLE = "user:update-role"
-		self.URL_RESET_PASSWORD = reverse("user:reset-password", kwargs={"pk": self.user.id})
+		self.URL_RESET_PASSWORD = reverse("user:reset-password", query={"email": self.user.email})
 
 	def test_create_user(self):
 		"""
@@ -518,16 +518,43 @@ class UserAPITest(TransactionTestCase):
 	
 	def test_reset_password(self):
 		"""
-			Validar que se ha resetado el password del usuario
+			Validar que restablecido el password del usuario
 		"""
-		self.client.force_authenticate(user = self.user)
-
 		response = self.client.patch(self.URL_RESET_PASSWORD)
 
 		responseJson = response.data
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
+
+
+	def test_reset_password_without_query_params(self):
+		"""
+			Intentar acceder al endpoint sin el parametro de busqueda
+		"""
+		response = self.client.patch(
+			reverse("user:reset-password")
+		)
+		
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 422)
+
+
+	def test_reset_password_with_no_existent_user(self):
+		"""
+			Intentar restablecer el password de un usuario que no existe
+		"""
+		email = "campos_12@example.com"
+		response = self.client.patch(
+			reverse("user:reset-password", query={"email": email})
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 404)
 
 
 	def test_update_role(self):
