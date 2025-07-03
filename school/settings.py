@@ -181,7 +181,7 @@ SPECTACULAR_SETTINGS = {
 
 ## Stotages staticfiles for Production
 if not DEBUG:
-     STORAGES = {
+    STORAGES = {
         "staticfiles": {
             "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
         }
