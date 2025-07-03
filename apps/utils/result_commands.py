@@ -21,8 +21,8 @@ class ResponseMessage(BaseModel):
 	
 
 class ResponseSuccess(BaseModel):
-	success: list[ResponseMessage]
+	success: list[ResponseMessage] | list[BaseMessage]
 
 class ResponseError(BaseModel):
-	errors: list[ResponseMessage]
+	errors: list[ResponseMessage] | list[BaseMessage]
 
