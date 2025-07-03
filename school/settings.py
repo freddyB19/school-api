@@ -12,20 +12,21 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 import os
 from datetime import timedelta
 
-from dotenv import load_dotenv
-load_dotenv()
+import environ
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
+env = environ.Env()
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv("SECRET_KEY")
+SECRET_KEY = env("SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG")
+DEBUG = env.bool("DEBUG")
 
 if not DEBUG:
     ALLOWED_HOSTS = ["*"]
@@ -96,13 +97,7 @@ WSGI_APPLICATION = 'school.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': os.getenv("ENGINE"),
-        'NAME': os.getenv("DATABASE"),
-        'USER': os.getenv("USER"),
-        'HOST': os.getenv("HOST"),
-        'PASSWORD': os.getenv("PASSWORD"),
-    }
+    'default': env.db()
 }
 
 
@@ -173,22 +168,18 @@ SIMPLE_JWT = {
 
 
 ## API Documentation
-
 SPECTACULAR_SETTINGS = {
     'TITLE': 'School API',
     'DESCRIPTION': 'Your project description',
     'VERSION': '0.0.1',
     'SERVE_INCLUDE_SCHEMA': False,
     'SCHEMA_PATH_PREFIX': '/api/v[0-9]',
-    
-    # OTHER SETTINGS
-
-    'SWAGGER_UI_DIST': 'SIDECAR',  # shorthand to use the sidecar instead
+    'SWAGGER_UI_DIST': 'SIDECAR',
     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
     'REDOC_DIST': 'SIDECAR',
 }
 
-
+## Stotages staticfiles for Production
 if not DEBUG:
      STORAGES = {
         "staticfiles": {
@@ -199,19 +190,14 @@ if not DEBUG:
 
 
 # Email Settings
-EMAIL_DEBUG = os.getenv('EMAIL_DEBUG')
+EMAIL_DEBUG = env.bool("EMAIL_DEBUG")
+
+email = env.dict("EMAIL_MAILTRAP") if EMAIL_DEBUG else env.dict("EMAIL_GMAIL")
 
 EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS')
+EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
 
-if EMAIL_DEBUG:
-    EMAIL_HOST = os.getenv("TEST_EMAIL_HOST")
-    EMAIL_HOST_USER = os.getenv("TEST_EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = os.getenv("TEST_EMAIL_HOST_PASSWORD")
-    EMAIL_PORT = os.getenv("TEST_EMAIL_PORT")
-else:
-    EMAIL_HOST = os.getenv("EMAIL_HOST")
-    EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-    EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
-    EMAIL_PORT = os.getenv("EMAIL_PORT")
-    
+EMAIL_HOST = email.get("host")
+EMAIL_HOST_USER = email.get("user")
+EMAIL_HOST_PASSWORD = email.get("password")
+EMAIL_PORT = email.get("port")
