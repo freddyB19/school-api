@@ -25,7 +25,7 @@ urlpatterns = [
         name = "update-role"
     ),
     path(
-        "<int:pk>/reset/password/", 
+        "reset/password/", 
         views.UserResetPasswordAPIView.as_view(), 
         name = "reset-password"
     ),
