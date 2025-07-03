@@ -29,7 +29,8 @@ from apps.user.commands.commands import (
     create_user,
     change_password,
     generate_password,
-    get_user
+    get_user,
+    get_user_by_email
 )
 
 from apps.utils.result_commands import (
@@ -180,26 +181,47 @@ class UserUpdatePasswordAPIView(views.APIView):
 
 
 class UserResetPasswordAPIView(views.APIView):
-    permission_classes = [IsAuthenticated, IsUserOrReadOnly]
 
     @extend_schema(
+        methods=["PATCH"],
+        request=None,
         responses={
             200: ResponseSuccess, 
-            400: ResponseError
+            404: ResponseError,
+            422: ResponseError
         },
-        methods=["PATCH"]
+        parameters=[
+            OpenApiParameter(
+                name="email",
+                type=str,
+                location=OpenApiParameter.QUERY,
+                description="Search user by email"
+            )
+        ]
     )
-    def patch(self, request, pk):
+    def patch(self, request):
         signal = SignalResetPassword()
 
-        command = get_user(pk = pk)
+        query_email = request.query_params.get("email")
+        
+        if not query_email:
+            return response.Response(
+                ResponseError(
+                    errors = [
+                        {"message": "Debe enviar un valor en el parametro de busqueda: [email]"}
+                    ]
+                ).model_dump(), 
+                status = status.HTTP_422_UNPROCESSABLE_ENTITY
+            )
+
+        command = get_user_by_email(email = query_email)
 
         if not command.status:
             return response.Response(
                 data = ResponseError(
                     errors = command.errors
                 ).model_dump(), 
-                status = status.HTTP_400_BAD_REQUEST
+                status = status.HTTP_404_NOT_FOUND
             )
 
         user = command.query
