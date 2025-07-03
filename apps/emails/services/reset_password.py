@@ -1,10 +1,7 @@
 import os
-
+from django.conf import settings
 from django.template.exceptions import TemplateDoesNotExist
 from django.template.loader import render_to_string, get_template
-
-from dotenv import load_dotenv
-load_dotenv()
 
 from .send_email import SendEmail
 from .send_email import ConfigEmail
@@ -12,7 +9,7 @@ from .send_email import ContentHTMLMessage
 
 
 class EmailResetPassword:
-	from_email = os.getenv("EMAIL_HOST_USER")
+	from_email = settings.EMAIL_HOST_USER
 	subject = "Restableciendo contraseña"
 	template_name = "reset_user_password.html"
 	
@@ -55,33 +52,3 @@ class EmailResetPassword:
 	def send(self) -> int:
 		result = SendEmail.send(email = self.email)
 		return result
-
-"""
-	def set_content_message(self) -> str:
-		return render_to_string(
-			"emails/reset_user_password.html",
-			context={"name": self.user_name, "password": self.plain_password}
-		)
-
-	def set_config_email(self) -> EmailMultiAlternatives:
-		content = self.set_content_message()
-
-		email = EmailMultiAlternatives(
-			self.subject,
-			content,
-			self.from_email, 
-			self.emails_to
-		)
-
-		email.content_subtype = "html"
-
-		return email
-
-	def send_email(self):
-		email = self.set_config_email(emails_to = self.emails_to)
-
-		try:
-			email.send()
-		except Exception as e:
-			raise e
-"""
