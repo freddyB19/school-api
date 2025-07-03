@@ -376,8 +376,39 @@ class UserCommandsTest(TransactionTestCase):
 		self.assertTrue(isinstance(new_password, str))
 		self.assertEqual(len(new_password), password_size)
 
+	def test_command_get_by_email(self):
+		"""
+			Validar obtener usuario por su email
+		"""
+		EMAIL = "user1@example.com"
+		user = create_user(email = EMAIL)
+		
+		result = commands.get_user_by_email(email = EMAIL)
 
+		get_user = result.query
 
+		self.assertTrue(result.status)
+		self.assertEqual(get_user.email, user.email)
+		self.assertEqual(get_user.id, user.id)
+
+	def test_command_get_by_email_does_not_exist(self):
+		"""
+			Intenatar obtener un usuario que no existe
+		"""
+
+		EMAIL = "user1@example.com"
+		result = commands.get_user_by_email(email = EMAIL)
+
+		self.assertFalse(result.status)
+		self.assertIsNone(result.query)
+
+	@unittest.expectedFailure
+	def test_command_get_by_email_without_send_email(self):
+		"""
+			Generar un error por no pasar un valor para 'email'
+		"""
+		
+		result = commands.get_user_by_email()
 
 
 
