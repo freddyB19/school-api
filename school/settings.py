@@ -58,6 +58,7 @@ THIRDY_PARTY_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'drf_spectacular_sidecar',
+    'graphene_django'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRDY_PARTY_APPS
