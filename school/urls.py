@@ -22,13 +22,12 @@ from drf_spectacular.views import SpectacularAPIView
 from drf_spectacular.views import SpectacularRedocView
 from drf_spectacular.views import SpectacularSwaggerView
 
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/user/', include("apps.user.apiv1.urls")),
     path('api/v1/school/', include("apps.school.apiv1.urls")),
+    path('graphql', include("apps.graphql.urls")),
     path('email/', include("apps.emails.urls")),
-
 
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     # Optional UI:
