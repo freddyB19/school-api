@@ -49,7 +49,8 @@ DJANGO_APPS = [
 LOCAL_APPS = [
     "apps.user",
     "apps.school",
-    "apps.emails"
+    "apps.emails",
+    "apps.graphql"
 ]
 
 
@@ -167,6 +168,7 @@ SIMPLE_JWT = {
 }
 
 
+
 ## API Documentation
 SPECTACULAR_SETTINGS = {
     'TITLE': 'School API',
@@ -178,6 +180,8 @@ SPECTACULAR_SETTINGS = {
     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
     'REDOC_DIST': 'SIDECAR',
 }
+
+
 
 ## Stotages staticfiles for Production
 if not DEBUG:
