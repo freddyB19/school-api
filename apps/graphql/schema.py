@@ -1,13 +1,17 @@
+from django.utils import timezone
+
 import graphene
 from graphene_django import DjangoObjectType
 from graphene_django import DjangoListField
 
 from apps.school import models
 
+
 class SchoolType(DjangoObjectType):
 	class Meta:
 		model = models.School
 		fields = "__all__"
+
 
 class NewsType(DjangoObjectType):
 	photo = graphene.String()
@@ -21,10 +25,12 @@ class NewsType(DjangoObjectType):
 		media = obj.media.first()
 		return media.photo
 
+
 class CalendarType(DjangoObjectType):
 	class Meta:
 		model = models.Calendar
 		exclude = ("school", )
+
 
 class Settings(DjangoObjectType):
 	colors = graphene.List(graphene.String())
@@ -36,15 +42,18 @@ class Settings(DjangoObjectType):
 	def resolve_colors(obj, info):
 		return [data.color for data in obj.colors.all()]
 
+
 class SocialMediaType(DjangoObjectType):
 	class Meta:
 		model = models.SocialMedia
 		fields = ("profile", )
 
+
 class CoordinateType(DjangoObjectType):
 	class Meta:
 		model = models.Coordinate
 		exclude = ("school", ) 
+
 
 class InfraestructureType(DjangoObjectType):
 	class Meta:
@@ -64,6 +73,7 @@ class SchoolHomePageType(graphene.ObjectType):
 class ServiceOnlineType(graphene.ObjectType):
 	pass
 
+
 class ServiceOfflineType(graphene.ObjectType):
 	infraestructure = graphene.List(InfraestructureType) # DjangoListField(InfraestructureType)
 
@@ -79,6 +89,7 @@ class Query(graphene.ObjectType):
 		schoolId = graphene.Int(required = True)
 	)
 
+
 	def resolve_schoolBySubdomain(root, info, subdomain):
 		try:
 			school = models.School.objects.get(subdomain = subdomain)
@@ -92,17 +103,20 @@ class Query(graphene.ObjectType):
 		except models.SettingFormat.DoesNotExist as e:
 			settings = models.SettingFormat.objects.none()
 		
+		current_month = timezone.now().month
 		
-		news = models.News.objects.filter(school_id = school_id)[:11]
-		calendar = models.Calendar.objects.filter(school_id = school_id)[:11]
-		socialMedia = models.SocialMedia.objects.filter(school_id = school_id)[:6]
+		news = models.News.objects.filter(school_id = school_id)[:10]
+		calendar = models.Calendar.objects.filter(school_id = school_id, date__month = current_month)
+		socialMedia = models.SocialMedia.objects.filter(school_id = school_id)
+		coordinates = models.Coordinate.objects.filter(school_id = school_id)
 
 		return SchoolHomePageType(
 			school = school,
 			news = news,
 			calendar = calendar,
 			settings = settings,
-			networks = socialMedia
+			networks = socialMedia,
+			coordinates = coordinates
 		)
 
 
