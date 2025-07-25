@@ -57,7 +57,7 @@ class CoordinateType(DjangoObjectType):
 
 class InfraestructureType(DjangoObjectType):
 	photo = graphene.String()
-
+	
 	class Meta:
 		model = models.Infraestructure
 		exclude = ("school", "description", "media") 
@@ -65,6 +65,22 @@ class InfraestructureType(DjangoObjectType):
 	def resolve_photo(obj, info):
 		media = obj.media.first()
 		return media.photo
+
+class DownloadType(DjangoObjectType):
+	class Meta:
+		model = models.Download
+		exclude = ("school", "description")
+
+
+class RepositoryType(DjangoObjectType):
+	project = graphene.String(required = True)
+
+	class Meta:
+		model = models.Repository
+		exclude = ("school", "name_project", "media", "description")
+
+	def resolve_project(obj, info):
+		return obj.name_project
 
 
 class SchoolHomePageType(graphene.ObjectType):
