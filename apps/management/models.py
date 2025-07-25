@@ -1,19 +1,14 @@
 from django.db import models
 
 from apps.user.models import User
-from apps.school import models
+from apps.school.models import School
 
 # Create your models here.
 class Administrator(models.Model):
-	user = models.ForeignKey(
-		User,
-		on_delete=models.CASCADE,
-		verbose_name = "administrador",
-		related_name="adminList",
-	)
+	users = models.ManyToManyField(User)
 
 	school = models.ForeignKey(
-		models.School,
+		School,
 		on_delete=models.CASCADE,
 		related_name="adminSchoolList",
 	)
@@ -28,4 +23,4 @@ class Administrator(models.Model):
 		return f"Administradores de la escuela: [{self.school.name}]"
 
 	def __repr__(self):
-		return f"Administrator(id = {self.id}, school = {self.school.name}, user = {self.user.name})"
+		return f"Administrator(id = {self.id}, school = {self.school.name}"
