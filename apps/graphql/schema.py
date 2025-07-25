@@ -112,6 +112,11 @@ class Query(graphene.ObjectType):
 		schoolId = graphene.Int(required = True)
 	)
 
+	schoolServiceOnline = graphene.Field(
+		ServiceOnlineType,
+		schoolId = graphene.Int(required = True)
+	)
+
 
 	def resolve_schoolBySubdomain(root, info, subdomain):
 		try:
@@ -142,12 +147,27 @@ class Query(graphene.ObjectType):
 			coordinates = coordinates
 		)
 
-
 	def resolve_schoolServiceOffline(root, info, schoolId):
-		infraestructure = models.Infraestructure.objects.filter(school_id = schoolId)
+		infraestructure = models.Infraestructure.objects.filter(
+			school_id = schoolId
+		)
 		
 		return ServiceOfflineType(
 			infraestructure = infraestructure
+		)
+
+	def resolve_schoolServiceOnline(root, info, schoolId):
+		downloads = models.Download.objects.filter(
+			school_id = schoolId
+		)[:11]
+
+		repositories = models.Repository.objects.filter(
+			school_id = schoolId
+		)[:11]
+
+		return ServiceOnlineType(
+			downloads = downloads,
+			repositories = repositories
 		)
 
 
