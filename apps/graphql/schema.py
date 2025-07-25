@@ -93,7 +93,8 @@ class SchoolHomePageType(graphene.ObjectType):
 
 
 class ServiceOnlineType(graphene.ObjectType):
-	pass
+	downloads = graphene.List(DownloadType) # DjangoListField(DownloadType)
+	repositories = graphene.List(RepositoryType) # DjangoListField(RepositoryType)
 
 
 class ServiceOfflineType(graphene.ObjectType):
