@@ -15,7 +15,7 @@ class AdministratorModelTest(TransactionTestCase):
 
 	def test_create_administrator(self):
 		"""
-			Creando tabala de admis para una determinada escuela
+			Creando tabla de admis para una determinada escuela
 		"""
 		user = create_user()
 		admin_site = models.Administrator.objects.create(school = self.school)
