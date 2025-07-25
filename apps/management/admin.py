@@ -6,6 +6,6 @@ from . import models
 @admin.register(models.Administrator)
 class AdministradorModelAdmin(admin.ModelAdmin):
 	list_display = [
+		"id",
 		"school__name",
-		"user__name"
 	]
