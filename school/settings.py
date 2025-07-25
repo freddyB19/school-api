@@ -50,7 +50,8 @@ LOCAL_APPS = [
     "apps.user",
     "apps.school",
     "apps.emails",
-    "apps.graphql"
+    "apps.graphql",
+    "apps.management"
 ]
 
 
