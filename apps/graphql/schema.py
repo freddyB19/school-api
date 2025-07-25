@@ -29,7 +29,7 @@ class NewsType(DjangoObjectType):
 class CalendarType(DjangoObjectType):
 	class Meta:
 		model = models.Calendar
-		exclude = ("school", )
+		exclude = ("school", "description")
 
 
 class Settings(DjangoObjectType):
