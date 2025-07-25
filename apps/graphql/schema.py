@@ -33,13 +33,13 @@ class CalendarType(DjangoObjectType):
 
 
 class Settings(DjangoObjectType):
-	colors = graphene.List(graphene.String())
+	color = graphene.List(graphene.String)
 	
 	class Meta:
 		model = models.SettingFormat
-		exclude = ("colors", "school")
+		exclude = ("colors", "school", "id")
 
-	def resolve_colors(obj, info):
+	def resolve_color(obj, info):
 		return [data.color for data in obj.colors.all()]
 
 
