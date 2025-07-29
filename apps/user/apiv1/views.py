@@ -41,7 +41,7 @@ from apps.utils.result_commands import (
 )
 
 from apps.user.utils.token import Token
-from apps.user.services.signals import SignalResetPassword
+from apps.user.services.signals.signals import SignalResetPassword
 
 
 class RegisterAPIView(views.APIView):
