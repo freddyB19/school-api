@@ -22,7 +22,7 @@ class SignalResetPassword:
 class SignalChangeRole:
 
 	def send(self, role:int = None, user:User = None):
-		if role not in TypeRole.values():
+		if role not in TypeRole.values:
 			raise ValueError(f"Debe ser un role valido {TypeRole.choices}")
 
 		if not isinstance(user, User):
