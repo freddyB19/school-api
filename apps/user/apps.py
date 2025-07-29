@@ -6,6 +6,6 @@ class UserConfig(AppConfig):
    name = 'apps.user'
 
    def ready(self):
-      import apps.user.services.signals
-      import apps.user.services.receivers
+      import apps.user.services.signals.signals
+      import apps.user.services.signals.receivers
 
