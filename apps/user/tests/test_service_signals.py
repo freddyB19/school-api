@@ -1,10 +1,17 @@
-from unittest.mock import patch
-from unittest.mock import Mock
+from unittest.mock import (patch, Mock)
+
 from django.test import TestCase
 
-from apps.user.services.signals.signals import reset_password
-from apps.user.services.signals.signals import SignalResetPassword
-from apps.user.services.receivers import reset_password_receiver
+from apps.user.services.signals.signals import (
+	reset_password,
+	SignalResetPassword,
+
+)
+
+from apps.user.services.signals.receivers import (
+	reset_password_receiver
+)
+
 
 class UserServiceResetPassword(TestCase):
 	
@@ -16,15 +23,17 @@ class UserServiceResetPassword(TestCase):
 			signal = SignalResetPassword()
 
 			plain_password = "12345"
-			name = "Freddy"			
+			name = "Freddy"	
+			email = "fredd@example.com"			
 
-			signal.send(plain_password = plain_password, name = name)
+			signal.send(plain_password = plain_password, name = name, email = email)
 
 			mock_send.assert_called_once()
 			mock_send.assert_called_once_with(
 				sender = SignalResetPassword,
 				plain_password = plain_password,
-				name = name
+				name = name,
+				email = email
 			)
 
 	
@@ -38,19 +47,24 @@ class UserServiceResetPassword(TestCase):
 
 		reset_password.connect(mock_receiver, sender = SignalResetPassword)
 
+		plain_password = "12345"
+		name = "Freddy"
+		email = "fredd@example.com"	
+
 		try:
 			signal = SignalResetPassword()
-			plain_password = "12345"
-			name = "Freddy"			
-
-			signal.send(plain_password = plain_password, name = name)
+	
+			signal.send(plain_password = plain_password, name = name, email = email)
 
 			mock_receiver.assert_called_once()
 			mock_receiver.assert_called_once_with(
 				sender = SignalResetPassword,
 				plain_password = plain_password,
 				name = name,
+				email = email,
 				signal = reset_password
 			)
 		finally:
 			reset_password.connect(reset_password_receiver, sender = SignalResetPassword)
+
+
