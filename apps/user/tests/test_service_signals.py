@@ -6,7 +6,7 @@ from apps.user.services.signals.signals import reset_password
 from apps.user.services.signals.signals import SignalResetPassword
 from apps.user.services.receivers import reset_password_receiver
 
-class UserServiceSignals(TestCase):
+class UserServiceResetPassword(TestCase):
 	
 	def test_signal_reset_password_emits(self):
 		"""
