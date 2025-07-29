@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 from .manager import UserManager
 # Create your models here.
@@ -19,7 +19,7 @@ class OccupationStaff(models.TextChoices):
 	teacher = "profesor"
 	administrative = "administrativo"
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
 	name = models.CharField(max_length = MAX_LENGTH_NAME, default = "Anon")
 	email = models.EmailField(max_length = MAX_LENGTH_EMAIL, unique = True)
 	role = models.IntegerField(
@@ -39,12 +39,6 @@ class User(AbstractBaseUser):
 
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['name']
-
-	def has_perm(self, perm, obj=None):
-		return self.is_admin
-
-	def has_module_perms(self, add_label):
-		return True
 
 
 	def __str__(self):
