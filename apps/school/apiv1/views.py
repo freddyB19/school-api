@@ -512,7 +512,7 @@ class ExtraActivitiesListAPIView(generics.ListAPIView):
 		).order_by("-created", "-updated")
 
 
-class ExtraActivitiesDeatilAPIView(generics.RetrieveAPIView):
+class ExtraActivitiesDetailAPIView(generics.RetrieveAPIView):
 	queryset = models.ExtraActivitie.objects.all()
 	serializer_class = serializers.ExtraActivitieDetailResponse
 

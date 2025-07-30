@@ -132,7 +132,7 @@ urlpatterns = [
 	),
 	path(
 		"extra/activity/<int:pk>/", 
-		views.ExtraActivitiesDeatilAPIView.as_view(), 
+		views.ExtraActivitiesDetailAPIView.as_view(), 
 		name='extra-activitie-detail'
 	),
 ]
