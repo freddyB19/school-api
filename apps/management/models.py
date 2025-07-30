@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 
 from apps.user.models import User
 from apps.school.models import School
@@ -17,6 +18,12 @@ class Administrator(models.Model):
 		verbose_name = "Adminstrador"
 		verbose_name_plural = "Adminstradores"
 		db_table = "administrator"
+
+	def get_absolute_url(self):
+		return reverse(
+			"management:administrator-detail", 
+			kwargs = {"pk": self.id}
+		)
 
 
 	def __str__(self):
