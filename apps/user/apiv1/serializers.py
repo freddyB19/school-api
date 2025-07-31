@@ -79,6 +79,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
 
         return data
 
+    def create(self, validate_data):
+        
+        return models.User.objects.create_user(
+            name = validate_data["name"],
+            email = validate_data["email"],
+            password = validate_data["password"],
+        )
+
 
 class UserUpdateRoleSerializer(serializers.ModelSerializer):
     class Meta:
