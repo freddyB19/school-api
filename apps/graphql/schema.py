@@ -33,7 +33,7 @@ class CalendarType(DjangoObjectType):
 		exclude = ("school", "description")
 
 
-class Settings(DjangoObjectType):
+class SettingsType(DjangoObjectType):
 	color = graphene.List(graphene.String)
 	
 	class Meta:
@@ -88,7 +88,7 @@ class SchoolHomePageType(graphene.ObjectType):
 	school = graphene.Field(SchoolType)
 	news = graphene.List(NewsType) # DjangoListField(NewsType)
 	calendar = graphene.List(CalendarType) # DjangoListField(CalendarType)
-	settings = graphene.Field(Settings)
+	settings = graphene.Field(SettingsType)
 	networks = graphene.List(SocialMediaType) # DjangoListField(SocialMediaType)
 	coordinates = graphene.List(CoordinateType) # DjangoListField(CoordinateType)
 
