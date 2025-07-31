@@ -6,6 +6,7 @@ from graphene_django import DjangoListField
 
 from apps.school import models
 
+from .management_user.mutations import ManagementUserMutation
 
 class SchoolType(DjangoObjectType):
 	class Meta:
@@ -171,4 +172,11 @@ class Query(graphene.ObjectType):
 		)
 
 
-schema = graphene.Schema(query=Query)
+class Mutation(
+	ManagementUserMutation, 
+	graphene.ObjectType
+):
+	pass
+	
+
+schema = graphene.Schema(query=Query, mutation = Mutation)
