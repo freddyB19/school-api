@@ -26,7 +26,6 @@ from .permissions import (
 
 from apps.user import models
 from apps.user.commands.commands import (
-    create_user,
     change_password,
     generate_password,
     get_user,
@@ -60,19 +59,13 @@ class RegisterAPIView(views.APIView):
 
         if not serializer_register.is_valid():
             return response.Response(
-                serializer_register.errors, 
+                data = serializer_register.errors, 
                 status = status.HTTP_400_BAD_REQUEST
             )
         
-        command = create_user(user = serializer_register.data)
+        new_user = serializer_register.save()
 
-        if not command.status:
-            return response.Response(
-                data = command.errors, 
-                status = status.HTTP_400_BAD_REQUEST
-            )
-
-        de_serializer = serializers.UserResposeSerializer(command.query)
+        de_serializer = serializers.UserResposeSerializer(new_user)
 
         return response.Response(
             data = de_serializer.data,
