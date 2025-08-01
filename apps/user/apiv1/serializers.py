@@ -99,6 +99,12 @@ class UserUpdateRoleSerializer(serializers.ModelSerializer):
 
 
 class UserResposeSerializer(serializers.ModelSerializer):
+    user_permissions = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='codename'
+    )
+
     class Meta:
         model = models.User
         fields = [
@@ -108,9 +114,9 @@ class UserResposeSerializer(serializers.ModelSerializer):
             "role", 
             "last_login", 
             "date_joined", 
-            "is_active"
+            "is_active",
+            "user_permissions"
         ]
-
 
 class UserChangePassword(serializers.Serializer):
     password = serializers.CharField(
