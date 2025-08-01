@@ -9,7 +9,8 @@ from apps.user.models import (
     MIN_LENGTH_PASSWORD
 )
 
-from apps.user.commands.commands import is_valid_email
+
+from apps.user.commands.commands import is_valid_email, create_user
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(
@@ -80,12 +81,15 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return data
 
     def create(self, validate_data):
-        
-        return models.User.objects.create_user(
-            name = validate_data["name"],
-            email = validate_data["email"],
-            password = validate_data["password"],
-        )
+
+        command = create_user(user = validate_data)
+
+        if not command.status:
+            raise serializers.ValidationError(ResponseError(
+                errors = command.errors
+            ).model_dump())
+
+        return command.query
 
 
 class UserUpdateRoleSerializer(serializers.ModelSerializer):
