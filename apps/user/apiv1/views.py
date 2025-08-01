@@ -272,7 +272,7 @@ class UserUpdateRoleAPIView(views.APIView):
                 data = ResponseError(
                     errors = command.errors
                 ).model_dump(), 
-                status = status.HTTP_400_BAD_REQUEST
+                status = status.HTTP_404_NOT_FOUND
             )
 
         user = command.query
