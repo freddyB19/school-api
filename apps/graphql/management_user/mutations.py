@@ -1,19 +1,13 @@
 import graphene
-from graphene_django import DjangoObjectType
 from graphql import GraphQLError
 
 from apps.school.models import School
 from apps.management.models import Administrator
-from apps.user.models import User
+
 from apps.user.apiv1.serializers import UserRegisterSerializer
-from apps.user.commands.commands import create_user
 
+from .types import UserType
 
-class UserType(DjangoObjectType):
-	class Meta:
-		model = User
-		fields = ("id", "name", "email", "role")
-		convert_choices_to_enum = ["role"]
 
 class UserInput(graphene.InputObjectType):
 	name = graphene.String(required = True)
