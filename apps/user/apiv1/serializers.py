@@ -1,3 +1,4 @@
+from django.contrib.auth.models import Permission
 
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
@@ -167,4 +168,17 @@ class UserResponseLogin(serializers.Serializer):
     token = TokenSerializer()
 
 
+class UserPermissionsSerializer(serializers.Serializer):
+    permissions = serializers.ListField(child = serializers.CharField())
 
+
+    def validate_permissions(self, value):
+        if not value:
+            raise serializers.ValidationError("Debe indicar que permisos desea agregar al usuario")
+        
+        exists_permissions = Permission.objects.filter(codename__in = value)
+
+        if not exists_permissions:
+            raise serializers.ValidationError("No existe ningún permiso con alguno de esos nombres")
+        
+        return value
