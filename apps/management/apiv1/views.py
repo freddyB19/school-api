@@ -1,13 +1,30 @@
+from django.contrib.auth.models import Permission
+
 from rest_framework import (
 	views, 
 	status, 
 	response, 
 	generics
 )
+from rest_framework.permissions import IsAuthenticated
 
-from apps.management.models import Administrator
+
+from apps.user.commands.commands import get_user
+from apps.user.apiv1.serializers import (
+	UserResposeSerializer, 
+	UserPermissionsSerializer
+)
+from apps.user.apiv1.permissions import IsRoleAdminOrReadOnly
+
+from apps.utils.result_commands import (
+    ResponseError,
+    ResponseSuccess
+)
+
 
 from . import serializers
+from apps.management.models import Administrator
+
 
 class AdministratorAPIView(views.APIView):
 
@@ -62,3 +79,40 @@ class AdministratorDetailAPIView(generics.RetrieveAPIView):
 			data = serializer.data,
 			status = status.HTTP_200_OK
 		)
+
+
+class UpdatePermissionsUser(views.APIView):
+	permission_classes = [IsAuthenticated, IsRoleAdminOrReadOnly]
+
+	def patch(self, request, pk):
+
+		command = get_user(pk = pk)
+
+		if not command.status:
+			return response.Response(
+				data = ResponseError(
+					errors = command.errors
+				).model_dump(),
+				status = status.HTTP_404_NOT_FOUND
+			)
+
+		serializer = UserPermissionsSerializer(data = request.data)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		user = command.query
+
+		permissions = Permission.objects.filter(
+			codename__in = serializer.data['permissions']
+		)
+
+		user.user_permissions.set(permissions)
+
+		return response.Response(
+			data = UserResposeSerializer(user).data,
+			status = status.HTTP_200_OK
+		) 
