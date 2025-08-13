@@ -14,5 +14,10 @@ urlpatterns = [
 		views.AdministratorAPIView.as_view(), 
 		name = "administrator"
 	),
+	path(
+		"user/<int:pk>/permission/", 
+		views.UpdatePermissionsUser.as_view(), 
+		name = "user-permission"
+	),
 
 ]
