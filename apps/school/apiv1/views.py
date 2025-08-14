@@ -474,7 +474,9 @@ class PaymentInfoAPIView(views.APIView):
 
 			return response.Response(
 				ResponseError(
-					errors={"message": "No existe información sobre esta escuela"}
+					errors=[
+						{"message": "No existe información sobre esta escuela"}
+					]
 				).model_dump(), 
 				status = status.HTTP_404_NOT_FOUND
 			)
