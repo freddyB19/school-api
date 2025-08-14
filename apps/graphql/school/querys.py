@@ -20,6 +20,9 @@ from .types import (
 
 )
 
+
+SchoolDoesNotExist = None
+
 class SchoolQuery(graphene.ObjectType):
 	schoolBySubdomain = graphene.Field(
 		SchoolHomePageType, 
@@ -39,23 +42,17 @@ class SchoolQuery(graphene.ObjectType):
 
 	def resolve_schoolBySubdomain(root, info, subdomain):
 		try:
-			school = models.School.objects.get(subdomain = subdomain)
+			school = models.School.objects..get(subdomain = subdomain)
 		except models.School.DoesNotExist as e:
-			return models.School.objects.none()
+			return SchoolDoesNotExist
 
-		school_id = school.id
-
-		try:
-			settings = models.SettingFormat.objects.get(school_id = school_id)
-		except models.SettingFormat.DoesNotExist as e:
-			settings = models.SettingFormat.objects.none()
-		
 		current_month = timezone.now().month
-		
-		news = models.News.objects.filter(school_id = school_id)[:10]
-		calendar = models.Calendar.objects.filter(school_id = school_id, date__month = current_month)
-		socialMedia = models.SocialMedia.objects.filter(school_id = school_id)
-		coordinates = models.Coordinate.objects.filter(school_id = school_id)
+
+		settings = school.setting
+		calendar = school.calendarsList.filter(date__month = current_month)
+		news = school.newsList.filter(status = "publicado")[:10]		
+		socialMedia = school.socialMediasList.all()[:6]
+		coordinates = school.coordinatesList.all()
 
 		return SchoolHomePageType(
 			school = school,
@@ -66,6 +63,7 @@ class SchoolQuery(graphene.ObjectType):
 			coordinates = coordinates
 		)
 
+	
 	def resolve_schoolServiceOffline(root, info, schoolId):
 		infraestructure = models.Infraestructure.objects.filter(
 			school_id = schoolId
