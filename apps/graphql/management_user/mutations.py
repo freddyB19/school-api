@@ -15,6 +15,7 @@ class UserInput(graphene.InputObjectType):
 	password = graphene.String(required = True)
 	password_confirm = graphene.String(required = True)
 
+AdministratorDoesNotExist = None
 
 class AdministratorUserMutation(graphene.Mutation):
 
@@ -27,11 +28,10 @@ class AdministratorUserMutation(graphene.Mutation):
 	def mutate(root, info, user, school_id):
 
 		try:
-			school = School.objects.get(pk = school_id)
-		except School.DoesNotExist as e:
-			raise GraphQLError("No existe una escuela con ese ID")
+			admin = Administrator.objects.get(school_id = school_id)
+		except Administrator.DoesNotExist as e:
+			return AdministratorDoesNotExist
 
-		admin = Administrator.objects.get(school_id = school.id)
 
 		serializer_register = UserRegisterSerializer(
 			data = {
