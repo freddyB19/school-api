@@ -689,10 +689,10 @@ class ColorHexFormat(models.Model):
 
 class SettingFormat(models.Model):
 	colors = models.ManyToManyField(ColorHexFormat)
-	school = models.ForeignKey(
-		School, 
+	school = models.OneToOneField(
+		School,
 		on_delete=models.CASCADE,
-		related_name="settingsList",
+		related_name="setting",
 		blank=True,
 		null=True
 	)
@@ -700,7 +700,8 @@ class SettingFormat(models.Model):
 	class Meta:
 		verbose_name = "Configuración"
 		verbose_name_plural = "Configuraciones"
-		db_table = "settins_format"
+		db_table = "setting_format"
+		
 
 	def __str__(self):
 		return f"Configuración de escuela: {self.school.name}"
