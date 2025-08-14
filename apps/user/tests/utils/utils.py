@@ -33,6 +33,28 @@ def create_user(name:str = "Jose", email:str = "jose@gmail.com", password:str = 
 	)
 
 
+def bulk_create_user(total_users: int = 5):
+	"""
+		Nos permite crear multiples usuarios en una sola consulta
+
+		Argumentos:
+		total_users --> (int) Total de usuarios que van ha ser creados
+
+		Retorno:
+		Lista de usuarios creados
+	"""
+	users = [
+		 models.User(
+		 	name = faker.name(),
+		 	email = faker.email(),
+		 	password = faker.pystr_format()
+		 )
+		for i in range(total_users)
+	]
+
+	return models.User.objects.bulk_create(users)
+
+
 def create_permissions(name = "Test permission", codename = "test_permission"):
 	content_type = ContentType.objects.get_for_model(models.User)
 	permission = Permission.objects.create(
