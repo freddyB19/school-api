@@ -31,14 +31,23 @@ def create_school(**kwargs):
 	return models.School.objects.create(**data)
 
 
-def create_settings_format(id, **kwargs):
-	color = models.ColorHexFormat.objects.create(color = faker.hex_color())
-
-	settings = models.SettingFormat.objects.create(school_id = id)
-
-	settings.colors.add(color)
-
-	return settings
+def create_color_hex_format():
+	"""
+		Nos permite crear multiples registros en una sola consulta
+		
+		Argumentos:
+		(Sin argumentos)
+		
+		Retorno:
+		Lista de colores creados
+	"""
+	
+	colors = [
+		models.ColorHexFormat(color = faker.hex_color())
+		for _ in range(5)
+	]
+	
+	return models.ColorHexFormat.objects.bulk_create(colors)
 
 
 def create_time_group(**kwargs):
