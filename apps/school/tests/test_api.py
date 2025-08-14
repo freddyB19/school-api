@@ -16,7 +16,9 @@ class SchoolAPITest(TransactionTestCase):
 		self.client = APIClient()
 		
 		self.school = utils.create_school()
-		self.settings_format = utils.create_settings_format(id = self.school.id)
+		self.school.setting.colors.set(utils.create_color_hex_format())
+		
+		self.settings_format = self.school.setting
 		self.office_hour = utils.crea_office_hour(id = self.school.id)
 		self.calendar = utils.create_calendar(id = self.school.id)
 		self.social_media = utils.create_social_media(id = self.school.id)
