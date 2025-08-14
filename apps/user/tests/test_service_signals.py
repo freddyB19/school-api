@@ -18,14 +18,7 @@ from apps.user.services.signals.receivers import (
 	reset_password_receiver
 )
 
-from .utils.utils import create_user
-
-def create_permissions():
-	content_type = ContentType.objects.get_for_model(User)
-	permission = Permission.objects.create(
-		codename="can_change_user_role",
-		content_type=content_type,
-	)
+from .utils.utils import create_user, create_permissions
 
 
 class UserServiceResetPassword(TestCase):
@@ -146,7 +139,7 @@ class UserServiceChangeRole(TestCase):
 		"""
 			Mockeando el receiver, validar que el receptor de 'change_role' se ejecuta correctamente
 		"""
-		create_permissions()
+		create_permissions(codename = "can_change_user_role")
 
 		mock_receiver = Mock()
 
