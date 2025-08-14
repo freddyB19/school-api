@@ -68,7 +68,7 @@ def create_time_group(**kwargs):
 	return time_group
 
 
-def crea_office_hour(id, **kwargs):
+def create_office_hour(id, **kwargs):
 	data = {
 		"interval_description": faker.text(max_nb_chars = 20)
 	}

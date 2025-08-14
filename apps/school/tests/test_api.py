@@ -19,7 +19,7 @@ class SchoolAPITest(TransactionTestCase):
 		self.school.setting.colors.set(utils.create_color_hex_format())
 		
 		self.settings_format = self.school.setting
-		self.office_hour = utils.crea_office_hour(id = self.school.id)
+		self.office_hour = utils.create_office_hour(id = self.school.id)
 		self.calendar = utils.create_calendar(id = self.school.id)
 		self.social_media = utils.create_social_media(id = self.school.id)
 		self.coordinate = utils.create_social_media(id = self.school.id)
