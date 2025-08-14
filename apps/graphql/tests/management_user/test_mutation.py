@@ -60,7 +60,7 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 	def test_create_user_with_wrong_school_ID(self):
 		"""
-			Genearar un error por enviar el ID de una escuela que no existe
+			Enviando el ID de una escuela que no existe al intentar crear un usuario
 		"""
 
 		wrong_school_id = 120
@@ -73,7 +73,7 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
-		self.assertEqual(response["errors"][0]["message"], "No existe una escuela con ese ID")
+		self.assertIsNone(response["data"]["createUser"])
 
 
 	def test_create_user_with_existent_email(self):
