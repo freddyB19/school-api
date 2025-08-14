@@ -4,7 +4,7 @@ from graphene_django.utils.testing import GraphQLTestCase
 
 from apps.school.tests.utils.utils import (
 	create_school,
-	create_settings_format,
+	create_color_hex_format,
 	create_calendar,
 	create_social_media,
 	create_coordinate,
@@ -19,8 +19,9 @@ from apps.school.tests.utils.utils import (
 class SchoolQueryTest(GraphQLTestCase):
 	def setUp(self):
 		self.school = create_school()
-
-		settings = create_settings_format(id = self.school.id)
+		self.school.setting.colors.set(create_color_hex_format())
+	
+		settings = self.school.setting
 		self.settings_colors = [data.color for data in settings.colors.all()]
 
 		self.calendar = create_calendar(id = self.school.id, date = datetime.datetime.utcnow())
@@ -110,45 +111,48 @@ class SchoolQueryTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
+		school = response["data"]["schoolBySubdomain"]
+
+
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["school"]["subdomain"],
+			school["school"]["subdomain"],
 			self.school.subdomain
 		)
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["school"]["name"],
+			school["school"]["name"],
 			self.school.name
 		)
 
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["settings"]["color"][0],
+			school["settings"]["color"][0],
 			self.settings_colors[0]
 		)
 
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["news"][0]["id"],
+			school["news"][0]["id"],
 			str(self.news.id)
 		)
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["news"][0]["title"],
+			school["news"][0]["title"],
 			self.news.title
 		)
 
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["calendar"][0]["title"],
+			school["calendar"][0]["title"],
 			self.calendar.title
 		)
 
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["networks"][0]["profile"],
+			school["networks"][0]["profile"],
 			self.networks.profile
 		)
 
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["coordinates"][0]["id"],
+			school["coordinates"][0]["id"],
 			str(self.coordinate.id)
 		)
 		self.assertEqual(
-			response["data"]["schoolBySubdomain"]["coordinates"][0]["title"],
+			school["coordinates"][0]["title"],
 			self.coordinate.title
 		)
 
@@ -166,30 +170,33 @@ class SchoolQueryTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
+		serviceOnline = response["data"]["schoolServiceOnline"]
+		serviceOffline = response["data"]["schoolServiceOffline"]
+
 		self.assertEqual(
-			response["data"]["schoolServiceOnline"]["downloads"][0]["id"],
+			serviceOnline["downloads"][0]["id"],
 			str(self.downloads.id)
 		)
 		self.assertEqual(
-			response["data"]["schoolServiceOnline"]["downloads"][0]["title"],
+			serviceOnline["downloads"][0]["title"],
 			self.downloads.title
 		)
 		
 		self.assertEqual(
-			response["data"]["schoolServiceOnline"]["repositories"][0]["id"],
+			serviceOnline["repositories"][0]["id"],
 			str(self.repository.id)
 		)
 
 		self.assertEqual(
-			response["data"]["schoolServiceOnline"]["repositories"][0]["project"],
+			serviceOnline["repositories"][0]["project"],
 			self.repository.name_project
 		)
 
 		self.assertEqual(
-			response["data"]["schoolServiceOffline"]["infraestructure"][0]["id"],
+			serviceOffline["infraestructure"][0]["id"],
 			str(self.infra.id)
 		)
 		self.assertEqual(
-			response["data"]["schoolServiceOffline"]["infraestructure"][0]["photo"],
+			serviceOffline["infraestructure"][0]["photo"],
 			self.infra.media.first().photo
 		)
