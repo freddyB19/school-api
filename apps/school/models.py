@@ -549,7 +549,6 @@ class News(models.Model):
     )
 
 	class Meta:
-		ordering = ["-created"]
 		verbose_name = "Noticia"
 		verbose_name_plural = "Noticias"
 		db_table = "news"
