@@ -15,16 +15,19 @@ from apps.school.tests.utils.utils import (
 	create_news,
 )
 
+from apps.graphql.school.types import Months
 
 class SchoolQueryTest(GraphQLTestCase):
 	def setUp(self):
+		self.current_date = datetime.datetime.utcnow()
+
 		self.school = create_school()
 		self.school.setting.colors.set(create_color_hex_format())
 	
 		settings = self.school.setting
 		self.settings_colors = [data.color for data in settings.colors.all()]
 
-		self.calendar = create_calendar(id = self.school.id, date = datetime.datetime.utcnow())
+		self.calendar = create_calendar(id = self.school.id, date = self.current_date)
 		self.networks = create_social_media(id = self.school.id)
 		self.news = create_news(id = self.school.id)
 		self.coordinate = create_coordinate(id = self.school.id)
@@ -45,10 +48,6 @@ class SchoolQueryTest(GraphQLTestCase):
 						color
 					}
 
-					calendar {
-						title
-					}
-
 					networks {
 						profile
 					}
@@ -66,7 +65,6 @@ class SchoolQueryTest(GraphQLTestCase):
 				}
 			}
 		"""
-
 		self.variables_schoolBySubdomain = {
 			"subdomain": self.school.subdomain
 		}
@@ -95,6 +93,35 @@ class SchoolQueryTest(GraphQLTestCase):
 		"""
 		self.variables_schoolService = {
 			"schoolId": self.school.id
+		}
+
+		self.query_schoolCalendar = """
+			query SchoolCalendar($subdomain: String!, $month: Months, $first: Int) {
+				schoolCalendar(subdomain: $subdomain, month: $month, first: $first) {
+					pageInfo {
+				        startCursor
+				        endCursor
+				        hasNextPage
+				        hasPreviousPage
+				    }
+				    edges {
+				        cursor
+				        node {
+							id
+							title
+							date
+							calendarId
+				        }
+			        }
+
+				}
+			}
+
+		"""
+		self.variables_schoolCalendar = {
+			"subdomain": self.school.subdomain,
+			"month": Months.get(self.current_date.month).name,
+			"first": 2 
 		}
 
 
@@ -135,11 +162,6 @@ class SchoolQueryTest(GraphQLTestCase):
 		self.assertEqual(
 			school["news"][0]["title"],
 			self.news.title
-		)
-
-		self.assertEqual(
-			school["calendar"][0]["title"],
-			self.calendar.title
 		)
 
 		self.assertEqual(
@@ -200,3 +222,74 @@ class SchoolQueryTest(GraphQLTestCase):
 			serviceOffline["infraestructure"][0]["photo"],
 			self.infra.media.first().photo
 		)
+
+
+	def test_get_schoolCalendar(self):
+		"""
+			Fechas del calendario de una escuela
+		"""
+		result = self.query(
+			self.query_schoolCalendar,
+			variables = self.variables_schoolCalendar
+		)
+
+		self.assertResponseNoErrors(result)
+
+		response = json.loads(result.content)
+
+		calendar = response["data"]["schoolCalendar"]
+
+		self.assertTrue(calendar["edges"])
+		self.assertTrue(
+			calendar["edges"][0]["node"]["calendarId"], 
+			self.calendar.id
+		)
+		self.assertTrue(
+			calendar["edges"][0]["node"]["title"], 
+			self.calendar.title
+		)
+
+
+	def test_get_schoolCalendar_with_wrong_subdomain(self):
+		"""
+			Obtener fechas del calendario de una escuela pero, enviando un 'subdomain' incorrecto
+		"""
+		self.variables_schoolCalendar.update({"subdomain": "san-carmen"})
+
+		result = self.query(
+			self.query_schoolCalendar,
+			variables = self.variables_schoolCalendar
+		)
+
+		response = json.loads(result.content)
+
+		calendar = response["data"]["schoolCalendar"]
+
+		self.assertFalse(calendar["edges"])
+
+
+	def test_get_schoolCalendar_current_month(self):
+		"""
+			Obtener fechas del calendario del mes actual de una escuela
+		"""
+		self.variables_schoolCalendar.pop("month")
+
+		result = self.query(
+			self.query_schoolCalendar,
+			variables = self.variables_schoolCalendar
+		)
+
+		response = json.loads(result.content)
+
+		calendar = response["data"]["schoolCalendar"]
+
+		self.assertEqual(
+			calendar["edges"][0]["node"]["date"],
+			self.calendar.date.strftime("%Y-%m-%d")
+		)
+
+		self.assertTrue(
+			calendar["edges"][0]["node"]["date"] == self.current_date.strftime("%Y-%m-%d")
+		)
+
+
