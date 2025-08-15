@@ -1,8 +1,25 @@
 import graphene
+from graphene import relay
 from graphene_django import DjangoObjectType
 from graphene_django import DjangoListField
 
 from apps.school import models
+
+
+class Months(graphene.Enum):
+	ENE = 1
+	FEB = 2
+	MAR = 3
+	ABR = 4
+	MAY = 5
+	JUN = 6
+	JUL = 7
+	AGO = 8
+	SEP = 9
+	OCT = 10
+	NOV = 11
+	DIC = 12
+
 
 class SchoolType(DjangoObjectType):
 	class Meta:
@@ -24,9 +41,21 @@ class NewsType(DjangoObjectType):
 
 
 class CalendarType(DjangoObjectType):
+	calendarId = graphene.Int()
+
 	class Meta:
 		model = models.Calendar
 		exclude = ("school", "description")
+		interfaces = (relay.Node, )
+
+	def resolve_calendarId(obj, info):
+		return obj.id
+
+
+class CalendarConnection(relay.Connection):
+
+	class Meta:
+		node = CalendarType
 
 
 class SettingsType(DjangoObjectType):
@@ -84,7 +113,6 @@ class RepositoryType(DjangoObjectType):
 class SchoolHomePageType(graphene.ObjectType):
 	school = graphene.Field(SchoolType)
 	news = graphene.List(NewsType) # DjangoListField(NewsType)
-	calendar = graphene.List(CalendarType) # DjangoListField(CalendarType)
 	settings = graphene.Field(SettingsType)
 	networks = graphene.List(SocialMediaType) # DjangoListField(SocialMediaType)
 	coordinates = graphene.List(CoordinateType) # DjangoListField(CoordinateType)
