@@ -17,6 +17,12 @@ from apps.school.tests.utils.utils import (
 
 from apps.graphql.school.types import Months
 
+from .utils.schemas import (
+	QUERY_SCHOOL_SERVICE,
+	QUERY_SCHOOL_CALENDAR,
+	QUERY_SCHOOL_BY_SUBDOMAIN
+)
+
 class SchoolQueryTest(GraphQLTestCase):
 	def setUp(self):
 		self.current_date = datetime.datetime.utcnow()
@@ -29,95 +35,24 @@ class SchoolQueryTest(GraphQLTestCase):
 
 		self.calendar = create_calendar(id = self.school.id, date = self.current_date)
 		self.networks = create_social_media(id = self.school.id)
-		self.news = create_news(id = self.school.id)
+		self.news = create_news(id = self.school.id, status="publicado")
 		self.coordinate = create_coordinate(id = self.school.id)
 		self.repository = create_repository(id = self.school.id)
 		self.infra = create_infraestructure(id = self.school.id)
 		self.downloads = create_download(id = self.school.id)
 
-		self.query_schoolBySubdomain = """
-			query School($subdomain: String!) {
-				schoolBySubdomain(subdomain: $subdomain) {
-					school {
-						id
-						name
-						subdomain
-					}
-					
-					settings {
-						color
-					}
+		self.query_schoolBySubdomain = QUERY_SCHOOL_BY_SUBDOMAIN
 
-					networks {
-						profile
-					}
-					
-					news {
-						id
-						title
-					}
-
-					coordinates {
-						id
-						title
-					}
-
-				}
-			}
-		"""
 		self.variables_schoolBySubdomain = {
 			"subdomain": self.school.subdomain
 		}
 
-		self.query_schoolService = """
-			query SchoolService($schoolId: Int!){
-				schoolServiceOnline(schoolId: $schoolId) {
-					downloads {
-						id
-						title
-					}
-					
-					repositories {
-						id
-						project
-					}
-				}
-
-				schoolServiceOffline(schoolId: $schoolId) {
-					infraestructure {
-						id
-						photo
-					}
-				}
-			}
-		"""
+		self.query_schoolService = QUERY_SCHOOL_SERVICE
 		self.variables_schoolService = {
 			"schoolId": self.school.id
 		}
 
-		self.query_schoolCalendar = """
-			query SchoolCalendar($subdomain: String!, $month: Months, $first: Int) {
-				schoolCalendar(subdomain: $subdomain, month: $month, first: $first) {
-					pageInfo {
-				        startCursor
-				        endCursor
-				        hasNextPage
-				        hasPreviousPage
-				    }
-				    edges {
-				        cursor
-				        node {
-							id
-							title
-							date
-							calendarId
-				        }
-			        }
-
-				}
-			}
-
-		"""
+		self.query_schoolCalendar = QUERY_SCHOOL_CALENDAR
 		self.variables_schoolCalendar = {
 			"subdomain": self.school.subdomain,
 			"month": Months.get(self.current_date.month).name,
@@ -139,7 +74,6 @@ class SchoolQueryTest(GraphQLTestCase):
 		response = json.loads(result.content)
 
 		school = response["data"]["schoolBySubdomain"]
-
 
 		self.assertEqual(
 			school["school"]["subdomain"],
