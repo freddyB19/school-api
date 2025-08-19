@@ -58,6 +58,7 @@ LOCAL_APPS = [
 THIRDY_PARTY_APPS = [
     "rest_framework",
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'drf_spectacular_sidecar',
     'graphene_django'
