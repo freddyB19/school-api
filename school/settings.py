@@ -207,3 +207,20 @@ EMAIL_HOST = email.get("host")
 EMAIL_HOST_USER = email.get("user")
 EMAIL_HOST_PASSWORD = email.get("password")
 EMAIL_PORT = email.get("port")
+
+
+#GRAPHENE Settings
+
+GRAPHENE = {
+    'MIDDLEWARE': [
+        'apps.graphql.middleware.AuthorizationMiddleware',
+    ]
+}
+
+GRAPHENE_JWT = {
+    "ALGORITHM": "HS256",
+    "GRAPHENE_KEY": SECRET_KEY,
+    "GRAPHENE_PRIVATE_KEY": None,
+    "JWT_AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "JWT_AUTH_HEADER_PREFIX": "Bearer"
+}
