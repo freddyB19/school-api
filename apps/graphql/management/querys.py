@@ -1,11 +1,14 @@
 import graphene
 from graphene import relay
+
 from apps.management.models import Administrator
+from apps.graphql.decorators import login_required
 
 from .types import (
 	UserConnection,
 	AdministratorType
 )
+
 
 AdministratorDoesNotExist = None
 
@@ -19,6 +22,8 @@ class AdministratorDetailQuery(graphene.ObjectType):
 		pk = graphene.Int(required = True)
 	)
 
+
+	@login_required
 	def resolve_detail(root, info, pk):
 		try:
 			administrator = Administrator.objects.select_related(
@@ -30,6 +35,7 @@ class AdministratorDetailQuery(graphene.ObjectType):
 		return administrator
 
 
+	@login_required
 	def resolve_admins(root, info, pk, **kwargs):
 		try:
 			administrator = Administrator.objects.prefetch_related(
