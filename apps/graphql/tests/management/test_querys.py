@@ -1,21 +1,40 @@
 import json
 
+from django.test import Client
+from django.contrib.auth import get_user_model
+
 from graphene_django.utils.testing import GraphQLTestCase
 
 from apps.management.models import Administrator
-from apps.user.tests.utils.utils import bulk_create_user
+from apps.user.tests.utils.utils import bulk_create_user, create_user
 from apps.school.tests.utils.utils import create_school
+
+from apps.graphql.tests.utils import get_token
+
+def authorization_user():
+	EMAIL = "user_auth@example.com"
+	PASSWORD = "12345678"
+
+	user = create_user(email = EMAIL, password = PASSWORD)
+	return get_token(email = EMAIL, password = PASSWORD)
+
 
 class AdministratorDetailQueryTest(GraphQLTestCase):
 
 	def setUp(self):
+		self.client = Client()
+
 		self.school = create_school()
 		self.users = bulk_create_user(total_users = 11)
+		token = authorization_user()
+		self.headers = {
+			"Authorization": f"Bearer {token}"
+		}
 
 		self.administrator = Administrator.objects.get(school_id = self.school.id)
 
 		self.administrator.users.set(self.users)
-
+		
 		self.query_administrator_detail = """
 			query AdministratorDetail($pk: Int!, $first: Int){
 
@@ -55,13 +74,10 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 
 
 	def test_get_detail_administrator_info(self):
-		"""
-			El detalle de una administración
-		"""
-
 		result = self.query(
 			self.query_administrator_detail,
-			variables = self.variables_administrator_detail
+			variables = self.variables_administrator_detail,
+			headers = self.headers
 		)
 
 		self.assertResponseNoErrors(result)
@@ -109,7 +125,8 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 
 		result = self.query(
 			query,
-			variables = variables
+			variables = variables,
+			headers = self.headers
 		)
 
 		self.assertResponseNoErrors(result)
@@ -138,7 +155,8 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 
 		result = self.query(
 			self.query_administrator_detail,
-			variables = variables
+			variables = variables,
+			headers = self.headers
 		)
 
 		self.assertResponseNoErrors(result)
