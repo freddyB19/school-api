@@ -11,6 +11,11 @@ from apps.school.tests.utils.utils import create_school
 
 from apps.graphql.tests.utils import get_token
 
+from .utils.schemas import (
+	QUERY_ADMINISTRATOR_DETAIL,
+	QUERY_ADMINISTRATOR_DETAIL_ADMINS
+)
+
 def authorization_user():
 	EMAIL = "user_auth@example.com"
 	PASSWORD = "12345678"
@@ -34,39 +39,9 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 		self.administrator = Administrator.objects.get(school_id = self.school.id)
 
 		self.administrator.users.set(self.users)
-		
-		self.query_administrator_detail = """
-			query AdministratorDetail($pk: Int!, $first: Int){
 
-				detail(pk: $pk){
-					id
-					school {
-						id
-						name
-					}
-				}
 
-				admins(pk: $pk, first: $first){
-					pageInfo {
-				        startCursor
-				        endCursor
-				        hasNextPage
-				        hasPreviousPage
-				    }
-				    edges {
-				        cursor
-				        node {
-							name
-							email
-							role
-							userId
-							dateJoined
-							lastLogin
-				        }
-			        }
-				}
-			}
-		"""
+		self.query_administrator_detail = QUERY_ADMINISTRATOR_DETAIL		
 		self.variables_administrator_detail = {
 			"pk": self.administrator.id,
 			"first": 2
@@ -95,27 +70,7 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 			self.variables_administrator_detail["first"]
 		)
 
-		query = """
-			query AdministratorDetail($pk: Int!, $first: Int, $after: String){
-
-				admins(pk: $pk, first: $first, after: $after){
-					pageInfo {
-				        startCursor
-				        endCursor
-				        hasNextPage
-				        hasPreviousPage
-				    }
-				    edges {
-				        cursor
-				        node {
-				            id
-							name
-							email
-				        }
-			        }
-				}
-			}
-		"""
+		query = QUERY_ADMINISTRATOR_DETAIL_ADMINS
 
 		variables = {
 			"pk": self.administrator.id,
