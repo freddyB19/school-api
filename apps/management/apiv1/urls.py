@@ -1,6 +1,9 @@
-from django.urls import path
+from django.urls import path, include
 
 from . import views
+from .school.routers import router as school_router
+
+
 app_name = "management"
 
 urlpatterns = [
@@ -10,7 +13,7 @@ urlpatterns = [
 		name = "administrator-detail"
 	),
 	path(
-		"school/<int:school_id>/", 
+		"school/<int:school_id>/admin", 
 		views.AdministratorAPIView.as_view(), 
 		name = "administrator"
 	),
@@ -20,4 +23,5 @@ urlpatterns = [
 		name = "user-permission"
 	),
 
+	path('', include(school_router.urls)),
 ]
