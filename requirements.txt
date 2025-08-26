@@ -23,6 +23,7 @@ iniconfig==2.1.0
 jsonschema==4.24.0
 jsonschema-specifications==2025.4.1
 packaging==25.0
+pillow==11.3.0
 pluggy==1.6.0
 promise==2.3
 psycopg==3.2.9
