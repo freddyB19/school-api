@@ -55,10 +55,14 @@ def bulk_create_user(total_users: int = 5):
 	return models.User.objects.bulk_create(users)
 
 
-def create_permissions(name = "Test permission", codename = "test_permission"):
+def create_permissions(name:str = "Test permission", codename:str = "test_permission") -> None:
 	content_type = ContentType.objects.get_for_model(models.User)
 	permission = Permission.objects.create(
 		name = name,
 		codename= codename,
 		content_type=content_type,
 	)
+
+
+def get_permissions(codenames: list[str] = []) -> Permission:
+	return Permission.objects.filter(codename__in = codenames)
