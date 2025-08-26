@@ -6,13 +6,18 @@ from django.test import TransactionTestCase
 from rest_framework.test import APIClient
 from rest_framework.test import force_authenticate
 
-from apps.management.apiv1 import views
-from apps.management import models
-
-from apps.user.tests.utils.utils import create_user, create_permissions
+from apps.user.tests.utils.utils import (
+	create_user, 
+	create_permissions, 
+	get_permissions
+)
 from apps.school.tests.utils.utils import create_school
+from apps.management import models
+from apps.management.apiv1 import views
 
 from .utils.utils import get_administrator
+from .utils.testcases import UPDATE_SCHOOL_WITH_WRONG_DATA
+
 
 class AdministratorAPITest(TransactionTestCase):
 
@@ -131,7 +136,7 @@ class UserUpdatePermissionsTest(TransactionTestCase):
 		"""
 			Actualizar los permisos de un usuario
 		"""
-		self.client.force_authenticate(user = self.user_role_admin);
+		self.client.force_authenticate(user = self.user_role_admin)
 
 		update_user_permissions = {
 			"permissions": ["create_test", "update_test"]
@@ -215,6 +220,140 @@ class UserUpdatePermissionsTest(TransactionTestCase):
 		)
 
 		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+
+class SchoolUpdateAPITest(TransactionTestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_with_perm = create_user(role = 0)
+		self.user_without_perm = create_user(role = 0, email = "user2@example.com")
+
+		self.permissions = get_permissions(codenames = ["change_school"])
+
+		self.user_with_perm.user_permissions.set(self.permissions)
+
+		self.URL_SCHOOL_UPDATE = self.get_detail_url(id = self.school.id)
+
+	def get_detail_url(self, id):
+		return reverse(
+			"management:school-detail",
+			kwargs={"pk": id}
+		)
+
+
+	def test_update_school(self):
+		"""
+			Actualizando la información de una escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_perm)
+
+		update_school = {
+			"name": "School test 1",
+			"history": "Información sobre la historia de la escuela"
+		}
+
+		response = self.client.patch(
+			self.URL_SCHOOL_UPDATE,
+			update_school
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.school.id)
+		self.assertNotEqual(responseJson["name"], self.school.name)
+		self.assertNotEqual(responseJson["history"], self.school.history)
+
+
+	def test_update_school_does_not_exist(self):
+		"""
+			Actualizando la información de una escuela que no existe
+		"""
+
+		self.client.force_authenticate(user = self.user_with_perm)
+
+		update_school = {
+			"name": "School test 1",
+			"history": "Información sobre la historia de la escuela"
+		}
+
+		wrong_id = 12
+
+		response = self.client.patch(
+			self.get_detail_url(id = wrong_id),
+			update_school
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 404)
+
+	def test_update_school_without_user_permission(self):
+		"""
+			Actualizando la información de una escuela sin permiso de usuario
+		"""
+
+		self.client.force_authenticate(user = self.user_without_perm)
+
+		update_school = {
+			"name": "School test 1",
+			"history": "Información sobre la historia de la escuela"
+		}
+		
+		response = self.client.patch(
+			self.URL_SCHOOL_UPDATE,
+			update_school
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_update_school_with_wrong_data(self):
+		"""
+			Enviando datos erroneos para actualizar una escuela
+		"""
+		test_cases = UPDATE_SCHOOL_WITH_WRONG_DATA
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.client.force_authenticate(user = self.user_with_perm)
+				response = self.client.patch(
+					self.URL_SCHOOL_UPDATE,
+					case["update"]
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, case["expect"]["code"])
+				self.assertTrue(case["expect"]["field"] in responseJson)
+
+
+	def test_update_school_without_authentication(self):
+		"""
+			Actualizando la información de una escuela sin autenticación del usuario
+		"""
+
+		update_school = {
+			"name": "School test 1",
+			"history": "Información sobre la historia de la escuela"
+		}
+		
+		response = self.client.patch(
+			self.URL_SCHOOL_UPDATE,
+			update_school
+		)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
