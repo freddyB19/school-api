@@ -47,6 +47,7 @@ class AdministratorAPITest(TransactionTestCase):
 		"""
 			Validar endpoint administrator
 		"""
+		self.client.force_authenticate(user = self.user_role_staff)
 
 		response = self.client.get(self.URL_ADMINISTRATOR)
 
@@ -63,6 +64,8 @@ class AdministratorAPITest(TransactionTestCase):
 		"""
 			Intentar acceder a la información de 'administrator' con un ID de escuela que no existe
 		"""
+		self.client.force_authenticate(user = self.user_role_staff)
+
 		wrong_school_id = 100
 		
 		response = self.client.get(reverse(
@@ -81,6 +84,7 @@ class AdministratorAPITest(TransactionTestCase):
 		"""
 			Validar endpoint administrator-detail
 		"""
+		self.client.force_authenticate(user = self.user_role_staff)
 
 		response = self.client.get(self.URL_ADMINISTRATOR_DETAIL)
 
@@ -98,6 +102,8 @@ class AdministratorAPITest(TransactionTestCase):
 		"""
 			Intentar acceder a una información que no existe en endpoint administrator-detail
 		"""
+		self.client.force_authenticate(user = self.user_role_staff)
+		
 		wrong_id = 120
 		
 		response = self.client.get(reverse(
