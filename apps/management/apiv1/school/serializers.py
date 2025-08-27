@@ -102,5 +102,5 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 
 
 class SchoolUpdateLogoRequest(serializers.Serializer):
-	logo = serializers.ImageField(required = False, max_length = 20)
+	logo = serializers.ImageField(max_length = 20)
 	
