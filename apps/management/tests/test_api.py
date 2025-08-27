@@ -351,3 +351,46 @@ class SchoolUpdateAPITest(SchoolUpdateTest):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+
+class SchoolUpdateLogoAPITest(SchoolUpdateTest):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_SCHOOL_UPDATE_LOGO = self.get_upload_image_url(id = self.school.id)
+
+	def get_upload_image_url(self, id):
+		return reverse(
+			"management:school-upload-image",
+			kwargs = {"pk": id}
+		)
+
+
+	@unittest.skip("Esta función aun no está completada")
+	def test_update_school_logo(self):
+		"""
+			Actualizando el logo de una escuela
+		"""
+
+		self.client.force_authenticate(user = self.user_with_perm)
+
+		with tempfile.NamedTemporaryFile(suffix = ".jpg") as temp_file:
+			image = Image.new("RGB", (10, 10))
+			image.save(temp_file, format="JPEG")
+			temp_file.seek(0)
+
+			response = self.client.patch(
+				self.URL_SCHOOL_UPDATE_LOGO,
+				{"logo": temp_file},
+				format="multipart"
+			)
+
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.school.id)
+		self.assertNotEqual(responseJson["logo"], self.school.logo)
+
