@@ -1,7 +1,9 @@
-import unittest
+import unittest, tempfile
 
 from django.urls import reverse
 from django.test import TransactionTestCase
+
+from PIL import Image
 
 from rest_framework.test import APIClient
 from rest_framework.test import force_authenticate
@@ -16,7 +18,7 @@ from apps.management import models
 from apps.management.apiv1 import views
 
 from .utils.utils import get_administrator
-from .utils.testcases import UPDATE_SCHOOL_WITH_WRONG_DATA
+from .utils.testcases import UPDATE_SCHOOL_WITH_WRONG_DATA, SchoolUpdateTest
 
 
 class AdministratorAPITest(TransactionTestCase):
@@ -226,17 +228,9 @@ class UserUpdatePermissionsTest(TransactionTestCase):
 
 
 
-class SchoolUpdateAPITest(TransactionTestCase):
+class SchoolUpdateAPITest(SchoolUpdateTest):
 	def setUp(self):
-		self.client = APIClient()
-
-		self.school = create_school()
-		self.user_with_perm = create_user(role = 0)
-		self.user_without_perm = create_user(role = 0, email = "user2@example.com")
-
-		self.permissions = get_permissions(codenames = ["change_school"])
-
-		self.user_with_perm.user_permissions.set(self.permissions)
+		super().setUp()
 
 		self.URL_SCHOOL_UPDATE = self.get_detail_url(id = self.school.id)
 
