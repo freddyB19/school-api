@@ -27,6 +27,7 @@ from apps.management.models import Administrator
 
 
 class AdministratorAPIView(views.APIView):
+	permission_classes = [IsAuthenticated]
 
 	def get(self, request, school_id: int = None):
 		try:
@@ -53,7 +54,8 @@ class AdministratorAPIView(views.APIView):
 class AdministratorDetailAPIView(generics.RetrieveAPIView):
 	queryset = Administrator.objects.all()
 	serializer_class = serializers.AdministratorDetailResponse
-
+	permission_classes = [IsAuthenticated]
+	
 	def get_object(self):
 		try:
 			return self.queryset.prefetch_related(
