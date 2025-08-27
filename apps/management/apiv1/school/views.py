@@ -64,7 +64,7 @@ class SchoolUpdateVS(BaseSchoolVS):
 				status = status.HTTP_400_BAD_REQUEST,
 			)
 
-		command = commands.update_school_logo(serializer.data["logo"])
+		command = commands.update_school_logo(image = request.data["logo"])
 
 		if not command.status:
 			return response.Response(
@@ -73,9 +73,8 @@ class SchoolUpdateVS(BaseSchoolVS):
 				).model_dump()
 			)
 		
-		#new_logo = command.query
-		#school.logo = new_logo
-		#school.save()
+		school.logo = command.query
+		school.save()
 
 		return response.Response(
 			data = self.serializer_class(school).data,
