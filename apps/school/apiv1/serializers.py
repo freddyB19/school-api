@@ -192,7 +192,7 @@ class NotificationCDCEDetailResponse(serializers.ModelSerializer):
 
 class NewMediaSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = models.NewMedia
+		model = models.NewsMedia
 		fields = "__all__"
 
 @extend_schema_field(OpenApiTypes.URI)

@@ -507,7 +507,7 @@ class NotificationCDCE(models.Model):
 	def __repr__(self):
 		return f"NotificationCDCE(id = {self.id}, title = {self.title})"
 
-class NewMedia(SchoolPhoto):
+class NewsMedia(SchoolPhoto):
 
 	class Meta:
 		verbose_name = "Foto de la noticia"
@@ -518,7 +518,7 @@ class NewMedia(SchoolPhoto):
 		return self.title if self.title else "Archivo de imagen"
 
 	def __repr__(self):
-		return f"NewMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
+		return f"NewsMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
 
 class News(models.Model):
 	class TypeStatus(models.TextChoices):
@@ -539,7 +539,7 @@ class News(models.Model):
 		default = TypeStatus.published,
 		max_length = 10
 	)
-	media = models.ManyToManyField(NewMedia)
+	media = models.ManyToManyField(NewsMedia)
 	school = models.ForeignKey(
 		School, 
 		on_delete=models.CASCADE,

@@ -223,7 +223,7 @@ def create_news_media(**kwargs):
 
 	data.update(kwargs)
 
-	return models.NewMedia.objects.create(**data)
+	return models.NewsMedia.objects.create(**data)
 
 def create_news(id, **kwargs):
 	data = {
