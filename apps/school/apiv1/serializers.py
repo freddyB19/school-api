@@ -190,19 +190,19 @@ class NotificationCDCEDetailResponse(serializers.ModelSerializer):
 
 
 
-class NewMediaSerializer(serializers.ModelSerializer):
+class NewsMediaSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = models.NewsMedia
 		fields = "__all__"
 
 @extend_schema_field(OpenApiTypes.URI)
-class NewMediaField(serializers.RelatedField):
+class NewsMediaField(serializers.RelatedField):
 	def to_representation(self, value):
 		image = value.first()
 		return image.photo
 
 class NewsListResponse(serializers.ModelSerializer):
-	media = NewMediaField(read_only = True)
+	media = NewsMediaField(read_only = True)
 
 	class Meta:
 		model = models.News
@@ -211,7 +211,7 @@ class NewsListResponse(serializers.ModelSerializer):
 
 class NewsDetailResponse(serializers.ModelSerializer):
 	school = SchoolShortResponse(read_only = True)
-	media = NewMediaSerializer(many = True)
+	media = NewsMediaSerializer(many = True)
 
 	class Meta:
 		model = models.News
