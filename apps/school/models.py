@@ -593,6 +593,8 @@ class NotificationCDCE(models.Model):
 	def __repr__(self):
 		return f"NotificationCDCE(id = {self.id}, title = {self.title})"
 
+
+
 class NewsMedia(SchoolPhoto):
 
 	class Meta:
@@ -607,6 +609,7 @@ class NewsMedia(SchoolPhoto):
 		return f"NewsMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
 
 
+
 MAX_LENGTH_NEWS_TITLE = 70
 MIN_LENGTH_NEWS_TITLE = 5
 MAX_LENGTH_NEWS_STATUS = 10
@@ -619,7 +622,10 @@ class News(models.Model):
 	title = models.CharField(
 		max_length=MAX_LENGTH_NEWS_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = MIN_LENGTH_NEWS_TITLE, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_NEWS_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
@@ -657,6 +663,7 @@ class News(models.Model):
 		return f"NotificationCDCE(id = {self.id}, title = {self.title})"
 
 
+
 class PaymentInfo(SchoolPhoto):
 	description = models.TextField(blank = True, null = True)
 	
@@ -681,11 +688,18 @@ class PaymentInfo(SchoolPhoto):
 		return f"PaymentInfo(id = {self.id}, photo = {self.photo})"
 
 
+
+MIN_LENGTH_PAYMENTREPORT_FULLNAME_STUDENT = 5
+MAX_LENGTH_PAYMENTREPORT_FULLNAME_STUDENT = 100
+
 class PaymentReport(models.Model):
 	fullname_student = models.CharField(
-		max_length=100, 
+		max_length=MAX_LENGTH_PAYMENTREPORT_FULLNAME_STUDENT, 
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El nombre del estudiante es muy corto, ingrese el nombre completo")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_PAYMENTREPORT_FULLNAME_STUDENT, 
+				message = "El nombre del estudiante es muy corto, ingrese el nombre completo"
+			)
 		]
 	)
 	payment_detail = models.URLField()
@@ -723,15 +737,30 @@ class PaymentReport(models.Model):
 		return f"PaymentReport(id = {self.id}, name_student = {self.name_student}, payment_detail = {self.payment_detail}, grade = {self.grade.name} - {self.grade.section}, school = {self.school.name})"
 
 
+
+MIN_LENGTH_COORDINATE_TITLE = 4
+MAX_LENGTH_COORDINATE_TITLE = 100
+MAX_DIGITS_COORDINATE = 8
+DECIMAL_PLACES_COORDINATE = 5
+
 class Coordinate(models.Model):
 	title = models.CharField(
-		max_length=100,
+		max_length=MAX_LENGTH_COORDINATE_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 4, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_COORDINATE_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
-	latitude = models.DecimalField(max_digits=8, decimal_places=5)
-	longitude = models.DecimalField(max_digits=8, decimal_places=5)
+	latitude = models.DecimalField(
+		max_digits=MAX_DIGITS_COORDINATE, 
+		decimal_places=DECIMAL_PLACES_COORDINATE
+	)
+	longitude = models.DecimalField(
+		max_digits=MAX_DIGITS_COORDINATE, 
+		decimal_places=DECIMAL_PLACES_COORDINATE
+	)
 	school = models.ForeignKey(
 		School, 
 		on_delete=models.CASCADE,
@@ -754,14 +783,16 @@ class Coordinate(models.Model):
 		return f"Coordinate(id = {self.id}, title = {self.title}, latitude = {self.latitude}, longitude = {self.longitude}, school = {self.school.name})"
 
 
+
 def validate_hex_format(value):
 	if not value.startswith("#"):
 		raise ValidationError("El formato valido para los colores es en Hexadecimal", params = {"color": value})
 
+MAX_LENGTH_COLORHEXFORMAT_COLOR = 8
 
 class ColorHexFormat(models.Model):
 	color = models.CharField(
-		max_length = 8, 
+		max_length = MAX_LENGTH_COLORHEXFORMAT_COLOR, 
 		validators = [validate_hex_format]
 	)
 
