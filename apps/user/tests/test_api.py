@@ -329,8 +329,6 @@ class UserAPITest(TransactionTestCase):
 		"""
 			Validar actualizar [email | name | is_active] en el usuario
 		"""
-		ocuppations = models.ManagerOcuppation.get()
-
 		update = {
 			"name": faker.name(),
 			"email": faker.email(),

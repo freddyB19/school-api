@@ -5,7 +5,6 @@ from django.test import TransactionTestCase
 
 from apps.user.commands import commands
 from apps.user.models import TypeRole
-from apps.user.models import OccupationStaff
 
 from .utils.utils import (
 	faker,
