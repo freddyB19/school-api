@@ -5,8 +5,10 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.core.validators import MaxLengthValidator
 
+
+
+MIN_LENGTH_SCHOOLMEDIA_TITLE = 5
 MAX_LENGTH_SCHOOLMEDIA_TITLE = 100
-MIN_LENGTH_SCHOOLMEDIA_TITLE = 100
 
 class SchoolPhoto(models.Model):
 	title = models.CharField(
@@ -23,6 +25,7 @@ class SchoolPhoto(models.Model):
 		abstract = True
 
 
+
 class SchoolFile(models.Model):
 	title = models.CharField(
 		max_length=MAX_LENGTH_SCHOOLMEDIA_TITLE,
@@ -34,6 +37,7 @@ class SchoolFile(models.Model):
 
 	class Meta:
 		abstract = True
+
 
 
 MIN_LENGTH_SCHOOL_NAME = 5
@@ -75,6 +79,7 @@ class School(models.Model):
 
 	def __repr__(self):
 		return f"School(id = {self.id}, name = {self.name})"
+
 
 
 class OccupationStaff(models.TextChoices):
@@ -203,6 +208,7 @@ class Grade(models.Model):
 		return f"Grade(id = {self.id}, name = {self.name}, type = {self.type}, school = {self.school.name})"
 
 
+
 class InfraestructureMedia(SchoolPhoto):
 	class Meta:
 		verbose_name = "Foto de la infraestructura"
@@ -213,6 +219,7 @@ class InfraestructureMedia(SchoolPhoto):
 
 	def __repr__(self):
 		return f"InfraestructureMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
+
 
 
 MIN_LENGTH_INFRA_NAME = 5
@@ -258,19 +265,22 @@ class Infraestructure(models.Model):
 		)
 
 
+
+MAX_LENGTH_CONTACTINFO_PHONE = 11
+
 class ContactInfo(models.Model):
 	email = models.EmailField(blank = True, null = True)
 	phone = models.CharField(
-		max_length = 11,
+		max_length = MAX_LENGTH_CONTACTINFO_PHONE,
 		blank = True, 
 		null = True,
 		validators = [
 			MinLengthValidator(
-				limit_value = 11, 
+				limit_value = MAX_LENGTH_CONTACTINFO_PHONE, 
 				message = "El número de telefono ingresado es incorrecto (es muy corto)"
 			),
 			MaxLengthValidator(
-				limit_value = 11,
+				limit_value = MAX_LENGTH_CONTACTINFO_PHONE,
 				message = "El número de telefono ingresado es incorrecto (es muy largo)"
 			)
 		]
@@ -295,6 +305,7 @@ class ContactInfo(models.Model):
 		return f"ContactInfo(id = {self.id}, email = {self.email}, phone = {self.phone})"
 
 
+
 class DaysName(models.TextChoices):
 	monday = "Lunes"
 	tuesday = "Martes"
@@ -309,6 +320,8 @@ class DaysNumber(models.IntegerChoices):
 	thursday = 4
 	friday = 5
 
+MAX_LENGTH_DAYSWEEK_NAME = 10
+
 class DaysWeek(models.Model):
 
 	day = models.IntegerField(
@@ -317,7 +330,7 @@ class DaysWeek(models.Model):
 		unique = True
 	)
 	name = models.CharField(
-		max_length = 10, 
+		max_length = MAX_LENGTH_DAYSWEEK_NAME, 
 		editable = False, 
 		default = DaysName.monday, 
 		unique = True
@@ -342,9 +355,13 @@ class DaysWeek(models.Model):
 	def __repr__(self):
 		return f"DaysWeek(id = {self.id}, day = {self.day}, name = {self.name})"
 
+
+
+MAX_LENGTH_TYPEGROUP_TYPE = 50
+
 class TimeGroup(models.Model):
 	# Sirve para indicar: Ej - (Turno Mañana, Turno Tarde, ...)
-	type = models.CharField(max_length = 50)
+	type = models.CharField(max_length = MAX_LENGTH_TYPEGROUP_TYPE)
 	daysweek = models.ManyToManyField(DaysWeek)
 	opening_time = models.TimeField()
 	closing_time = models.TimeField()
@@ -371,12 +388,19 @@ class TimeGroup(models.Model):
 		return f"TimeGroup(id = {self.id}, type = {self.type}, active = {self.active}, opening_time = {self.opening_time.strftime('%H:%M')}, closing_time = {self.closing_time.strftime('%H:%M')})"
 
 
+
+MIN_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION = 4
+MAX_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION = 100
+
 class OfficeHour(models.Model):
 	# Para indicar Descripción específica del intervalo (ej: Atención al cliente, Consultas)
 	interval_description = models.CharField(
-		max_length = 100,
+		max_length = MAX_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION,
 		validators = [
-			MinLengthValidator(limit_value = 4, message = "La descripción sobre el horario de oficina, es muy corta")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION, 
+				message = "La descripción sobre el horario de oficina, es muy corta"
+			)
 		]
 	)
 	time_group = models.ForeignKey(
