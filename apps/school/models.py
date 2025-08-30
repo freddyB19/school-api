@@ -86,21 +86,21 @@ class OccupationStaff(models.TextChoices):
 	teacher = "profesor"
 	administrative = "administrativo"
 
-MIN_LENGTH_SCHOOSTAF_NAME = 5
-MAX_LENGTH_SCHOOSTAF_NAME = 50
-MAX_LENGTH_SCHOOSTAF_OCCUPATION = 15
+MIN_LENGTH_SCHOOSTAFF_NAME = 5
+MAX_LENGTH_SCHOOSTAFF_NAME = 50
+MAX_LENGTH_SCHOOSTAFF_OCCUPATION = 15
 
 class SchoolStaff(models.Model):
 	name = models.CharField(
-		max_length = MAX_LENGTH_SCHOOSTAF_NAME,
+		max_length = MAX_LENGTH_SCHOOSTAFF_NAME,
 		validators = [
-			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOSTAF_NAME, message = "El nombre es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOSTAFF_NAME, message = "El nombre es muy corto")
 		]
 	)
 	occupation = models.CharField(
         choices = OccupationStaff,
         default = OccupationStaff.administrative,
-        max_length = MAX_LENGTH_SCHOOSTAF_OCCUPATION
+        max_length = MAX_LENGTH_SCHOOSTAFF_OCCUPATION
     )
 	school = models.ForeignKey(
 		School, 
@@ -431,6 +431,7 @@ class OfficeHour(models.Model):
 		return f"OfficeHour(id = {self.id}, time_group = {self.time_group.type})"
 
 
+
 class SocialMedia(models.Model):
 	profile = models.URLField()
 	school = models.ForeignKey(
@@ -453,6 +454,7 @@ class SocialMedia(models.Model):
 		return f"SocialMedia(id = {self.id}, profile = {self.profile})"
 
 
+
 class CulturalEventMedia(SchoolPhoto):
 
 	class Meta:
@@ -465,11 +467,19 @@ class CulturalEventMedia(SchoolPhoto):
 	def __repr__(self):
 		return f"CulturalEventMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
 
+
+
+MIN_LENGTH_CULTURALEVENT_TITLE = 5
+MAX_LENGTH_CULTURALEVENT_TITLE = 50
+
 class CulturalEvent(models.Model):
 	title = models.CharField(
-		max_length=50,
+		max_length=MAX_LENGTH_CULTURALEVENT_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_CULTURALEVENT_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
@@ -502,11 +512,17 @@ class CulturalEvent(models.Model):
 		return f"CulturalEvent(id = {self.id}, title = {self.title}, date = {self.date})"
 
 
+MIN_LENGTH_CALENDAR_TITLE = 5
+MAX_LENGTH_CALENDAR_TITLE = 50
+
 class Calendar(models.Model):
 	title = models.CharField(
-		max_length=50,
+		max_length=MAX_LENGTH_CALENDAR_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_CALENDAR_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
@@ -536,11 +552,18 @@ class Calendar(models.Model):
 		return f"Calendar(id = {self.id}, title = {self.title}, date = {self.date})"
 
 
+
+MIN_LENGTH_NOTIFICATIONCDCE_TITLE = 5
+MAX_LENGTH_NOTIFICATIONCDCE_TITLE = 70
+
 class NotificationCDCE(models.Model):
 	title = models.CharField(
-		max_length=70,
+		max_length=MAX_LENGTH_NOTIFICATIONCDCE_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_NOTIFICATIONCDCE_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
