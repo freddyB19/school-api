@@ -209,6 +209,14 @@ class NewsListResponse(serializers.ModelSerializer):
 		fields = ["id", "title", "created", "updated", "media"]
 
 
+class NewsResponse(serializers.ModelSerializer):
+	school = SchoolShortResponse(read_only = True)
+	media = NewsMediaSerializer(many = True)
+
+	class Meta:
+		model = models.News
+		fields = "__all__"
+
 class NewsDetailResponse(serializers.ModelSerializer):
 	school = SchoolShortResponse(read_only = True)
 	media = NewsMediaSerializer(many = True)
