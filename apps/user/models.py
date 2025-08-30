@@ -15,10 +15,6 @@ class TypeRole(models.IntegerChoices):
 	admin = 0,
 	staff = 1
 
-class OccupationStaff(models.TextChoices):
-	teacher = "profesor"
-	administrative = "administrativo"
-
 class User(AbstractBaseUser, PermissionsMixin):
 	name = models.CharField(max_length = MAX_LENGTH_NAME, default = "Anon")
 	email = models.EmailField(max_length = MAX_LENGTH_EMAIL, unique = True)
@@ -54,12 +50,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 		indexes = [
 			models.Index(fields = ["email"], name="email_user_idx")
 		]
-
-
-class ManagerOcuppation:
-	@classmethod
-	def get(cls):
-		return OccupationStaff
 
 
 class ManagerRole:
