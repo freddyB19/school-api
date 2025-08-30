@@ -808,6 +808,7 @@ class ColorHexFormat(models.Model):
 		return f"Color(id = {self.id}, color = {self.color})"
 
 
+
 class SettingFormat(models.Model):
 	colors = models.ManyToManyField(ColorHexFormat)
 	school = models.OneToOneField(
@@ -875,12 +876,16 @@ class RepositoryMediaFile(SchoolFile):
 		return f"RepositoryMediaFile(id = {self.id}, title = {self.title}, file = {self.file})"
 
 
+
+MIN_LENGTH_REPOSITORY_NAME_PROJECT = 4
+MAX_LENGTH_REPOSITORY_NAME_PROJECT = 100
+
 class Repository(models.Model):
 	name_project = models.CharField(
-		max_length = 100,
+		max_length = MAX_LENGTH_REPOSITORY_NAME_PROJECT,
 		validators = [
 			MinLengthValidator(
-				limit_value = 4, 
+				limit_value = MIN_LENGTH_REPOSITORY_NAME_PROJECT, 
 				message = "El titulo del proyecto es muy corto"
 			)
 		]
@@ -920,6 +925,7 @@ class Repository(models.Model):
 		return f"Repository(id = {self.id}, name_project = {self.name_project}, school = {self.school.name})"
 
 
+
 class ExtraActivitiePhoto(SchoolPhoto):
 	class Meta:
 		verbose_name = "Foto de actividad extracurricular"
@@ -931,6 +937,7 @@ class ExtraActivitiePhoto(SchoolPhoto):
 
 	def __repr__(self):
 		return f"ExtraActivitiesMediaPhotos(id = {self.id}, title = {self.title}, photo = {self.photo})"
+
 
 
 class ExtraActivitieFile(SchoolFile):
@@ -947,8 +954,19 @@ class ExtraActivitieFile(SchoolFile):
 		return f"ExtraActivitiesMediaFiles(id = {self.id}, title = {self.title}, file = {self.file})"
 
 
+MIN_LENGTH_EXTRA_ACT_SCH_TYPE = 5
+MAX_LENGTH_EXTRA_ACT_SCH_TYPE = 50
+
 class ExtraActivitieSchedule(models.Model):
-	type = models.CharField(max_length = 50)
+	type = models.CharField(
+		max_length = MAX_LENGTH_EXTRA_ACT_SCH_TYPE,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_EXTRA_ACT_SCH_TYPE, 
+				message = "La descripción del horario de la actividad, es muy corta"
+			)
+		]
+	)
 	daysweek = models.ManyToManyField(DaysWeek)
 	opening_time = models.TimeField(blank = True, null = True)
 	closing_time = models.TimeField(blank = True, null = True)
@@ -970,11 +988,18 @@ class ExtraActivitieSchedule(models.Model):
 		return f"TimeGroup(id = {self.id}, type = {self.type}, active = {self.active}, opening_time = {self.opening_time.strftime('%H:%M')}, closing_time = {self.closing_time.strftime('%H:%M')})"
 
 
+
+MIN_LENGTH_EXTRA_ACT_TITLE = 5
+MAX_LENGTH_EXTRA_ACT_TITLE = 100
+
 class ExtraActivitie(models.Model):
 	title = models.CharField(
-		max_length = 100,
+		max_length = MAX_LENGTH_EXTRA_ACT_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_EXTRA_ACT_TITLE, 
+				message = "El titulo es muy corto"
+			)
 		]
 	)
 	description = models.TextField(null = True, blank = True)
