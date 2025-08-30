@@ -5,14 +5,16 @@ from django.core.exceptions import ValidationError
 from django.core.validators import MinLengthValidator
 from django.core.validators import MaxLengthValidator
 
+MAX_LENGTH_SCHOOLMEDIA_TITLE = 100
+MIN_LENGTH_SCHOOLMEDIA_TITLE = 100
 
 class SchoolPhoto(models.Model):
 	title = models.CharField(
-		max_length = 100, 
+		max_length = MAX_LENGTH_SCHOOLMEDIA_TITLE, 
 		blank = True, 
 		null = True,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo de la foto es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOLMEDIA_TITLE, message = "El titulo de la foto es muy corto")
 		]
 	)
 	photo = models.URLField()
@@ -23,9 +25,9 @@ class SchoolPhoto(models.Model):
 
 class SchoolFile(models.Model):
 	title = models.CharField(
-		max_length=100,
+		max_length=MAX_LENGTH_SCHOOLMEDIA_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo del archivo es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOLMEDIA_TITLE, message = "El titulo del archivo es muy corto")
 		]
 	)
 	file = models.URLField()
@@ -34,17 +36,26 @@ class SchoolFile(models.Model):
 		abstract = True
 
 
+MIN_LENGTH_SCHOOL_NAME = 5
+MAX_LENGTH_SCHOOL_NAME = 50
+MIN_LENGTH_SCHOOL_ADDRESS = 10
+MAX_LENGTH_SCHOOL_ADDRESS = 100
 
 class School(models.Model):
 	name = models.CharField(
-		max_length=50, 
+		max_length=MAX_LENGTH_SCHOOL_NAME, 
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El nombre de la escuela es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOL_NAME, message = "El nombre de la escuela es muy corto")
 		]
 	)
 	subdomain = models.SlugField(unique = True)
 	logo = models.URLField(blank = True, null = True)
-	address = models.CharField(max_length=100)
+	address = models.CharField(
+		max_length=MAX_LENGTH_SCHOOL_ADDRESS,
+		validators = [
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOL_ADDRESS, message = "La información de la dirección es muy corta")
+		]
+	)
 	mission = models.TextField(blank = True, null = True)
 	vision = models.TextField(blank = True, null = True) 
 	history = models.TextField(blank = True, null = True)
@@ -520,15 +531,20 @@ class NewsMedia(SchoolPhoto):
 	def __repr__(self):
 		return f"NewsMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
 
+
+MAX_LENGTH_NEWS_TITLE = 70
+MIN_LENGTH_NEWS_TITLE = 5
+MAX_LENGTH_NEWS_STATUS = 10
+
 class News(models.Model):
 	class TypeStatus(models.TextChoices):
 		pending = "pendiente"
 		published = "publicado"
 
 	title = models.CharField(
-		max_length=70,
+		max_length=MAX_LENGTH_NEWS_TITLE,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El titulo es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_NEWS_TITLE, message = "El titulo es muy corto")
 		]
 	)
 	description = models.TextField(blank = True, null = True)
@@ -537,7 +553,7 @@ class News(models.Model):
 	status = models.CharField(
 		choices = TypeStatus, 
 		default = TypeStatus.published,
-		max_length = 10
+		max_length = MAX_LENGTH_NEWS_STATUS
 	)
 	media = models.ManyToManyField(NewsMedia)
 	school = models.ForeignKey(
