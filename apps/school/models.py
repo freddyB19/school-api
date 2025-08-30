@@ -81,18 +81,21 @@ class OccupationStaff(models.TextChoices):
 	teacher = "profesor"
 	administrative = "administrativo"
 
+MIN_LENGTH_SCHOOSTAF_NAME = 5
+MAX_LENGTH_SCHOOSTAF_NAME = 50
+MAX_LENGTH_SCHOOSTAF_OCCUPATION = 15
 
 class SchoolStaff(models.Model):
 	name = models.CharField(
-		max_length = 50,
+		max_length = MAX_LENGTH_SCHOOSTAF_NAME,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El nombre es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_SCHOOSTAF_NAME, message = "El nombre es muy corto")
 		]
 	)
 	occupation = models.CharField(
         choices = OccupationStaff,
         default = OccupationStaff.administrative,
-        max_length = 15
+        max_length = MAX_LENGTH_SCHOOSTAF_OCCUPATION
     )
 	school = models.ForeignKey(
 		School, 
@@ -131,19 +134,41 @@ class TypeGrade(models.TextChoices):
 	primary = "básica"
 	high = "secundaria"
 
+MIN_LENGTH_GRADE_NAME = 5
+MAX_LENGTH_GRADE_NAME = 50
+MAX_LENGTH_GRADE_TYPE = 11
+MAX_LENGTH_GRADE_SECTION = 3
+MIN_LENGTH_GRADE_SECTION = 1
 
 class Grade(models.Model):
 	
 	name = models.CharField(
-		max_length=50,
+		max_length=MAX_LENGTH_GRADE_NAME,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El nombre es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_GRADE_NAME, 
+				message = "El nombre es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
-	type = models.CharField(choices = TypeGrade, default = TypeGrade.primary, max_length = 11)
+	type = models.CharField(
+		choices = TypeGrade, 
+		default = TypeGrade.primary, 
+		max_length = MAX_LENGTH_GRADE_TYPE
+	)
 	type_number = models.IntegerField(choices = TypeGradeByNumber, default = TypeGradeByNumber.preschool)
-	section = models.CharField(max_length = 3, blank = True, null = True)
+	section = models.CharField(
+		max_length = MAX_LENGTH_GRADE_SECTION, 
+		blank = True, 
+		null = True,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_GRADE_SECTION, 
+				message = "El nombre es muy corto"
+			)
+		]
+	)
 	school = models.ForeignKey(
 		School, 
 		on_delete=models.CASCADE,
@@ -190,11 +215,14 @@ class InfraestructureMedia(SchoolPhoto):
 		return f"InfraestructureMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
 
 
+MIN_LENGTH_INFRA_NAME = 5
+MAX_LENGTH_INFRA_NAME = 100
+
 class Infraestructure(models.Model):
 	name = models.CharField(
-		max_length = 100,
+		max_length = MAX_LENGTH_INFRA_NAME,
 		validators = [
-			MinLengthValidator(limit_value = 5, message = "El nombre es muy corto")
+			MinLengthValidator(limit_value = MIN_LENGTH_INFRA_NAME, message = "El nombre es muy corto")
 		]
 	)
 	description = models.TextField(blank = True, null = True)
