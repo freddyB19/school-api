@@ -1,5 +1,7 @@
 import tempfile
 
+from django.core.files.uploadedfile import SimpleUploadedFile
+
 from apps.management import models
 
 from PIL import Image
@@ -32,5 +34,27 @@ def create_list_images() -> list:
 		temp_file.seek(0)
 		
 		images.append(temp_file)
+
+	return images
+
+
+def list_upload_images() -> list:
+	images = [
+		SimpleUploadedFile(
+			"test_image1.jpg", 
+			content=b"content_image1", 
+			content_type="image/jpeg"
+		),
+		SimpleUploadedFile(
+			"test_image2.jpg", 
+			content=b"content_image2", 
+			content_type="image/jpeg"
+		),
+		SimpleUploadedFile(
+			"test_image3.jpg", 
+			content=b"content_image3", 
+			content_type="image/jpeg"
+		),
+	]
 
 	return images
