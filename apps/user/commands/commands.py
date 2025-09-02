@@ -5,7 +5,7 @@ from pydantic import validate_call
 
 from apps.user import models
 from apps.utils.result_commands import ResultCommand
-from apps.utils.decorators import handle_validation_errors
+from apps.utils.decorators import handler_validation_errors
 
 from .utils.props import (
 	CreateUserParam,
@@ -25,7 +25,7 @@ def is_valid_email(email: str = None) -> ResultCommand:
 		query = models.User.objects.filter(email = email).exists()
 	)
 
-@handle_validation_errors
+@handler_validation_errors
 def create_user(user: CreateUserParam, errors: Optional[list] = None):
 	if errors:
 		return ResultCommand(status = False, errors = errors)
@@ -54,7 +54,7 @@ def get_user(pk: int = None) -> ResultCommand:
 			errors = [{"message": f"No existe información para el usuario {pk}"}]
 		)
 
-@handle_validation_errors
+@handler_validation_errors
 def change_user(update: UpdateUserParam, pk: int = None, errors: Optional[list] = None) -> ResultCommand:
 	if not pk:
 		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
@@ -88,7 +88,7 @@ def change_user(update: UpdateUserParam, pk: int = None, errors: Optional[list] 
 
 	return ResultCommand(**context)
 
-@handle_validation_errors
+@handler_validation_errors
 def change_password(new_password: PropPassword, pk: int = None, errors: Optional[list] = None) -> ResultCommand:
 	if not pk:
 		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")

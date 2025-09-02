@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, ValidationError, validate_call
 
 from .result_commands import MessageError
 
-def handle_validation_errors(func):
+def handler_validation_errors(func):
 	validated_func = validate_call(func, config = ConfigDict(
 		hide_input_in_errors=True, arbitrary_types_allowed = True
 		)
