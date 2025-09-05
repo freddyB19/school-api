@@ -2,6 +2,7 @@ import random
 from typing import Optional
 
 from pydantic import validate_call
+from rest_framework import status as status_code
 
 from apps.user import models
 from apps.utils.result_commands import ResultCommand
@@ -28,7 +29,11 @@ def is_valid_email(email: str = None) -> ResultCommand:
 @handler_validation_errors
 def create_user(user: CreateUserParam, errors: Optional[list] = None):
 	if errors:
-		return ResultCommand(status = False, errors = errors)
+		return ResultCommand(
+			status = False, 
+			errors = errors, 
+			error_code = status_code.HTTP_400_BAD_REQUEST
+		)
 
 	return ResultCommand(
 		query = models.User.objects.create_user(
@@ -51,7 +56,8 @@ def get_user(pk: int = None) -> ResultCommand:
 	except models.User.DoesNotExist as e:
 		return ResultCommand(
 			status = False,
-			errors = [{"message": f"No existe información para el usuario {pk}"}]
+			errors = [{"message": f"No existe información para el usuario {pk}"}],
+			error_code = status_code.HTTP_404_NOT_FOUND
 		)
 
 @handler_validation_errors
@@ -60,11 +66,16 @@ def change_user(update: UpdateUserParam, pk: int = None, errors: Optional[list] 
 		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
 
 	if errors:
-		return ResultCommand(status = False, errors = errors)
+		return ResultCommand(
+			status = False, 
+			errors = errors,
+			error_code = status_code.HTTP_400_BAD_REQUEST
+		)
 
 	context = {
 		"status": False,
-		"errors": [{"message": f"No existe información para el usuario {pk}"}]
+		"errors": [{"message": f"No existe información para el usuario {pk}"}],
+		"error_code": status_code.HTTP_404_NOT_FOUND
 	}
 	
 	update_columns = update.model_dump(exclude_defaults = True)
@@ -94,7 +105,11 @@ def change_password(new_password: PropPassword, pk: int = None, errors: Optional
 		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
 
 	if errors:
-		return ResultCommand(status = False, errors = errors)
+		return ResultCommand(
+			status = False, 
+			errors = errors, 
+			error_code = status_code.HTTP_400_BAD_REQUEST
+		)
 
 	has_user = get_user(pk = pk)
 
@@ -116,7 +131,8 @@ def get_user_by_email(email: str = None) -> ResultCommand:
 	if not has_user.exists():
 		return ResultCommand(
 			status = False,
-			errors = [{"message": f"No existe un usuario con ese email: {email}"}]
+			errors = [{"message": f"No existe un usuario con ese email: {email}"}],
+			error_code = status_code.HTTP_404_NOT_FOUND
 		)
 
 	return ResultCommand(status = True, query = has_user.first())
