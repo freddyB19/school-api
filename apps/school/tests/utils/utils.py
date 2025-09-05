@@ -241,6 +241,22 @@ def create_news(id, **kwargs):
 	return news
 
 
+def bulk_create_news(id: int) -> list[models.News]:
+	news = [
+		models.News(
+			school_id = id,
+			title = faker.text(max_nb_chars = 20),
+			description =  faker.paragraph(),
+			status = faker.random_element(elements = models.News.TypeStatus.values)
+		)
+
+		for _ in range(5)
+	]
+
+	return models.News.objects.bulk_create(news)
+
+
+
 def create_cultura_event_media(**kwargs):
 	data = {
 		"title": faker.text(max_nb_chars = 20),
