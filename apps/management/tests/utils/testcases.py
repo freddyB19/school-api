@@ -110,3 +110,9 @@ class NewsTest(APITestCase):
 		])
 
 		self.user_with_all_perm.user_permissions.set(self.permissions)
+
+
+class CommandNewsTest(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+		
