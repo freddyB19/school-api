@@ -2,6 +2,7 @@ import unittest, tempfile
 
 from django.urls import reverse
 from django.test import TransactionTestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from PIL import Image
 
@@ -13,12 +14,18 @@ from apps.user.tests.utils.utils import (
 	create_permissions, 
 	get_permissions
 )
-from apps.school.tests.utils.utils import create_school
+from apps.school.tests.utils.utils import create_school, bulk_create_news
 from apps.management import models
 from apps.management.apiv1 import views
 
-from .utils.utils import get_administrator
-from .utils.testcases import UPDATE_SCHOOL_WITH_WRONG_DATA, SchoolUpdateTest
+from . import faker
+from .utils.utils import get_administrator, create_list_images
+from .utils.testcases import (
+	UPDATE_SCHOOL_WITH_WRONG_DATA, 
+	NewsCreateTest,
+	SchoolUpdateTest
+)
+
 
 
 class AdministratorAPITest(TransactionTestCase):
@@ -139,6 +146,7 @@ class AdministratorAPITest(TransactionTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
 
 
 class UserUpdatePermissionsTest(TransactionTestCase):
@@ -422,3 +430,178 @@ class SchoolUpdateLogoAPITest(SchoolUpdateTest):
 		self.assertEqual(responseJson["id"], self.school.id)
 		self.assertNotEqual(responseJson["logo"], self.school.logo)
 
+
+
+class NewsCreateAPITest(NewsCreateTest):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_NEWS = self.get_school_news_url(school_id = self.school.id)
+
+	def get_school_news_url(self, school_id):
+		return reverse(
+			"management:news-list-create", 
+			kwargs={"school_id": school_id}
+		)
+
+	def test_create_news(self):
+		"""
+			Validar "POST /news"
+		"""
+
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		images = create_list_images()
+		
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph(),
+			"media": images
+		}
+
+		response = self.client.post(
+			self.URL_NEWS,
+			add_news,
+			format="multipart"
+		)
+
+		for image in images:
+			image.close()
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 201)
+		self.assertEqual(responseJson["title"], add_news["title"])
+		self.assertEqual(responseJson["description"], add_news["description"])
+		self.assertEqual(responseJson["status"], "publicado")
+
+
+	def test_create_news_without_images(self):
+		"""
+			Validar "POST /news" sin enviar imagenes
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph()
+		}
+
+		response = self.client.post(
+			self.URL_NEWS,
+			add_news,
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 201)
+		self.assertEqual(responseJson["title"], add_news["title"])
+		self.assertEqual(responseJson["description"], add_news["description"])
+		self.assertEqual(responseJson["status"], "publicado")
+		self.assertEqual(len(responseJson["media"]), 0)
+
+
+	def test_create_news_with_wrong_data(self):
+		"""
+			Generar [Error 400] en "POST /news" por enviar datos invalidos
+		"""
+		
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		test_cases = [
+			{
+				"title": "Text"
+			},
+			{
+				"title": faker.text(max_nb_chars=200)
+			},
+			{
+				"title": faker.text(max_nb_chars=20),
+				"status": "pausado"
+			},
+		]
+
+		for case in test_cases:
+			with self.subTest(case  = case):
+				response = self.client.post(
+					self.URL_NEWS,
+					case,
+				)
+				
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_create_news_with_non_existent_school(self):
+		"""
+			Generar [Error 404] en "POST /news" por enviar el ID de una escuela que no existe
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+		
+		wrong_school_id = 12
+
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph()
+		}
+
+		response = self.client.post(
+			self.get_school_news_url(school_id = wrong_school_id),
+			add_news,
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 404)
+
+
+	def test_create_news_with_permission(self):
+		"""
+			Generar [Error 403] en "POST /news" por usuarios sin permisos para crear una noticia
+		"""
+
+		test_cases = [
+			{"user": self.user_with_view_perm},
+			{"user": self.user_with_delete_perm},
+		]
+
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph()
+		}
+
+		for case in test_cases:
+			with self.subTest(case  = case):
+				self.client.force_authenticate(user = case["user"])
+
+				response = self.client.post(
+					self.URL_NEWS,
+					add_news,
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 403)
+
+
+	def test_create_news_without_authentication(self):
+		"""
+			Generar [Error 401] en "POST /news" no autenticarse
+		"""
+
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph()
+		}
+
+		response = self.client.post(
+			self.URL_NEWS,
+			add_news,
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
