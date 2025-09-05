@@ -199,7 +199,7 @@ class NewsMediaSerializer(serializers.ModelSerializer):
 class NewsMediaField(serializers.RelatedField):
 	def to_representation(self, value):
 		image = value.first()
-		return image.photo
+		return image.photo if image else None
 
 class NewsListResponse(serializers.ModelSerializer):
 	media = NewsMediaField(read_only = True)
