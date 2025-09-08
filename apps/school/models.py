@@ -660,7 +660,7 @@ class News(models.Model):
 		return f"{self.title}"
 
 	def __repr__(self):
-		return f"NotificationCDCE(id = {self.id}, title = {self.title})"
+		return f"News(id = {self.id}, title = {self.title}, status = {self.status})"
 
 
 
