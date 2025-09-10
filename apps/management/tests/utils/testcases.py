@@ -129,6 +129,9 @@ class NewsCreateTest(NewsTest):
 			get_permissions(codenames = ["delete_news"])
 		)
 
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(*(self.user_with_view_perm, self.user_with_delete_perm))
+
 
 class NewsListTest(NewsTest):
 	def setUp(self):
