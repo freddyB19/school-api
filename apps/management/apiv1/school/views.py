@@ -20,6 +20,11 @@ class BaseSchoolVS(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 class SchoolUpdateVS(BaseSchoolVS):
 	queryset = models.School.objects.all()
 	serializer_class = school_serializer.SchoolDetailResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
 
 	def get_serializer_class(self):
 		if self.action == "update" or self.action == "partial_update":
