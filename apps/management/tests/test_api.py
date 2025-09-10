@@ -546,13 +546,13 @@ class NewsCreateAPITest(NewsCreateTest):
 				self.assertEqual(responseStatus, 400)
 
 
-	def test_create_news_with_non_existent_school(self):
+	def test_create_news_without_permission_school(self):
 		"""
-			Generar [Error 404] en "POST /news" por enviar el ID de una escuela que no existe
+			Generar [Error 403] "GET /news" de escuela que no tiene permiso de acceder
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 		
-		wrong_school_id = 12
+		other_school = create_school()
 
 		add_news = {
 			"title": faker.text(max_nb_chars=20),
@@ -560,13 +560,13 @@ class NewsCreateAPITest(NewsCreateTest):
 		}
 
 		response = self.client.post(
-			self.get_school_news_url(school_id = wrong_school_id),
+			self.get_school_news_url(school_id = other_school.id),
 			add_news,
 		)
 
 		responseStatus = response.status_code
 
-		self.assertEqual(responseStatus, 404)
+		self.assertEqual(responseStatus, 403)
 
 
 	def test_create_news_with_permission(self):
@@ -653,9 +653,9 @@ class NewsListAPITest(NewsListTest):
 		self.assertEqual(len(responseJson["results"]), len(self.list_news))
 
 
-	def test_get_news_with_non_permission_school(self):
+	def test_get_news_without_permission_school(self):
 		"""
-			"GET /news" de escuela que no tenemos permiso de acceder
+			Generar [Error 403] "GET /news" de escuela que no tiene permiso de acceder
 		"""
 		other_school = create_school()
 
@@ -718,7 +718,7 @@ class NewsListAPITest(NewsListTest):
 
 	def test_get_news_filter_by_date(self):
 		"""
-			"GET /news" filtrados por creación/actualización [año, mes, dia]
+			"GET /news" filtrados por creación/actualización [año, mes, día]
 		"""
 		self.delete_all_news()
 
