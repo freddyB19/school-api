@@ -110,6 +110,10 @@ class NewsTest(APITestCase):
 
 		self.user_with_all_perm.user_permissions.set(self.permissions)
 
+		admin = get_administrator(school_id = self.school.id)
+
+		admin.users.add(self.user_with_all_perm)
+
 
 class NewsCreateTest(NewsTest):
 	def setUp(self):
@@ -129,10 +133,6 @@ class NewsCreateTest(NewsTest):
 class NewsListTest(NewsTest):
 	def setUp(self):
 		super().setUp()
-
-		admin = get_administrator(school_id = self.school.id)
-
-		admin.users.add(self.user_with_all_perm)
 
 
 class CommandNewsTest(TransactionTestCase):
