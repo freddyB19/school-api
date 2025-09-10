@@ -16,7 +16,7 @@ class BelongToOurAdministrator(permissions.BasePermission):
 	
 	def has_permission(self, request, view):
 
-		school_id = view.kwargs.get("school_id")
+		school_id = view.kwargs.get("pk")
 
 		admin_school = models.Administrator.objects.filter(
 			school_id = school_id,
