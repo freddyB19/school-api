@@ -99,7 +99,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 
 	def get_queryset(self):
 		return self.queryset.filter(
-			school_id = self.kwargs.get("school_id")
+			school_id = self.kwargs.get("pk")
 		)
 
 	def get_serializer_class(self):
@@ -112,7 +112,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 		return self.serializer_class
 
 
-	def post(self, request, school_id = None):
+	def post(self, request, pk = None):
 
 		serializer = self.get_serializer(data = request.data)
 
@@ -123,7 +123,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 			)
 
 		command = commands.create_news(
-			school_id = school_id,
+			school_id = pk,
 			news = serializer.data,
 			images = request.FILES
 		)
