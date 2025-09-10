@@ -14,7 +14,9 @@ dnspython==2.7.0
 drf-spectacular==0.28.0
 drf-spectacular-sidecar==2025.6.1
 email_validator==2.2.0
+factory_boy==3.3.3
 Faker==37.3.0
+freezegun==1.5.5
 graphene==3.4.3
 graphene-django==3.2.3
 graphql-core==3.2.6
