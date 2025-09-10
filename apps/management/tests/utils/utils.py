@@ -3,11 +3,9 @@ import tempfile
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from apps.management import models
+from apps.management.tests import faker
 
 from PIL import Image
-from faker import Faker
-
-faker = Faker(locale = "es")
 
 def get_administrator(school_id: int = None):
 	if not school_id:
