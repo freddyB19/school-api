@@ -76,7 +76,7 @@ class SchoolQuery(graphene.ObjectType):
 		except models.School.DoesNotExist as e:
 			return models.School.objects.none()
 
-		current_month = timezone.now().month if not month else Months.get(month).value
+		current_month = timezone.localtime().month if not month else Months.get(month).value
 
 		calendar = school.calendarsList.filter(
 			date__month = current_month
