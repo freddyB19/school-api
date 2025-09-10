@@ -2,8 +2,7 @@ from django.test import TransactionTestCase
 
 from rest_framework.test import APIClient, APITestCase
 
-from faker import Faker
-
+from apps.management.tests import faker
 from apps.user.tests.utils.utils import (
 	create_user, 
 	create_permissions, 
@@ -11,9 +10,9 @@ from apps.user.tests.utils.utils import (
 )
 from apps.school.tests.utils.utils import create_school
 
-from .utils import get_long_string
 
-faker = Faker(locale = "es")
+from .utils import get_long_string, get_administrator
+
 
 
 UPDATE_SCHOOL_WITH_WRONG_DATA = [
@@ -127,6 +126,13 @@ class NewsCreateTest(NewsTest):
 		)
 
 
+class NewsListTest(NewsTest):
+	def setUp(self):
+		super().setUp()
+
+		admin = get_administrator(school_id = self.school.id)
+
+		admin.users.add(self.user_with_all_perm)
 
 
 class CommandNewsTest(TransactionTestCase):
