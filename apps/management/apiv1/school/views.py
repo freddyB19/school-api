@@ -2,12 +2,15 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, response, status, viewsets, mixins
 
+from django_filters.rest_framework import DjangoFilterBackend
+
 from apps.school import models
 from apps.school.apiv1 import serializers as school_serializer
-from apps.utils.result_commands import ResponseError
-from apps.management.commands import commands
 
-from . import serializers, permissions
+from apps.management.commands import commands
+from apps.utils.result_commands import ResponseError
+
+from . import serializers, permissions, filters, paginations
 
 
 class BaseSchoolVS(viewsets.GenericViewSet, mixins.UpdateModelMixin):
@@ -79,4 +82,63 @@ class SchoolUpdateVS(BaseSchoolVS):
 		return response.Response(
 			data = self.serializer_class(school).data,
 			status = status.HTTP_200_OK
+		)
+
+
+class NewsListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.News.objects.all()
+	serializer_class = school_serializer.NewsResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.NewsFilter
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("school_id")
+		)
+
+	def get_serializer_class(self):
+
+		if self.request.method == "POST":
+			return serializers.NewsRequest
+		elif self.request.method == "GET":
+			return serializers.NewsListResponse
+
+		return self.serializer_class
+
+
+	def post(self, request, school_id = None):
+
+		serializer = self.get_serializer(data = request.data)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		command = commands.create_news(
+			school_id = school_id,
+			news = serializer.data,
+			images = request.FILES
+		)
+
+		if not command.status:
+			return response.Response(
+				data = ResponseError(
+					errors = command.errors
+				).model_dump(),
+				status = command.error_code
+			)
+
+		news = command.query
+
+		return response.Response(
+			data = self.serializer_class(news).data,
+			status = status.HTTP_201_CREATED
 		)
