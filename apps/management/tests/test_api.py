@@ -313,9 +313,9 @@ class SchoolUpdateAPITest(SchoolUpdateTest):
 		self.assertNotEqual(responseJson["history"], self.school.history)
 
 
-	def test_update_school_does_not_exist(self):
+	def test_update_school_without_school_permission(self):
 		"""
-			Actualizando la información de una escuela que no existe
+			Generar [Error 403] "PATCH /school" al no tener permiso para actualizar esta escuela
 		"""
 
 		self.client.force_authenticate(user = self.user_with_perm)
@@ -325,17 +325,17 @@ class SchoolUpdateAPITest(SchoolUpdateTest):
 			"history": "Información sobre la historia de la escuela"
 		}
 
-		wrong_id = 12
+		other_school = create_school()
 
 		response = self.client.patch(
-			self.get_detail_url(id = wrong_id),
+			self.get_detail_url(id = other_school.id),
 			update_school
 		)
 
 		responseJson = response.data
 		responseStatus = response.status_code
 
-		self.assertEqual(responseStatus, 404)
+		self.assertEqual(responseStatus, 403)
 
 	def test_update_school_without_user_permission(self):
 		"""
