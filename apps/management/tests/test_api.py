@@ -452,7 +452,7 @@ class NewsCreateAPITest(NewsCreateTest):
 	def get_school_news_url(self, school_id):
 		return reverse(
 			"management:news-list-create", 
-			kwargs={"school_id": school_id}
+			kwargs={"pk": school_id}
 		)
 
 	def test_create_news(self):
@@ -630,7 +630,7 @@ class NewsListAPITest(NewsListTest):
 	def get_school_news_url(self, school_id, **extra):
 		return reverse(
 			"management:news-list-create", 
-			kwargs={"school_id": school_id},
+			kwargs={"pk": school_id},
 			**extra
 		)
 
