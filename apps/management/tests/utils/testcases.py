@@ -93,6 +93,9 @@ class SchoolUpdateTest(TransactionTestCase):
 		self.permissions = get_permissions(codenames = ["change_school"])
 
 		self.user_with_perm.user_permissions.set(self.permissions)
+		
+		admin = get_administrator(school_id = self.school.id)		
+		admin.users.add(*(self.user_with_perm, self.user_without_perm))
 
 
 class NewsTest(APITestCase):
