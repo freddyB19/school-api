@@ -1,10 +1,13 @@
 import datetime
 
+import factory, factory.fuzzy
 from faker import Faker
+
+from apps.school import models
+
 
 faker = Faker(locale="es")
 
-from apps.school import models
 
 def create_dayweek():
 	dayweek = ( 1,2,3,4,5 )
@@ -14,21 +17,22 @@ def create_dayweek():
 	return models.DaysWeek.objects.create(day = day)
 
 
-def create_school(**kwargs):
-	data = {
-		"name": faker.name(),
-		"subdomain": faker.domain_word(),
-		"logo": faker.image_url(),
-		"address": faker.address(),
-		"mission": faker.paragraph(),
-		"vision": faker.paragraph(),
-		"history": faker.paragraph(),
-		"private": faker.random_element(elements = (True, False))
-	}
+class SchoolFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.School
 
-	data.update(kwargs)
+	name = faker.name()
+	subdomain = factory.LazyAttributeSequence(lambda obj, num: f"{faker.domain_word()}-{num}") 
+	logo = faker.image_url()
+	address = faker.address()
+	mission = faker.paragraph()
+	vision = faker.paragraph()
+	history = faker.paragraph()
+	private = faker.random_element(elements = (True, False))
 
-	return models.School.objects.create(**data)
+
+def create_school(**kwargs) -> models.School:
+	return SchoolFactory.create(**kwargs)
 
 
 def create_color_hex_format():
@@ -215,46 +219,40 @@ def create_download(id, **kwargs):
 	return models.Download.objects.create(school_id = id, **kwargs)
 
 
-def create_news_media(**kwargs):
-	data = {
-		"title": faker.name(),
-		"photo": faker.image_url()
-	}
+class NewsMediaFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.NewsMedia
 
-	data.update(kwargs)
+	title = faker.name()
+	photo = faker.image_url()
 
-	return models.NewsMedia.objects.create(**data)
-
-def create_news(id, **kwargs):
-	data = {
-		"title": faker.text(max_nb_chars = 20),
-		"description": faker.paragraph(),
-		"status": faker.random_element(elements = ("pendiente", "publicado")),
-	}
-
-	data.update(kwargs)
-
-	news = models.News.objects.create(school_id = id, **data)
-
-	news.media.add(create_news_media())
-
-	return news
+def create_news_media(**kwargs) -> list[models.NewsMedia]:
+	return NewsMediaFactory.create_batch(size = kwargs.get("size", 1))
 
 
-def bulk_create_news(id: int) -> list[models.News]:
-	news = [
-		models.News(
-			school_id = id,
-			title = faker.text(max_nb_chars = 20),
-			description =  faker.paragraph(),
-			status = faker.random_element(elements = models.News.TypeStatus.values)
-		)
+class NewsFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.News
 
-		for _ in range(5)
-	]
+	title = faker.text(max_nb_chars = 20)
+	description = faker.paragraph()
+	status = factory.fuzzy.FuzzyChoice(models.News.TypeStatus.values)
+	school = factory.SubFactory(SchoolFactory)
 
-	return models.News.objects.bulk_create(news)
+	@factory.post_generation
+	def media(self, create, extracted, **kwargs):
+		if not create or not extracted:
+			return
 
+		self.media.set(extracted)
+
+
+def create_news(**kwargs) -> models.News:
+	return NewsFactory.create(**kwargs, media = create_news_media(size = 5))
+
+
+def bulk_create_news(size: int = 1, **kwargs) -> list[models.News]:
+	return NewsFactory.create_batch(size = size, **kwargs)
 
 
 def create_cultura_event_media(**kwargs):
