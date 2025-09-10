@@ -5,6 +5,7 @@ from django.test import TransactionTestCase
 from django.core.files.uploadedfile import SimpleUploadedFile
 
 from PIL import Image
+from freezegun import freeze_time
 
 from rest_framework.test import APIClient
 from rest_framework.test import force_authenticate
@@ -14,14 +15,24 @@ from apps.user.tests.utils.utils import (
 	create_permissions, 
 	get_permissions
 )
-from apps.school.tests.utils.utils import create_school, bulk_create_news
+from apps.school.tests.utils.utils import(
+	create_news,
+	create_school, 
+	bulk_create_news, 
+)
+from apps.school import models as school_models
 from apps.management import models
 from apps.management.apiv1 import views
 
 from . import faker
-from .utils.utils import get_administrator, create_list_images
+from .utils.utils import (
+	get_administrator, 
+	create_list_images
+)
 from .utils.testcases import (
 	UPDATE_SCHOOL_WITH_WRONG_DATA, 
+	NewsTest,
+	NewsListTest,
 	NewsCreateTest,
 	SchoolUpdateTest
 )
@@ -602,6 +613,216 @@ class NewsCreateAPITest(NewsCreateTest):
 			add_news,
 		)
 
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+
+class NewsListAPITest(NewsListTest):
+	def setUp(self):
+		super().setUp()
+
+		self.list_news = bulk_create_news(size = 5, school = self.school)
+
+		self.URL_NEWS = self.get_school_news_url(school_id = self.school.id)
+
+	def get_school_news_url(self, school_id, **extra):
+		return reverse(
+			"management:news-list-create", 
+			kwargs={"school_id": school_id},
+			**extra
+		)
+
+	def delete_all_news(self):
+		school_models.News.objects.all().delete()
+
+	
+	def test_get_news(self):
+		"""
+			Validar "GET /news" 
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_NEWS)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(len(responseJson["results"]), len(self.list_news))
+
+
+	def test_get_news_with_non_permission_school(self):
+		"""
+			"GET /news" de escuela que no tenemos permiso de acceder
+		"""
+		other_school = create_school()
+
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(
+			self.get_school_news_url(school_id = other_school.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_get_news_filter_by_status(self):
+		"""
+			"GET /news" filtrados por estado de publicación ["publicado", "pendiente"]
+		"""
+		STATUS_PUBLISHED = "publicado"
+		STATUS_PENDING = "pendiente"
+
+		news_published = list(
+			filter(lambda news: news.status == STATUS_PUBLISHED, self.list_news)
+		)
+		news_pending = list(
+			filter(lambda news: news.status == STATUS_PENDING, self.list_news)
+		)
+
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"status": STATUS_PUBLISHED}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(len(responseJson["results"]), len(news_published))
+
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"status": STATUS_PENDING}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(len(responseJson["results"]), len(news_pending))
+
+
+	def test_get_news_filter_by_date(self):
+		"""
+			"GET /news" filtrados por creación/actualización [año, mes, dia]
+		"""
+		self.delete_all_news()
+
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		SEARCH_NEWS_UPDATE_DAY = 20
+		SEARCH_NEWS_CREATE_MONTH_OCT = 10
+		SEARCH_NEWS_CREATE_MONTH_NOV = 11
+		SEARCH_NEWS_CREATE_YEAR = 2023
+
+		with freeze_time(f"2025-{SEARCH_NEWS_CREATE_MONTH_OCT}-10"):
+			news_create_oct = bulk_create_news(size = 3, school= self.school)
+
+		with freeze_time(f"2025-{SEARCH_NEWS_CREATE_MONTH_NOV}-10"):
+			news_create_nov = bulk_create_news(size = 5, school = self.school)
+		
+		with freeze_time(f"{SEARCH_NEWS_CREATE_YEAR}-04-10"):
+			news_create_year = bulk_create_news(size = 2, school = self.school)
+
+		with freeze_time(f"2026-10-{SEARCH_NEWS_UPDATE_DAY} 12:30:30"):
+			news_update_day = news_create_oct.copy()[0]
+			news_update_day.title = faker.text(max_nb_chars = 20)
+			news_update_day.save()
+		
+			news_update_day.refresh_from_db()
+
+			total_news_updated = 1
+
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"created_month": SEARCH_NEWS_CREATE_MONTH_OCT}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(
+			len(responseJson["results"]), 
+			len(news_create_oct)
+		)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"created_month": SEARCH_NEWS_CREATE_MONTH_NOV}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(
+			len(responseJson["results"]), 
+			len(news_create_nov)
+		)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"updated_day": SEARCH_NEWS_UPDATE_DAY}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+
+		self.assertGreaterEqual(
+			len(responseJson["results"]), 
+			total_news_updated
+		)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"created_year": SEARCH_NEWS_CREATE_YEAR}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(
+			len(responseJson["results"]), 
+			len(news_create_year)
+		)
+
+
+
+	def test_get_news_without_authentication(self):
+		"""
+			"GET /news" sin autenticación de usuario
+		"""
+
+		response = self.client.get(self.URL_NEWS)
+
+		responseJson = response.data
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
