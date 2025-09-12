@@ -1,7 +1,5 @@
 from typing import TypeVar, Optional
 
-from django.core.files.uploadedfile import InMemoryUploadedFile
-
 from rest_framework import status as status_code
 from pydantic import validate_call, ConfigDict
 
@@ -24,7 +22,7 @@ faker = Faker(locale="es")
 
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def update_school_logo(image:InMemoryUploadedFile = None) -> ResultCommand:
+def update_school_logo(image:UploadedFile = None) -> ResultCommand:
 	context = {
 		"status": False,
 	}
