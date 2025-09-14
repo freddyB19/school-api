@@ -1,6 +1,8 @@
+
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
+import factory
 from faker import Faker
 
 from apps.user import models
@@ -24,35 +26,39 @@ class FakerCreateUser:
 		self.role = ROLE
 		self.password = PASSWORD
 
-def create_user(name:str = "Jose", email:str = "jose@gmail.com", password:str = "12345", role:int = 1) -> models.User:
-	return models.User.objects.create_user(
-		name = name,
-		email = email,
-		password = password,
-		role = role
-	)
+
+class UserFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.User
+
+	name = factory.LazyAttribute(lambda x: faker.name())
+	email = factory.LazyAttribute(lambda x: faker.email())
+	password = factory.LazyAttribute(lambda x: faker.password())
+
+	@classmethod
+	def _create(cls, model_class, *args, **kwargs):
+		manager = cls._get_manager(model_class)
+		
+		return manager.create_user(*args, **kwargs)
 
 
-def bulk_create_user(total_users: int = 5):
+
+def create_user(**kwargs) -> models.User:
+	return UserFactory.create(**kwargs)
+
+
+def bulk_create_user(size: int = 1) -> models.User:
+	
 	"""
 		Nos permite crear multiples usuarios en una sola consulta
 
 		Argumentos:
-		total_users --> (int) Total de usuarios que van ha ser creados
+		size --> (int) Total de usuarios que van ha ser creados
 
 		Retorno:
 		Lista de usuarios creados
 	"""
-	users = [
-		 models.User(
-		 	name = faker.name(),
-		 	email = faker.email(),
-		 	password = faker.pystr_format()
-		 )
-		for i in range(total_users)
-	]
-
-	return models.User.objects.bulk_create(users)
+	return UserFactory.create_batch(size = size, **kwargs)
 
 
 def create_permissions(name:str = "Test permission", codename:str = "test_permission") -> None:
