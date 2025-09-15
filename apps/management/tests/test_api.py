@@ -654,7 +654,7 @@ class NewsListAPITest(NewsListTest):
 		self.assertEqual(len(responseJson["results"]), len(self.list_news))
 
 
-	def test_get_news_without_permission_school(self):
+	def test_get_news_without_school_permission(self):
 		"""
 			Generar [Error 403] "GET /news" de escuela que no tiene permiso de acceder
 		"""
