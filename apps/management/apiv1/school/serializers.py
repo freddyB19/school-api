@@ -155,3 +155,44 @@ class NewsListResponse(school_serializer.NewsListResponse):
 	class Meta:
 		model = school_models.News
 		fields = ["id", "title", "created", "updated", "media", "status"]
+
+
+
+class NewsUpdateRequest(serializers.ModelSerializer):
+	class Meta:
+		model = school_models.News
+		fields = ["id", "title", "status", "description"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"title": {
+				"max_length": models.MAX_LENGTH_NEWS_TITLE,
+				"min_length": models.MIN_LENGTH_NEWS_TITLE,
+				"error_messages": {
+					"max_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "largo",
+						simbol = "menor o igual",
+						value = models.MAX_LENGTH_NEWS_TITLE
+					),
+					"min_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "corto",
+						simbol = "mayor o igual",
+						value = models.MIN_LENGTH_NEWS_TITLE
+					)
+				}
+
+			},
+			"status": {
+				"error_messages": {
+					"invalid_choice": STATUS_INVALID_CHOICE
+				}
+			}
+		}
+
+
+class NewsUpdateImagesRequest(serializers.Serializer):
+	media = serializers.ListField(
+		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME)
+	)
