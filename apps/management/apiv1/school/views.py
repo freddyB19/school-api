@@ -147,3 +147,58 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(news).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+
+class BaseNewsVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
+
+class NewsDetailUpdateDeleteVS(BaseNewsVS):
+	queryset = models.News.objects.all()
+	serializer_class = school_serializer.NewsResponse
+
+	def get_serializer_class(self):
+
+		if self.action == "update" or self.action == "partial_update":
+			return serializers.NewsUpdateRequest
+		elif self.action == "upload_images":
+			return serializers.NewsUpdateImagesRequest
+
+		return self.serializer_class
+
+	@action(detail = True, methods = ["patch"], url_name = "upload-images")
+	def upload_images(self, request, pk = None):
+		news = self.get_object()
+		serializer = self.get_serializer(
+			data=request.data,
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST,
+			)
+
+		command = commands.update_news_media(images = request.FILES)
+
+		if not command.status:
+			return response.Response(
+				data = ResponseError(
+					errors = command.errors
+				).model_dump(),
+				status = status.HTTP_400_BAD_REQUEST
+			)
+		
+		news.media.add(*command.query)
+		news.save()
+
+		return response.Response(
+			data = self.serializer_class(news).data,
+			status = status.HTTP_200_OK
+		)
+
