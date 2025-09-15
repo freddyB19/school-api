@@ -689,7 +689,21 @@ class NewsListAPITest(NewsListTest):
 			self.get_school_news_url(school_id = other_school.id)
 		)
 
-		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_list_news_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /news" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_NEWS)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 403)
@@ -836,7 +850,6 @@ class NewsListAPITest(NewsListTest):
 			len(responseJson["results"]), 
 			len(news_create_year)
 		)
-
 
 
 	def test_get_news_without_authentication(self):
