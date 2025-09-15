@@ -117,3 +117,26 @@ def create_news(school_id: int, news:NewsParam, images:DjangoDict = None, errors
 	context.update({"query": news_created, "status": True})
 
 	return ResultCommand(**context)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def update_news_media(images:DjangoDict = None) -> ResultCommand:
+	context = {
+		"status": False,
+	}
+
+	if not images:
+		context.update({
+			"errors": ["Debe pasar por lo menos una imagen"],
+			"error_code": status_code.HTTP_400_BAD_REQUEST
+		})
+	
+	# Conectarme a un servicio para subir la imagen
+
+	upload_images = [models.NewsMedia(photo = faker.image_url()) for _ in range(5)]
+
+	newsmedia = models.NewsMedia.objects.bulk_create(upload_images)
+
+	context.update({"query": newsmedia, "status": True})
+
+	return ResultCommand(**context)
