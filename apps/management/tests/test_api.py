@@ -34,7 +34,8 @@ from .utils.testcases import (
 	NewsTest,
 	NewsListTest,
 	NewsCreateTest,
-	SchoolUpdateTest
+	SchoolUpdateTest,
+	NewsDetailUpdateDeleteTest
 )
 
 
@@ -414,7 +415,7 @@ class SchoolUpdateLogoAPITest(SchoolUpdateTest):
 		)
 
 
-	@unittest.skip("Esta función aun no está completada")
+	@unittest.skip("Esta función aún no está completada")
 	def test_update_school_logo(self):
 		"""
 			Actualizando el logo de una escuela
@@ -826,3 +827,371 @@ class NewsListAPITest(NewsListTest):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+
+class NewsDetailUpdateDeleteAPITest(NewsDetailUpdateDeleteTest):
+	def setUp(self):
+		super().setUp()
+
+		self.news = create_news(school = self.school)
+
+		self.URL_NEWS_DETAIL = self.get_detail_news_url(
+			id = self.news.id
+		)
+
+	def get_detail_news_url(self, id):
+		return reverse(
+			"management:news-detail",
+			kwargs = {"pk": id}
+		)
+
+
+	def test_detail_news(self):
+		"""
+			Validar "GET /news/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_view_perm)
+
+		response = self.client.get(self.URL_NEWS_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.news.id)
+		self.assertEqual(responseJson["title"], self.news.title)
+		self.assertEqual(responseJson["school"]["id"], self.school.id)
+
+
+	def test_detail_news_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /news/:id" por una noticia que pertenece a otra escuela
+		"""
+		
+		self.client.force_authenticate(user = self.user_with_view_perm)
+
+		other_school = create_school()
+		news = create_news(school = other_school)
+
+		response = self.client.get(
+			self.get_detail_news_url(id = news.id)
+		)
+
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_news_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /news/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_NEWS_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_news_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /news/:id por usuarion sin autenticación"
+		"""
+		response = self.client.get(self.URL_NEWS_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+	def test_update_news(self):
+		"""
+			Validar "PUT/PATCH /news/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_update_perm)
+
+		update_news = {
+			"title": faker.text(max_nb_chars = 20),
+			"description": faker.paragraph(),
+		}
+
+		response = self.client.patch(
+			self.URL_NEWS_DETAIL,
+			update_news
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.news.id)
+		self.assertEqual(responseJson["title"], update_news["title"])
+		self.assertEqual(responseJson["description"], update_news["description"])
+
+		update_news = {
+			"status": school_models.News.TypeStatus.pending
+		}
+
+		response = self.client.patch(
+			self.URL_NEWS_DETAIL,
+			update_news
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.news.id)
+		self.assertEqual(responseJson["status"], update_news["status"])
+
+
+	def test_update_news_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /news/:id" por intentar actualizar con datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_update_perm)
+
+		test_cases = [
+			{
+				"title": "Text"
+			},
+			{
+				"title": faker.text(max_nb_chars=200)
+			},
+			{
+				"title": faker.text(max_nb_chars=20),
+				"status": "pausado"
+			},
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_NEWS_DETAIL,
+					case
+				)
+
+				responseStatus = response.status_code
+				responseJson = response.data
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_update_news_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /news/:id" por una noticia que pertenece a otra escuela
+		"""
+
+		self.client.force_authenticate(user = self.user_with_update_perm)
+
+		other_school = create_school()
+		news = create_news(school = other_school)
+
+		update_news = {
+			"title": faker.text(max_nb_chars = 20)
+		}
+
+		response = self.client.patch(
+			self.get_detail_news_url(id = news.id),
+			update_news
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_update_news_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /news/:id" por falta de permiso de usuario
+		"""
+
+		test_cases = [
+			{"user": self.user_with_view_perm},
+			{"user": self.user_with_delete_perm},
+		]
+
+		update_news = {
+			"title": faker.text(max_nb_chars = 20)
+		}
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.client.force_authenticate(user = case["user"])
+
+				response = self.client.patch(
+					self.URL_NEWS_DETAIL,
+					update_news
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 403)
+
+
+	def test_update_news_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /news/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		update_news = {
+			"title": faker.text(max_nb_chars = 20)
+		}
+
+		response = self.client.patch(
+			self.URL_NEWS_DETAIL,
+			update_news
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_update_news_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /news/:id" por usuario sin autenticación
+		"""
+		update_news = {
+			"title": faker.text(max_nb_chars = 20)
+		}
+
+		response = self.client.patch(
+			self.URL_NEWS_DETAIL,
+			update_news
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+	def test_delete_news(self):
+		"""
+			Validar "DELETE /news/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_NEWS_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+
+	def test_delete_news_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /news/:id" por una noticia que pertenece a otra escuela
+		"""
+		other_school = create_school()
+		news = create_news(school = other_school)
+
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(
+			self.get_detail_news_url(id = news.id)
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_news_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /news/:id" por falta de permiso de usuario
+		"""
+		test_cases = [
+			{"user": self.user_with_view_perm},
+			{"user": self.user_with_update_perm},
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.client.force_authenticate(user = case["user"])
+				
+				response = self.client.delete(self.URL_NEWS_DETAIL)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_news_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /news/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_NEWS_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_news_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /news/:id" por usuario sin autenticación
+		"""
+
+		response = self.client.delete(self.URL_NEWS_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+
+class NewsUpdateImagesAPITest(NewsDetailUpdateDeleteTest):
+	def setUp(self):
+		super().setUp()
+
+		self.news = create_news(school = self.school)
+
+		self.URL_NEWS_UPDATE_IMAGES = self.get_upload_image_url(
+			id = self.news.id
+		)
+
+	def get_upload_image_url(self, id):
+		return reverse(
+			"management:news-upload-images",
+			kwargs = {"pk": id}
+		)
+
+	@unittest.skip("Esta función aún no está completada")
+	def test_update_news_images(self):
+		"""
+			Validar "PATCH /news-upload-images/:id"
+		"""
+		images = create_list_images()
+
+		self.client.force_authenticate(user = self.user_with_update_perm)
+
+		response = self.client.patch(
+			self.URL_NEWS_UPDATE_IMAGES,
+			{"media": images},
+			format="multipart"
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+
+		for image in images:
+			image.close()
