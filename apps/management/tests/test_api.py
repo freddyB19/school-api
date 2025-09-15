@@ -547,7 +547,7 @@ class NewsCreateAPITest(NewsCreateTest):
 				self.assertEqual(responseStatus, 400)
 
 
-	def test_create_news_without_permission_school(self):
+	def test_create_news_without_school_permission(self):
 		"""
 			Generar [Error 403] "GET /news" de escuela que no tiene permiso de acceder
 		"""
@@ -570,7 +570,7 @@ class NewsCreateAPITest(NewsCreateTest):
 		self.assertEqual(responseStatus, 403)
 
 
-	def test_create_news_with_permission(self):
+	def test_create_news_without_user_permission(self):
 		"""
 			Generar [Error 403] en "POST /news" por usuarios sin permisos para crear una noticia
 		"""
