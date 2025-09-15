@@ -136,6 +136,21 @@ class NewsCreateTest(NewsTest):
 		admin.users.add(*(self.user_with_view_perm, self.user_with_delete_perm))
 
 
+class NewsDetailUpdateDeleteTest(NewsCreateTest):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_update_perm = create_user(role = 0, email = faker.email())
+
+		self.user_with_update_perm.user_permissions.set(
+			get_permissions(codenames = ["change_news"])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(self.user_with_update_perm)
+
+
+
 class NewsListTest(NewsTest):
 	def setUp(self):
 		super().setUp()
