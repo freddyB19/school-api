@@ -30,7 +30,7 @@ class AdministratorDetailQueryTest(GraphQLTestCase):
 		self.client = Client()
 
 		self.school = create_school()
-		self.users = bulk_create_user(total_users = 11)
+		self.users = bulk_create_user(size = 11)
 		token = authorization_user()
 		self.headers = {
 			"Authorization": f"Bearer {token}"
