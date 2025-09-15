@@ -12,7 +12,7 @@ class BelongToOurAdministrator(permissions.BasePermission):
 		Este permiso sirve para limitar que solo se pueda acceder/modificar
 		la información del colegio al que formamos parte como administradores.
 	"""
-	message = "No tienes permisos de modificar información que no te pertenece"
+	message = "No tienes permisos para (acceder o modificar) información que no te pertenece"
 	
 	def has_permission(self, request, view):
 
