@@ -599,6 +599,29 @@ class NewsCreateAPITest(NewsCreateTest):
 				self.assertEqual(responseStatus, 403)
 
 
+	def test_create_news_with_wrong_user(self):
+		"""
+			Generar [Error 403] "POST /news" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		add_news = {
+			"title": faker.text(max_nb_chars=20),
+			"description": faker.paragraph()
+		}
+
+		response = self.client.post(
+			self.URL_NEWS,
+			add_news,
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
 	def test_create_news_without_authentication(self):
 		"""
 			Generar [Error 401] en "POST /news" no autenticarse
