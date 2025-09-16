@@ -357,11 +357,20 @@ class DaysWeek(models.Model):
 
 
 
+MIN_LENGTH_TYPEGROUP_TYPE = 5
 MAX_LENGTH_TYPEGROUP_TYPE = 50
 
 class TimeGroup(models.Model):
 	# Sirve para indicar: Ej - (Turno Mañana, Turno Tarde, ...)
-	type = models.CharField(max_length = MAX_LENGTH_TYPEGROUP_TYPE)
+	type = models.CharField(
+		max_length = MAX_LENGTH_TYPEGROUP_TYPE,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_TYPEGROUP_TYPE, 
+				message = "La descripción sobre el tipo de grupo horario, es muy corta"
+			)
+		]
+	)
 	daysweek = models.ManyToManyField(DaysWeek)
 	opening_time = models.TimeField()
 	closing_time = models.TimeField()
