@@ -1,17 +1,9 @@
 from django.urls import reverse
-from django.test import TransactionTestCase
 
-from rest_framework.test import APIClient
+from apps.user.tests.utils.utils import create_user
 
-from apps.user.tests.utils.utils import (
-	create_user, 
-	create_permissions
-)
-from apps.school.tests.utils.utils import create_school
+from .utils.testcases import AdministratorTest, AdministratorUserTest
 
-from .utils.utils import get_administrator
-
-from .utils.testcases import AdministratorTest
 
 class AdministratorAPITest(AdministratorTest):
 
@@ -126,20 +118,10 @@ class AdministratorAPITest(AdministratorTest):
 		self.assertEqual(responseStatus, 401)
 
 
-class UserUpdatePermissionsTest(TransactionTestCase):
+class UserUpdatePermissionsTest(AdministratorUserTest):
 	
 	def setUp(self):
-		create_permissions()
-
-		self.client = APIClient()
-
-		self.user_role_admin = create_user(role = 0)
-		self.user_role_staff = create_user(role = 1, email = "carlos@example.com")
-
-		create_permissions("Create test", "create_test")
-		create_permissions("Read test", "read_test")
-		create_permissions("Delete test", "delete_test")
-		create_permissions("Update test", "update_test")
+		super().setUp()
 
 		self.URL_USER_PERMISSIONS = reverse(
 			"management:user-permission",
