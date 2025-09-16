@@ -14,7 +14,6 @@ from apps.school.tests.utils.utils import create_school
 from .utils import get_long_string, get_administrator
 
 
-
 UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	{
 		"update": {
@@ -92,6 +91,21 @@ class AdministratorTest(APITestCase):
 		self.administrator = get_administrator(school_id = self.school.id)
 		self.administrator.users.add(*[self.user_role_admin, self.user_role_staff])
 
+
+
+class AdministratorUserTest(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+		
+		create_permissions()
+
+		self.user_role_admin = create_user(role = 0)
+		self.user_role_staff = create_user(role = 1)
+
+		create_permissions("Create test", "create_test")
+		create_permissions("Read test", "read_test")
+		create_permissions("Delete test", "delete_test")
+		create_permissions("Update test", "update_test")
 
 class SchoolUpdateTest(TransactionTestCase):
 	def setUp(self):
