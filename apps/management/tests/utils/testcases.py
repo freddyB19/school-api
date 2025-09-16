@@ -82,6 +82,17 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 ]
 
 
+class AdministratorTest(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_role_admin = create_user(role = 0)
+		self.user_role_staff = create_user(role = 1)
+		self.administrator = get_administrator(school_id = self.school.id)
+		self.administrator.users.add(*[self.user_role_admin, self.user_role_staff])
+
+
 class SchoolUpdateTest(TransactionTestCase):
 	def setUp(self):
 		self.client = APIClient()
