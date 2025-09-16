@@ -150,12 +150,18 @@ class NewsRequest(serializers.ModelSerializer):
 		}
 
 
+class NewsResponse(school_serializer.NewsDetailResponse):
+
+	class Meta:
+		model = models.News
+		fields = "__all__"
+
+
 class NewsListResponse(school_serializer.NewsListResponse):
 
 	class Meta:
 		model = school_models.News
 		fields = ["id", "title", "created", "updated", "media", "status"]
-
 
 
 class NewsUpdateRequest(serializers.ModelSerializer):
