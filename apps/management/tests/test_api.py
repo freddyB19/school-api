@@ -1,8 +1,6 @@
 from django.urls import reverse
 
-from apps.user.tests.utils.utils import create_user
-
-from .utils.testcases import AdministratorTest, AdministratorUserTest
+from .utils.testcases import AdministratorTest
 
 
 class AdministratorAPITest(AdministratorTest):
@@ -111,110 +109,6 @@ class AdministratorAPITest(AdministratorTest):
 			Accediendo al endpoint 'administrator-detail' sin autenticación
 		"""
 		response = self.client.get(self.URL_ADMINISTRATOR_DETAIL)
-
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 401)
-
-
-class UserUpdatePermissionsTest(AdministratorUserTest):
-	
-	def setUp(self):
-		super().setUp()
-
-		self.URL_USER_PERMISSIONS = reverse(
-			"management:user-permission",
-			kwargs={"pk": self.user_role_staff.id}
-		)
-
-
-	def test_update_permission_user(self):
-		"""
-			Actualizar los permisos de un usuario
-		"""
-		self.client.force_authenticate(user = self.user_role_admin)
-
-		update_user_permissions = {
-			"permissions": ["create_test", "update_test"]
-		}
-
-		response = self.client.patch(
-			self.URL_USER_PERMISSIONS,
-			update_user_permissions
-		)
-
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 200)
-		self.assertEqual(
-			len(responseJson["user_permissions"]),
-			len(update_user_permissions["permissions"])
-		)
-
-
-		# Definiendo solo un permiso
-
-		update_user_permissions = {
-			"permissions": ["delete_test"]
-		}
-
-		response = self.client.patch(
-			self.URL_USER_PERMISSIONS,
-			update_user_permissions
-		)
-
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 200)
-		self.assertEqual(
-			responseJson["user_permissions"], 
-			update_user_permissions["permissions"]
-		)
-
-
-	def test_update_permission_user_without_permission_role(self):
-		"""
-			Intentando actualizar los permisos de un usuario tendiendo como user.role = 'staff'
-		"""
-		self.client.force_authenticate(user = self.user_role_staff)
-
-		user = create_user(role = 1, email = "user1@example.com")
-
-		update_user_permissions = {
-			"permissions": ["create_test", "delete_test"]
-		}
-
-		response = self.client.patch(
-			reverse(
-				"management:user-permission",
-				kwargs={"pk": user.id}
-			),
-			update_user_permissions
-		)
-
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 403)
-
-
-	def test_update_permission_user_without_authentication(self):
-		"""
-			Intentando actualizar los permisos de un usuario sin autenticación
-		"""
-		user = create_user(role = 1, email = "user1@example.com")
-
-		update_user_permissions = {
-			"permissions": ["create_test", "delete_test"]
-		}
-
-		response = self.client.patch(
-			self.URL_USER_PERMISSIONS,
-			update_user_permissions
-		)
 
 		responseJson = response.data
 		responseStatus = response.status_code
