@@ -11,18 +11,12 @@ from apps.school.tests.utils.utils import create_school
 
 from .utils.utils import get_administrator
 
+from .utils.testcases import AdministratorTest
 
-class AdministratorAPITest(TransactionTestCase):
+class AdministratorAPITest(AdministratorTest):
 
 	def setUp(self):
-		self.client = APIClient()
-
-		self.school = create_school()
-		self.user_role_admin = create_user(role = 0)
-		self.user_role_staff = create_user(role = 1, email = "carlos@example.com")
-		self.administrator = get_administrator(school_id = self.school.id)
-		self.administrator.users.set([self.user_role_admin, self.user_role_staff])
-
+		super().setUp()
 
 		self.URL_ADMINISTRATOR = reverse(
 			"management:administrator", 
