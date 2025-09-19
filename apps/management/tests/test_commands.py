@@ -262,6 +262,7 @@ class CommandCreateNewsTest(CommandNewsTest):
 		)
 			
 
+
 class CommandAddTimeGroupTest(CommandTimeGroup):
 
 	def setUp(self):
