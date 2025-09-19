@@ -1,19 +1,21 @@
-import unittest
+import unittest, random, datetime
 
 from django.utils.datastructures import MultiValueDict
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-from faker import Faker
+from . import faker
 from pydantic import ValidationError
 
 from apps.school import models
 from apps.management.commands import commands
+from apps.management.commands.utils.errors_messages import TimeGroupErrorsMessages
 
-from .utils.testcases import CommandNewsTest
+from .utils.testcases import (
+	CommandNewsTest,
+	CommandTimeGroup,
+)
 from .utils.utils import create_list_images, list_upload_images
-
-
-faker = Faker(locale = "es")
+from apps.school.tests.utils.utils import create_daysweek
 
 
 class CommandAddNewsTest(CommandNewsTest):
@@ -52,7 +54,7 @@ class CommandAddNewsTest(CommandNewsTest):
 				"title": faker.text(max_nb_chars=200)
 			},
 			{
-				"title": "title": faker.text(max_nb_chars=20),
+				"title": faker.text(max_nb_chars=20),
 				"status": "pausado"
 			},
 		]
@@ -76,7 +78,6 @@ class CommandAddNewsTest(CommandNewsTest):
 			news = commands.add_news(
 				news = data_news, 
 			)
-
 
 
 class CommandAddNewsMediaTest(CommandNewsTest):
@@ -130,7 +131,6 @@ class CommandAddNewsMediaTest(CommandNewsTest):
 		"""
 		with self.assertRaises(ValidationError):
 			commands.add_newsmedia()
-
 
 
 class CommandCreateNewsTest(CommandNewsTest):
@@ -261,5 +261,139 @@ class CommandCreateNewsTest(CommandNewsTest):
 			school_id = self.school.id,
 		)
 			
+
+class CommandAddTimeGroupTest(CommandTimeGroup):
+
+	def setUp(self):
+		super().setUp()
+		self.new_time_group = {
+			"type": faker.text(
+				max_nb_chars = models.MAX_LENGTH_TYPEGROUP_TYPE
+			),
+			"opening_time": datetime.time(7, 30),
+			"closing_time": datetime.time(14, 30),
+			"active": random.choice([True, False]),
+			"overview": faker.paragraph(),
+		}
+	
+	def test_add_time_group(self):
+		"""
+			Validar crear un 'TimeGroup'
+		"""
+
+		daysweek = faker.random_elements(
+			length=4, 
+			unique=True,
+			elements=[1,2,3,4,5], 
+		)
+
+		self.new_time_group.update({"daysweek": daysweek})
+
+		time_group = commands.add_time_group(
+			time_group = self.new_time_group,
+		)
+
+		self.assertTrue(time_group)
+		self.assertTrue(time_group.id)
+		self.assertEqual(time_group.type, self.new_time_group["type"])
+		self.assertEqual(time_group.active, self.new_time_group["active"])
+		self.assertGreaterEqual(time_group.daysweek.count(), 1)
+
+
+	def test_add_time_group_without_daysweek(self):
+		"""
+			Validar crear un 'TimeGroup' sin enviar 'daysweek'
+		"""
+		time_group = commands.add_time_group(
+			time_group = self.new_time_group,
+		)
+
+		self.assertTrue(time_group)
+		self.assertTrue(time_group.id)
+		self.assertEqual(time_group.type, self.new_time_group["type"])
+		self.assertEqual(time_group.active, self.new_time_group["active"])
+		self.assertEqual(time_group.daysweek.count(), 0)
+
+
+	def test_add_time_group_without_overview(self):
+		"""
+			Validar crear un 'TimeGroup' sin enviar 'overview'
+		"""
+		self.new_time_group.pop("overview")
+
+		time_group = commands.add_time_group(
+			time_group = self.new_time_group,
+		)
+
+		self.assertTrue(time_group)
+		self.assertTrue(time_group.id)
+		self.assertEqual(time_group.type, self.new_time_group["type"])
+		self.assertEqual(time_group.active, self.new_time_group["active"])
+		self.assertEqual(time_group.daysweek.count(), 0)
+
+	def test_add_time_group_without_time(self):
+		"""
+			Generar un error por no enviar [opening_time, closing_time]
+		"""
+		self.new_time_group.pop("opening_time")
+
+		with self.assertRaises(ValidationError):
+			commands.add_time_group(
+				time_group = self.new_time_group,
+			)
+		
+		self.new_time_group.pop("closing_time")
+
+		with self.assertRaises(ValidationError):
+			commands.add_time_group(
+				time_group = self.new_time_group,
+			)
+
+
+	def test_add_time_group_with_wrong_type(self):
+		"""
+			Generar un error por enviar un valor muy corto( o largo) para 'type'
+		"""
+
+		test_cases = [
+			{
+				"type" : faker.pystr(
+					max_chars = models.MIN_LENGTH_TYPEGROUP_TYPE - 1)
+			},
+			{
+				"type" : faker.pystr(
+					max_chars = models.MAX_LENGTH_TYPEGROUP_TYPE + 1)
+			}
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.new_time_group.update({"type": case["type"]})
+
+				with self.assertRaises(ValidationError):
+					commands.add_time_group(
+						time_group = self.new_time_group,
+					)
+
+
+	def test_add_time_group_with_wrong_dasyweek(self):
+		"""
+			Generar error por enviar valores incorrectos en 'daysweek'
+		"""
+		daysweek = faker.random_elements(
+			length=3, 
+			unique=True,
+			elements=[2, 6, 7, 8, 9, 10], 
+		)
+
+		self.new_time_group.update({"daysweek": daysweek})
+
+		error_message = TimeGroupErrorsMessages.INVALID_DAYSWEEK
+
+		with self.assertRaisesMessage(ValidationError, error_message):
+			commands.add_time_group(
+				time_group = self.new_time_group,
+			)
+
 
 

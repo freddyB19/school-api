@@ -8,7 +8,7 @@ from apps.user.tests.utils.utils import (
 	create_permissions, 
 	get_permissions
 )
-from apps.school.tests.utils.utils import create_school
+from apps.school.tests.utils.utils import create_school, create_daysweek
 
 
 from .utils import get_long_string, get_administrator
@@ -81,6 +81,16 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 ]
 
 
+class CommandNewsTest(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+
+
+class CommandTimeGroup(TransactionTestCase):
+	def setUp(self):
+		self.dayweek = create_daysweek()
+		
+
 class AdministratorTest(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
@@ -90,7 +100,6 @@ class AdministratorTest(APITestCase):
 		self.user_role_staff = create_user(role = 1)
 		self.administrator = get_administrator(school_id = self.school.id)
 		self.administrator.users.add(*[self.user_role_admin, self.user_role_staff])
-
 
 
 class AdministratorUserTest(APITestCase):
@@ -106,6 +115,7 @@ class AdministratorUserTest(APITestCase):
 		create_permissions("Read test", "read_test")
 		create_permissions("Delete test", "delete_test")
 		create_permissions("Update test", "update_test")
+
 
 class SchoolUpdateTest(TransactionTestCase):
 	def setUp(self):
@@ -175,13 +185,6 @@ class NewsDetailUpdateDeleteTest(NewsCreateTest):
 		admin.users.add(self.user_with_update_perm)
 
 
-
 class NewsListTest(NewsTest):
 	def setUp(self):
 		super().setUp()
-
-
-class CommandNewsTest(TransactionTestCase):
-	def setUp(self):
-		self.school = create_school()
-		
