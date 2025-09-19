@@ -86,10 +86,15 @@ class CommandNewsTest(TransactionTestCase):
 		self.school = create_school()
 
 
-class CommandTimeGroup(TransactionTestCase):
+class CommandTimeGroupTest(TransactionTestCase):
 	def setUp(self):
 		self.dayweek = create_daysweek()
-		
+
+
+class CommandOfficeHourTest(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+
 
 class AdministratorTest(APITestCase):
 	def setUp(self):
