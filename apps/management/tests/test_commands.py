@@ -8,11 +8,15 @@ from pydantic import ValidationError
 
 from apps.school import models
 from apps.management.commands import commands
-from apps.management.commands.utils.errors_messages import TimeGroupErrorsMessages
+from apps.management.commands.utils.errors_messages import (
+	TimeGroupErrorsMessages,
+	OfficeHourErrorsMessages
+)
 
 from .utils.testcases import (
 	CommandNewsTest,
-	CommandTimeGroup,
+	CommandTimeGroupTest,
+	CommandOfficeHourTest,
 )
 from .utils.utils import create_list_images, list_upload_images
 from apps.school.tests.utils.utils import create_daysweek
@@ -262,8 +266,7 @@ class CommandCreateNewsTest(CommandNewsTest):
 		)
 			
 
-
-class CommandAddTimeGroupTest(CommandTimeGroup):
+class CommandAddTimeGroupTest(CommandTimeGroupTest):
 
 	def setUp(self):
 		super().setUp()
@@ -397,4 +400,57 @@ class CommandAddTimeGroupTest(CommandTimeGroup):
 			)
 
 
+class CommandAddOfficeHourTest(CommandOfficeHourTest):
+	
+	def test_add_office_hour(self):
+		"""
+			Validar crear un 'OfficeHour'
+		"""
 
+		description = faker.text(
+			max_nb_chars = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
+		)
+
+		office_hour = commands.add_office_hour(
+			school_id = self.school.id,
+			description = description
+		)
+
+		self.assertTrue(office_hour)
+		self.assertTrue(office_hour.id)
+		self.assertEqual(office_hour.school.id, self.school.id)
+		self.assertEqual(office_hour.interval_description, description)
+
+
+	def test_add_office_hour_with_wrong_description(self):
+		"""
+			Generar un error por enviar un valor muy corto( o largo) para 'interval_description'
+		"""
+
+		test_cases = [
+			{
+				"value": faker.pystr(
+					max_chars = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D + 1
+				),
+				"expected": {
+					"error_message": OfficeHourErrorsMessages.MAX_LEN
+				}
+			},
+			{
+				"value": faker.pystr(
+					max_chars = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D - 1
+				),
+				"expected": {
+					"error_message": OfficeHourErrorsMessages.MIN_LEN
+				}
+			}
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				error_message = case["expected"]["error_message"]
+				with self.assertRaisesMessage(ValueError, error_message) as cm:
+					office_hour = commands.add_office_hour(
+						school_id = self.school.id,
+						description = case["value"]
+					)
