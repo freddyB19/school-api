@@ -1,22 +1,26 @@
+"""
+	Funciones (commands) que forman parte de la creación 
+	de un objeto 'OfficeHour'
+"""
 import random, datetime
 
 from . import faker
+
 from pydantic import ValidationError
 
 from apps.school import models
+
 from apps.management.commands import commands
 from apps.management.commands.utils.errors_messages import (
 	TimeGroupErrorsMessages,
 	OfficeHourErrorsMessages
 )
-
 from .utils.testcases import (
 	CommandTimeGroupTest,
 	CommandOfficeHourTest,
 )
 from apps.school.tests.utils.utils import create_daysweek
 
-			
 class CommandAddTimeGroupTest(CommandTimeGroupTest):
 
 	def setUp(self):
