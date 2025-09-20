@@ -14,7 +14,10 @@ from .utils.errors_messages import SchoolErrorsMessages
 from .utils.props import (
 	NewsParam,
 	DjangoDict,
-	UploadedFile
+	UploadedFile,
+	TimeGroupParam,
+	OfficeHourParam,
+	IntervalDescription
 )
 
 
@@ -140,3 +143,51 @@ def update_news_media(images:DjangoDict = None) -> ResultCommand:
 	context.update({"query": newsmedia, "status": True})
 
 	return ResultCommand(**context)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def add_time_group(time_group: TimeGroupParam) -> models.TimeGroup:
+	days = time_group.daysweek
+
+	time_group = models.TimeGroup.objects.create(
+		type = time_group.type,
+		opening_time = time_group.opening_time,
+		closing_time = time_group.closing_time,
+		active = time_group.active,
+		overview = time_group.overview,
+	)
+
+	if days:
+		daysweek = models.DaysWeek.objects.filter(day__in = days)
+		time_group.daysweek.set(daysweek)
+	
+	return time_group
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def add_office_hour(school_id: int, description: IntervalDescription) -> models.OfficeHour:
+	return models.OfficeHour.objects.create(
+		school_id = school_id,
+		interval_description = description
+	)
+
+@handler_validation_errors
+def create_office_hour(school_id: int, office_hour: OfficeHourParam, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
+	
+	if errors:
+		return ResultCommand(
+			status = False, 
+			errors = errors, 
+			error_code = status_code.HTTP_400_BAD_REQUEST
+		)
+
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	officehour = add_office_hour(school_id = school_id, description = office_hour.description)
+	officehour.time_group = add_time_group(time_group = office_hour.time_group)
+	officehour.save()
+
+
+	return ResultCommand(**{"query": officehour, "status": True})
