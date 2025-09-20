@@ -1,4 +1,4 @@
-import datetime
+import datetime, random
 
 import factory, factory.fuzzy
 from faker import Faker
@@ -8,13 +8,16 @@ from apps.school import models
 
 faker = Faker(locale="es")
 
+class DaysWeekFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.DaysWeek
+		django_get_or_create = ("day", )
 
-def create_dayweek():
-	dayweek = ( 1,2,3,4,5 )
+	day = factory.LazyAttribute(lambda x: random.choice([1,2,3,4,5]))
 
-	day = faker.random_element(elements = dayweek)
 
-	return models.DaysWeek.objects.create(day = day)
+def create_daysweek():
+	return DaysWeekFactory.create_batch(size = 5)
 
 
 class SchoolFactory(factory.django.DjangoModelFactory):
