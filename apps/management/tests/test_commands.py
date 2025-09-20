@@ -454,3 +454,320 @@ class CommandAddOfficeHourTest(CommandOfficeHourTest):
 						school_id = self.school.id,
 						description = case["value"]
 					)
+
+
+class CommandCreateOfficeHourTest(CommandOfficeHourTest):
+	def setUp(self):
+		super().setUp()
+
+		self.daysweek = create_daysweek()
+
+		self.new_office_hour = {
+			"description": faker.text(
+				max_nb_chars = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
+			),
+			"time_group": {
+				"type": faker.text(
+					max_nb_chars = models.MAX_LENGTH_TYPEGROUP_TYPE
+				),
+				"opening_time": datetime.time(7, 30),
+				"closing_time": datetime.time(14, 30),
+				"active": random.choice([True, False]),
+				"overview": faker.paragraph(),
+				"daysweek": faker.random_elements(
+					length=4, 
+					unique=True,
+					elements=[1,2,3,4,5], 
+				)
+			}
+		}
+
+
+	def test_create_office_hour(self):
+		"""
+			Validar crear un 'OfficeHour'
+		"""
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertTrue(command_status)
+		self.assertTrue(command_query)
+		self.assertIsNone(command_errors)
+
+		self.assertTrue(command_query.id)
+		self.assertEqual(
+			command_query.interval_description, 
+			self.new_office_hour["description"]
+		)
+		self.assertEqual(
+			command_query.time_group.type, 
+			self.new_office_hour["time_group"]["type"]
+		)
+		self.assertEqual(
+			command_query.time_group.active, 
+			self.new_office_hour["time_group"]["active"]
+		)
+		self.assertEqual(
+			command_query.time_group.overview, 
+			self.new_office_hour["time_group"]["overview"]
+		)
+
+		self.assertGreaterEqual(command_query.time_group.daysweek.count(), 1)
+
+	def test_create_office_hour_without_daysweek(self):
+		"""
+			Validar crear un 'OfficeHour' sin 'daysweek'
+		"""
+		self.new_office_hour["time_group"].pop("daysweek")
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertTrue(command_status)
+		self.assertTrue(command_query)
+		self.assertIsNone(command_errors)
+
+		self.assertTrue(command_query.id)
+		self.assertEqual(
+			command_query.interval_description, 
+			self.new_office_hour["description"]
+		)
+		self.assertEqual(
+			command_query.time_group.type, 
+			self.new_office_hour["time_group"]["type"]
+		)
+		self.assertEqual(
+			command_query.time_group.active, 
+			self.new_office_hour["time_group"]["active"]
+		)
+		self.assertEqual(
+			command_query.time_group.overview, 
+			self.new_office_hour["time_group"]["overview"]
+		)
+
+		self.assertLess(
+			command_query.time_group.daysweek.count(), 1
+		)
+
+	def test_create_office_hour_without_overview(self):
+		"""
+			Validar crear un 'OfficeHour' sin 'overview'
+		"""
+		self.new_office_hour["time_group"].pop("overview")
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertTrue(command_status)
+		self.assertTrue(command_query)
+		self.assertIsNone(command_errors)
+
+		self.assertTrue(command_query.id)
+		self.assertEqual(
+			command_query.time_group.active, 
+			self.new_office_hour["time_group"]["active"]
+		)
+		self.assertEqual(
+			command_query.interval_description, 
+			self.new_office_hour["description"]
+		)
+		self.assertEqual(
+			command_query.time_group.type, 
+			self.new_office_hour["time_group"]["type"]
+		)
+		self.assertIsNone(
+			command_query.time_group.overview
+		)
+		self.assertGreaterEqual(command_query.time_group.daysweek.count(), 1)
+
+	def test_create_office_hour_without_active(self):
+		"""
+			Validar crear un 'OfficeHour' sin 'active'
+		"""
+		self.new_office_hour["time_group"].pop("active")
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertTrue(command_status)
+		self.assertTrue(command_query)
+		self.assertIsNone(command_errors)
+
+		self.assertTrue(command_query.id)
+		self.assertTrue(
+			command_query.time_group.active
+		)
+		self.assertEqual(
+			command_query.interval_description, 
+			self.new_office_hour["description"]
+		)
+		self.assertEqual(
+			command_query.time_group.type, 
+			self.new_office_hour["time_group"]["type"]
+		)
+		self.assertEqual(
+			command_query.time_group.overview, 
+			self.new_office_hour["time_group"]["overview"]
+		)
+		self.assertGreaterEqual(command_query.time_group.daysweek.count(), 1)
+
+	def test_create_office_hour_with_wrong_time(self):
+		"""
+			Generar error por definir 'closing_time' > 'opening_time'
+		"""
+
+		self.new_office_hour["time_group"].update({
+			"closing_time":  datetime.time(7, 30),
+			"opening_time": datetime.time(17, 30)
+		})
+
+		error_message = TimeGroupErrorsMessages.WRONG_TIME
+		
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertFalse(command_status)
+		self.assertIsNone(command_query)
+		self.assertTrue(command_errors)
+		self.assertEqual(command_errors[0].message, error_message)
+
+	def test_create_office_hour_with_wrong_daysweek(self):
+		"""
+			Generar error por definir un valor [ x < 1 | x > 5]
+		"""
+
+		self.new_office_hour["time_group"].update({
+			"daysweek": faker.random_elements(
+				length=4, 
+				unique=True,
+				elements=[6,7,2,1,9,8,10], 
+			)
+		})
+
+		error_message = TimeGroupErrorsMessages.INVALID_DAYSWEEK
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_status = command.status
+		command_query = command.query
+		command_errors = command.errors
+
+		self.assertFalse(command_status)
+		self.assertIsNone(command_query)
+		self.assertTrue(command_errors)
+		self.assertEqual(command_errors[0].message , error_message)
+
+	def test_create_office_hour_with_wrong_type(self):
+		"""
+			Generar error por definir un valor para 'type' muy corto (o muy largo)
+		"""
+
+		test_cases = [
+			{
+				"value": faker.pystr(
+					max_chars = models.MIN_LENGTH_TYPEGROUP_TYPE - 1 
+				),
+				"expected": TimeGroupErrorsMessages.MIN_LEN,
+			},
+			{
+				"value": faker.pystr(
+					max_chars = models.MAX_LENGTH_TYPEGROUP_TYPE + 1 
+				),
+				"expected": TimeGroupErrorsMessages.MAX_LEN,
+			}
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.new_office_hour["time_group"].update({
+					"type": case["value"]
+				})
+				
+				error_message = case["expected"]
+
+				command = commands.create_office_hour(
+					school_id = self.school.id,
+					office_hour = self.new_office_hour
+				)
+
+				command_status = command.status
+				command_query = command.query
+				command_errors = command.errors
+
+				self.assertFalse(command_status)
+				self.assertIsNone(command_query)
+				self.assertTrue(command_errors)
+				self.assertEqual(command_errors[0].message, error_message)
+
+	def test_create_office_hour_with_wrong_description(self):
+		"""
+			Generar un error po definir un valor para 'description' muy corto (o muy largo)
+		"""
+		test_cases = [
+			{
+				"value": faker.pystr(
+					max_chars = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D - 1 
+				),
+				"expected": OfficeHourErrorsMessages.MIN_LEN,
+			},
+			{
+				"value": faker.pystr(
+					max_chars = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D + 1 
+				),
+				"expected": OfficeHourErrorsMessages.MAX_LEN,
+			}
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.new_office_hour.update({"description": case["value"]})
+				
+				error_message = case["expected"]
+
+				command = commands.create_office_hour(
+					school_id = self.school.id,
+					office_hour = self.new_office_hour
+				)
+
+				command_status = command.status
+				command_query = command.query
+				command_errors = command.errors
+
+				self.assertFalse(command_status)
+				self.assertIsNone(command_query)
+				self.assertTrue(command_errors)
+				self.assertEqual(command_errors[0].message, error_message)
