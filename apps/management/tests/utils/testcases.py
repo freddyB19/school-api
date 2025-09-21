@@ -193,3 +193,50 @@ class NewsDetailUpdateDeleteTest(NewsCreateTest):
 class NewsListTest(NewsTest):
 	def setUp(self):
 		super().setUp()
+
+
+class OfficeHourTest(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.dayweek = create_daysweek()
+		self.user_with_all_perm = create_user(role = 0)
+
+		permissions = get_permissions(codenames = [
+			'add_officehour', 
+			'change_officehour', 
+			'delete_officehour', 
+			'view_officehour'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(self.user_with_all_perm)
+
+
+class OfficeHourCreateTest(OfficeHourTest):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_view_perm = create_user(role = 0)
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_add_perm = create_user(role = 0)
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ["add_officehour"])
+		)
+		self.user_with_view_perm.user_permissions.set(
+			get_permissions(codenames = ["view_news"])
+		)
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_news"])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(*(
+			self.user_with_add_perm,
+			self.user_with_view_perm, 
+			self.user_with_delete_perm,
+		))
