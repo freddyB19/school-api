@@ -154,6 +154,34 @@ class CommandAddTimeGroupTest(CommandTimeGroupTest):
 				time_group = self.new_time_group,
 			)
 
+	def test_add_time_group_with_wrong_time(self):
+		"""
+			Generar un error por definir 'closing_time' <= 'opening_time'
+		"""
+		error_message = TimeGroupErrorsMessages.WRONG_TIME
+
+		# 'closing_time' < opening_time
+		self.new_time_group.update({
+			"closing_time": datetime.time(7,00),
+			"opening_time": datetime.time(12,00),
+		})
+
+		with self.assertRaisesMessage(ValidationError, error_message):
+			commands.add_time_group(
+				time_group = self.new_time_group,
+			)
+		
+		# 'closing_time' == opening_time
+		self.new_time_group.update({
+			"closing_time": datetime.time(7,00),
+			"opening_time": datetime.time(7,00),
+		})
+		
+		with self.assertRaisesMessage(ValidationError, error_message):
+			commands.add_time_group(
+				time_group = self.new_time_group,
+			)
+
 
 class CommandAddOfficeHourTest(CommandOfficeHourTest):
 	
@@ -393,7 +421,7 @@ class CommandCreateOfficeHourTest(CommandOfficeHourTest):
 
 	def test_create_office_hour_with_wrong_time(self):
 		"""
-			Generar error por definir 'closing_time' > 'opening_time'
+			Generar error por definir 'closing_time' <= 'opening_time'
 		"""
 
 		self.new_office_hour["time_group"].update({
