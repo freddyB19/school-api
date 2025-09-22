@@ -13,6 +13,13 @@ from apps.utils.result_commands import ResponseError
 from . import serializers, permissions, filters, paginations
 
 
+class BaseVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
 class BaseSchoolVS(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 	permission_classes = [IsAuthenticated, permissions.IsUserPermission]
 
@@ -149,16 +156,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 		)
 
 
-
-class BaseNewsVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
-	permission_classes = [
-		IsAuthenticated, 
-		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
-	]
-
-
-class NewsDetailUpdateDeleteVS(BaseNewsVS):
+class NewsDetailUpdateDeleteVS(BaseVS):
 	queryset = school_models.News.objects.all()
 	serializer_class = serializers.NewsResponse
 
