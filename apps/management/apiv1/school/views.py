@@ -4,7 +4,7 @@ from rest_framework import generics, response, status, viewsets, mixins
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.school import models
+from apps.school import models as school_models
 from apps.school.apiv1 import serializers as school_serializer
 
 from apps.management.commands import commands
@@ -18,7 +18,7 @@ class BaseSchoolVS(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 
 
 class SchoolUpdateVS(BaseSchoolVS):
-	queryset = models.School.objects.all()
+	queryset = school_models.School.objects.all()
 	serializer_class = school_serializer.SchoolDetailResponse
 	permission_classes = [
 		IsAuthenticated, 
@@ -91,8 +91,8 @@ class SchoolUpdateVS(BaseSchoolVS):
 
 
 class NewsListCreateAPIView(generics.ListCreateAPIView):
-	queryset = models.News.objects.all()
-	serializer_class = school_serializer.NewsResponse
+	queryset = school_models.News.objects.all()
+	serializer_class = serializers.NewsResponse
 	pagination_class = paginations.BasicPaginate
 	permission_classes = [
 		IsAuthenticated, 
@@ -159,8 +159,8 @@ class BaseNewsVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.Retrie
 
 
 class NewsDetailUpdateDeleteVS(BaseNewsVS):
-	queryset = models.News.objects.all()
-	serializer_class = school_serializer.NewsResponse
+	queryset = school_models.News.objects.all()
+	serializer_class = serializers.NewsResponse
 
 	def get_serializer_class(self):
 
@@ -202,3 +202,60 @@ class NewsDetailUpdateDeleteVS(BaseNewsVS):
 			status = status.HTTP_200_OK
 		)
 
+
+class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
+	queryset = school_models.OfficeHour.objects.all()
+	serializer_class = serializers.OfficeHourResponse 
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.OfficeHourFilter
+	
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		).order_by("-id")
+
+	def get_serializer_class(self):
+		
+		if self.request.method == "POST":
+			return serializers.OfficeHourRequest
+		elif self.request.method == "GET":
+			return serializers.OfficeHourListResponse	
+		
+		return self.serializer_class
+
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(data = request.data)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		command = commands.create_office_hour(
+			school_id = pk,
+			office_hour = serializer.data,
+		)
+
+		if not command.status:
+			return response.Response(
+				data = ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				status = command.error_code
+			)
+
+		news = command.query
+
+		return response.Response(
+			data = self.serializer_class(news).data,
+			status = status.HTTP_201_CREATED
+		)
