@@ -26,3 +26,27 @@ class NewsFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.News
 		fields = ["created", "updated", "status"]
+
+
+class NumberInFilter(django_filters.BaseInFilter, django_filters.NumberFilter):
+	pass
+
+class OfficeHourFilter(django_filters.FilterSet):
+	description = django_filters.CharFilter(
+		field_name = "interval_description", lookup_expr = "icontains"
+	)
+	is_active = django_filters.BooleanFilter(
+		field_name="time_group", lookup_expr = 'active' 
+	)
+	undays = django_filters.BooleanFilter(
+		field_name="time_group", lookup_expr = "daysweek__isnull"
+	)
+	days = NumberInFilter(
+		field_name = "time_group", 
+		lookup_expr = "daysweek__day__in",
+		distinct = True
+	)
+
+	class Meta:
+		mode = models.OfficeHour
+		fields = ["time_group, interval_description"]
