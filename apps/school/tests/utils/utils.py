@@ -57,40 +57,67 @@ def create_color_hex_format():
 	return models.ColorHexFormat.objects.bulk_create(colors)
 
 
-def create_time_group(**kwargs):
-	data = {
-		"type": faker.text(max_nb_chars = 20),
-		"opening_time": faker.date_time(),
-		"closing_time": faker.date_time(),
-		"active": faker.random_element(elements = (True, False)),
-		"overview": faker.paragraph()
-	}
+class TimeGroupBaseFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.TimeGroup
 
-	data.update(kwargs)
-
-	time_group = models.TimeGroup.objects.create(**data)
-
-	time_group.daysweek.add(models.DaysWeek.objects.create(day = 2))
-
-	return time_group
+	type = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = 20))
+	opening_time = factory.LazyFunction(lambda: datetime.time(7, 30))
+	closing_time = factory.LazyFunction(lambda: datetime.time(17,30))
+	active = factory.fuzzy.FuzzyChoice((True, False))
 
 
-def create_office_hour(id, **kwargs):
-	data = {
-		"interval_description": faker.text(max_nb_chars = 20)
-	}
+class TimeGroupFactory(TimeGroupBaseFactory):
+	
+	@factory.post_generation
+	def daysweek(self, create, extracted, **kwargs):
+		if not create or not extracted:
+			return
 
-	data.update(kwargs)
+		self.daysweek.set(extracted)
+	
+	@classmethod
+	def _create(cls, model_class, *args, **kwargs):
+		obj = model_class(*args, **kwargs)
+		obj.save()
+		obj.daysweek.set(create_daysweek())
+		return obj
 
-	time_group = create_time_group()
 
-	office_hour = models.OfficeHour.objects.create(
-		school_id = id, 
-		time_group_id = time_group.id, 
-		**data
+def create_time_group(**kwargs) -> models.TimeGroup:
+	return TimeGroupFactory.create(**kwargs)
+
+def create_time_group_without_dasyweek(**kwargs) -> models.TimeGroup:
+	return TimeGroupBaseFactory.create(**kwargs)
+
+
+class OfficeHourFactory(factory.django.DjangoModelFactory):
+	class Meta:
+		model = models.OfficeHour
+
+	interval_description = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = 20))
+	school = factory.SubFactory(SchoolFactory)
+	time_group = factory.SubFactory(TimeGroupFactory)
+
+	
+def create_officehour(**kwargs) -> models.OfficeHour:
+	return OfficeHourFactory.create(**kwargs)
+
+def create_officehour_without_daysweek(**kwargs):
+	return OfficeHourFactory.create(
+		time_group = create_time_group_without_dasyweek(),
+		**kwargs
 	)
 
-	return office_hour
+def bulk_create_officehour(size:int = 1, **kwargs) -> list[models.OfficeHour]:
+	return OfficeHourFactory.create_batch(size = size, **kwargs)
+
+def bulk_create_officehour_without_daysweek(size:int = 1, **kwargs) -> list[models.OfficeHour]:
+	return OfficeHourFactory.create_batch(
+		size = size,
+		time_group = create_time_group_without_dasyweek(),
+		**kwargs
+	)
 
 def create_calendar(id, **kwargs):
 	date = datetime.datetime.now()
