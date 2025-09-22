@@ -359,6 +359,10 @@ class DaysWeek(models.Model):
 
 MIN_LENGTH_TYPEGROUP_TYPE = 5
 MAX_LENGTH_TYPEGROUP_TYPE = 50
+TYPEGROUP_ACTIVE_DEFAULT = True
+OPENING_CLOSING_TIME = 'La hora de cierre debe ser posterior a la hora de apertura'
+ERROR_MESSAGE_MIN_LEN_TYPE = "La descripción sobre el tipo de grupo horario, es muy corta"
+ERROR_MESSAGE_MAX_LEN_TYPE = "La descripción sobre el tipo de grupo horario, es muy corta"
 
 class TimeGroup(models.Model):
 	# Sirve para indicar: Ej - (Turno Mañana, Turno Tarde, ...)
@@ -367,14 +371,14 @@ class TimeGroup(models.Model):
 		validators = [
 			MinLengthValidator(
 				limit_value = MIN_LENGTH_TYPEGROUP_TYPE, 
-				message = "La descripción sobre el tipo de grupo horario, es muy corta"
+				message = ERROR_MESSAGE_MIN_LEN_TYPE
 			)
 		]
 	)
 	daysweek = models.ManyToManyField(DaysWeek)
 	opening_time = models.TimeField()
 	closing_time = models.TimeField()
-	active = models.BooleanField(default = True)
+	active = models.BooleanField(default = TYPEGROUP_ACTIVE_DEFAULT)
 	overview = models.TextField(
 		blank = True,
 		null = True
@@ -387,7 +391,7 @@ class TimeGroup(models.Model):
 
 	def validate_opening_closing_time(self):
 		if self.closing_time <= self.opening_time:
-			raise ValidationError('La hora de cierre debe ser posterior a la hora de apertura', params = {'closing_time': self.closing_time})
+			raise ValidationError(OPENING_CLOSING_TIME, params = {'closing_time': self.closing_time})
 
 	def __str__(self):
 
@@ -398,17 +402,19 @@ class TimeGroup(models.Model):
 
 
 
-MIN_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION = 4
-MAX_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION = 100
+MIN_LENGTH_OFFICEHOUR_INTERVAL_D = 4
+MAX_LENGTH_OFFICEHOUR_INTERVAL_D = 100
+ERROR_MESSAGE_MIN_LEN_INTERVAL_D = "La descripción sobre el horario de oficina, es muy corta"
+ERROR_MESSAGE_MAX_LEN_INTERVAL_D = "La descripción sobre el horario de oficina, es muy larga"
 
 class OfficeHour(models.Model):
 	# Para indicar Descripción específica del intervalo (ej: Atención al cliente, Consultas)
 	interval_description = models.CharField(
-		max_length = MAX_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION,
+		max_length = MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
 		validators = [
 			MinLengthValidator(
-				limit_value = MIN_LENGTH_OFFICEHOUR_INTERVAL_DESCRIPTION, 
-				message = "La descripción sobre el horario de oficina, es muy corta"
+				limit_value = MIN_LENGTH_OFFICEHOUR_INTERVAL_D, 
+				message = ERROR_MESSAGE_MIN_LEN_INTERVAL_D
 			)
 		]
 	)
