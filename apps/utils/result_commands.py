@@ -55,5 +55,5 @@ class ResponseSuccess(BaseModel):
 	success: list[ResponseMessage] | list[BaseMessage]
 
 class ResponseError(BaseModel):
-	errors: list[ResponseMessage] | list[BaseMessage]
+	errors: list[BaseMessage] | list[ResponseMessage] | list[MessageError]
 
