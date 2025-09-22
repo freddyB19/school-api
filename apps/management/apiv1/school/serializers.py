@@ -1,8 +1,9 @@
+from datetime import datetime
+
 from apps.school import models
 
 from rest_framework import serializers
 
-from apps.school import models as school_models
 from apps.school.apiv1 import serializers as school_serializer
 
 
@@ -102,7 +103,6 @@ class SchoolUpdateLogoRequest(serializers.Serializer):
 	logo = serializers.ImageField(max_length = 20)
 
 
-
 MAX_LENGTH_IMAGE_NAME = 20
 
 STATUS_INVALID_CHOICE = "La opción elegida es invalida"
@@ -160,13 +160,13 @@ class NewsResponse(school_serializer.NewsDetailResponse):
 class NewsListResponse(school_serializer.NewsListResponse):
 
 	class Meta:
-		model = school_models.News
+		model = models.News
 		fields = ["id", "title", "created", "updated", "media", "status"]
 
 
 class NewsUpdateRequest(serializers.ModelSerializer):
 	class Meta:
-		model = school_models.News
+		model = models.News
 		fields = ["id", "title", "status", "description"]
 		read_only_fields = ["id"]
 
@@ -202,3 +202,116 @@ class NewsUpdateImagesRequest(serializers.Serializer):
 	media = serializers.ListField(
 		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME)
 	)
+
+
+
+DAYWEEK_INVALID_CHOICE = f"El día de la semana elegido es invalido, debe ser entre: {models.DaysNumber.values}"
+
+class TimeGroupRequest(serializers.ModelSerializer):
+	daysweek = serializers.ListField(
+		child = serializers.IntegerField(
+			min_value = 1,
+			max_value = 5,
+			error_messages = {
+				"min_value": DAYWEEK_INVALID_CHOICE,
+				"max_value": DAYWEEK_INVALID_CHOICE,
+			}
+		),
+		required = False
+	)
+
+	class Meta:
+		model = models.TimeGroup
+		fields = "__all__"
+		read_only_fields = ["id"]
+		extra_kwargs = {
+			"type": {
+				"max_length": models.MAX_LENGTH_TYPEGROUP_TYPE,
+				"min_length": models.MIN_LENGTH_TYPEGROUP_TYPE,
+				"error_messages": {
+					"max_length":ERROR_FIELD(
+						field = "tipo", 
+						type = "largo",
+						simbol = "menor o igual",
+						value = models.MAX_LENGTH_TYPEGROUP_TYPE
+					),
+					"min_length": ERROR_FIELD(
+						field = "tipo", 
+						type = "corto",
+						simbol = "mayor o igual",
+						value = models.MIN_LENGTH_TYPEGROUP_TYPE
+					)
+				}
+			}
+		}
+
+	def validate(self, data):
+		opening_time = data.get("opening_time")
+		closing_time = data.get("closing_time")
+
+		if closing_time <= opening_time:
+			raise serializers.ValidationError(
+				models.OPENING_CLOSING_TIME, 
+				code = "invalid_time"
+			)
+
+		return data
+
+
+class OfficeHourRequest(serializers.ModelSerializer):
+	time_group = TimeGroupRequest()
+	description = serializers.CharField(
+		max_length = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
+		min_length = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D,
+		error_messages = {
+			"max_length":ERROR_FIELD(
+				field = "descripción del intervalo", 
+				type = "largo",
+				simbol = "menor o igual",
+				value = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
+			),
+			"min_length": ERROR_FIELD(
+				field = "descripción del intervalo", 
+				type = "corto",
+				simbol = "mayor o igual",
+				value = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D
+			)
+		}
+	)
+
+	class Meta:
+		model = models.OfficeHour
+		fields = ["description", "time_group"]
+
+
+
+class TimeGroupResponse(serializers.ModelSerializer):
+	daysweek = serializers.SlugRelatedField(
+		many=True,
+		read_only=True,
+		slug_field='name'
+    )
+	
+	class Meta:
+		model = models.TimeGroup
+		fields = "__all__"
+
+class TimeGroupListResponse(TimeGroupResponse):
+	class Meta:
+		model = models.TimeGroup
+		exclude = ["overview"]
+
+class OfficeHourResponse(serializers.ModelSerializer):
+	time_group = TimeGroupResponse(read_only = True)
+	
+	class Meta:
+		model = models.OfficeHour
+		fields = "__all__"
+
+
+class OfficeHourListResponse(serializers.ModelSerializer):
+	time_group = TimeGroupListResponse(read_only = True)
+
+	class Meta:
+		model = models.OfficeHour
+		fields = ["id", "interval_description", "time_group"]
