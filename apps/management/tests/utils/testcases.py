@@ -240,3 +240,18 @@ class OfficeHourCreateTest(OfficeHourTest):
 			self.user_with_view_perm, 
 			self.user_with_delete_perm,
 		))
+
+
+class OfficeHourListTest(OfficeHourCreateTest):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["add_officehour"])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(self.user_with_change_perm)
+
