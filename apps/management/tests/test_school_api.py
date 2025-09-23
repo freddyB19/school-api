@@ -6,10 +6,10 @@ from PIL import Image
 
 from apps.school.tests.utils.utils import create_school
 
-from .utils.testcases import (
-	UPDATE_SCHOOL_WITH_WRONG_DATA, 
-	SchoolUpdateTest,
+from .utils.testcases_data import(
+	UPDATE_SCHOOL_WITH_WRONG_DATA
 )
+from .utils.testcases import SchoolUpdateTest
 
 class SchoolUpdateAPITest(SchoolUpdateTest):
 	def setUp(self):
