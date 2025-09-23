@@ -2,7 +2,7 @@ from apps.school import models as school_models
 
 from apps.management.tests import faker
 
-from .utils import set_daysweek
+from .utils import set_daysweek, get_long_string
 
 UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	{
