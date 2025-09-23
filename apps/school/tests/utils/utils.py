@@ -65,6 +65,7 @@ class TimeGroupBaseFactory(factory.django.DjangoModelFactory):
 	opening_time = factory.LazyFunction(lambda: datetime.time(7, 30))
 	closing_time = factory.LazyFunction(lambda: datetime.time(17,30))
 	active = factory.fuzzy.FuzzyChoice((True, False))
+	overview = factory.LazyAttribute(lambda x: faker.paragraph())
 
 
 class TimeGroupFactory(TimeGroupBaseFactory):
