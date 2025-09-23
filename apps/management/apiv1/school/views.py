@@ -237,7 +237,7 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 				data = serializer.errors,
 				status = status.HTTP_400_BAD_REQUEST
 			)
-
+		
 		command = commands.create_office_hour(
 			school_id = pk,
 			office_hour = serializer.data,
@@ -256,4 +256,42 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 		return response.Response(
 			data = self.serializer_class(news).data,
 			status = status.HTTP_201_CREATED
+		)
+
+
+class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = school_models.OfficeHour.objects.all()
+	serializer_class = serializers.OfficeHourResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
+	def get_serializer_class(self):
+		updated = ["PUT", "PATCH"]
+
+		if self.request.method in updated:
+			return serializers.OfficeHourUpdateRequest
+
+		return self.serializer_class
+
+	def update(self, request, pk, *args, **kwargs):
+		partial = kwargs.pop('partial', False)
+		
+		instance = self.get_object()
+		
+		serializer = self.get_serializer(
+			instance, 
+			data=request.data, 
+			partial=partial
+		)
+		
+		serializer.is_valid(raise_exception=True)
+		
+		officehour = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(officehour).data,
+			status = status.HTTP_200_OK
 		)
