@@ -13,4 +13,9 @@ urlpatterns = [
 		views.OfficeHourListCreateAPIView.as_view(),
 		name = "officehour-list-create" 
 	),
+	path(
+		"officehour/<int:pk>/",
+		views.OfficeHourDetaiUpdateDeletelAPIView.as_view(),
+		name = "officehour-detail" 
+	),
 ]
