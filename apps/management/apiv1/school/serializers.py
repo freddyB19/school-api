@@ -15,15 +15,7 @@ MIN_LENGTH_FIELDS = 10
 class SchoolUpdateRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.School
-		fields = [
-			"id",
-			"subdomain",
-			"name",
-			"address",
-			"mission",
-			"vision",
-			"history",
-		]
+		exclude = ["private", "logo"]
 
 		read_only_fields = ["id", "subdomain"]
 
