@@ -99,7 +99,10 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 
 
 	def post(self, request, pk = None):
-		serializer = self.get_serializer(data = request.data)
+		serializer = self.get_serializer(
+			data = request.data, 
+			context = {"pk": pk}
+		)
 
 		if not serializer.is_valid():
 			return response.Response(
@@ -107,23 +110,10 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 				status = status.HTTP_400_BAD_REQUEST
 			)
 		
-		command = commands.create_office_hour(
-			school_id = pk,
-			office_hour = serializer.data,
-		)
-
-		if not command.status:
-			return response.Response(
-				data = ResponseError(
-					errors = command.errors
-				).model_dump(exclude_defaults = True),
-				status = command.error_code
-			)
-
-		news = command.query
+		officehour = serializer.save()
 
 		return response.Response(
-			data = self.serializer_class(news).data,
+			data = self.serializer_class(officehour).data,
 			status = status.HTTP_201_CREATED
 		)
 
