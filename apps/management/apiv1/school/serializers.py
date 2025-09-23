@@ -1,12 +1,16 @@
 from typing import TypeVar
 from datetime import datetime
 
-from apps.school import models
-
 from rest_framework import serializers
 
-from apps.management.dtos import school as school_dto
+from apps.school import models
+
+from apps.utils.result_commands import ResponseError
+
 from apps.school.apiv1 import serializers as school_serializer
+
+from apps.management.commands import commands
+from apps.management.dtos import school as school_dto
 
 ERROR_FIELD = lambda field, type, simbol, value: f"El campo '{field}' es muy {type}, debe ser {simbol} a {value}" 
 
@@ -274,6 +278,24 @@ class OfficeHourRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.OfficeHour
 		fields = ["description", "time_group"]
+
+
+	def create(self, validated_data):
+
+		command = commands.create_office_hour(
+			school_id = self.context.get("pk"),
+			office_hour = validated_data,
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+
+		return command.query
+
 
 
 OfficeHour = TypeVar("OfficeHour", bound = models.OfficeHour)
