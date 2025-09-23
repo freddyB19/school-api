@@ -1,11 +1,12 @@
+from typing import TypeVar
 from datetime import datetime
 
 from apps.school import models
 
 from rest_framework import serializers
 
+from apps.management.dtos import school as school_dto
 from apps.school.apiv1 import serializers as school_serializer
-
 
 ERROR_FIELD = lambda field, type, simbol, value: f"El campo '{field}' es muy {type}, debe ser {simbol} a {value}" 
 
@@ -149,7 +150,6 @@ class NewsRequest(serializers.ModelSerializer):
 			}
 		}
 
-
 class NewsResponse(school_serializer.NewsDetailResponse):
 
 	class Meta:
@@ -284,6 +284,41 @@ class OfficeHourRequest(serializers.ModelSerializer):
 		fields = ["description", "time_group"]
 
 
+OfficeHour = TypeVar("OfficeHour", bound = models.OfficeHour)
+
+class OfficeHourUpdateRequest(serializers.Serializer):
+	description = serializers.CharField(
+		required = True,
+		max_length = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
+		min_length = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D,
+		error_messages = {
+			"max_length":ERROR_FIELD(
+				field = "descripción del intervalo", 
+				type = "largo",
+				simbol = "menor o igual",
+				value = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
+			),
+			"min_length": ERROR_FIELD(
+				field = "descripción del intervalo", 
+				type = "corto",
+				simbol = "mayor o igual",
+				value = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D
+			)
+		}
+	)
+
+	def update(self, instance: OfficeHour, validated_data: dict[str, str]) -> OfficeHour:
+		validated = school_dto.OfficeHourDTO(
+			interval_description = validated_data.get(
+				"description", 
+				instance.interval_description
+			)
+		).data
+		
+		instance.interval_description = validated.get("interval_description")
+		
+		return instance
+
 
 class TimeGroupResponse(serializers.ModelSerializer):
 	daysweek = serializers.SlugRelatedField(
@@ -295,6 +330,7 @@ class TimeGroupResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.TimeGroup
 		fields = "__all__"
+
 
 class TimeGroupListResponse(TimeGroupResponse):
 	class Meta:
