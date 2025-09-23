@@ -1,4 +1,4 @@
-import random, datetime
+import unittest, random, datetime
 
 from django.urls import reverse
 
@@ -23,7 +23,11 @@ from .utils.utils import (
 )
 from .utils.testcases import (
 	OfficeHourListTest,
-	OfficeHourCreateTest
+	OfficeHourCreateTest,
+	OfficeHourDetailUpdateDeleteTest
+)
+from .utils.testcases_data import (
+	UPDATE_OFFICEHOUR_WITH_WRONG_DATA
 )
 
 
@@ -634,6 +638,321 @@ class OfficeHourListAPITest(OfficeHourListTest):
 		)
 
 		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class OfficeHourDetailUpdateDeleteAPITest(OfficeHourDetailUpdateDeleteTest):
+	def setUp(self):
+		super().setUp()
+
+		self.officehour = create_officehour(school = self.school)
+
+		self.URL_OFFICEHOUR_DETAIL = self.get_detail_officehour_url(
+			id = self.officehour.id
+		)
+
+
+	def get_detail_officehour_url(self, id):
+		return reverse(
+			"management:officehour-detail",
+			kwargs={"pk": id}
+		)
+
+
+	def test_detail_officehour(self):
+		"""
+			Validar "GET /officehour/:id>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(
+			self.URL_OFFICEHOUR_DETAIL
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.officehour.id)
+		self.assertEqual(
+			responseJson["interval_description"],
+			self.officehour.interval_description
+		)
+		self.assertEqual(responseJson["school"], self.officehour.school.id)
+
+
+	def test_detail_officehour_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /officehour/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_officehour = create_officehour(
+			school = create_school()
+		)
+
+		response = self.client.get(
+			self.get_detail_officehour_url(
+				id = other_officehour.id
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_officehour_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /officehour/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(
+			self.URL_OFFICEHOUR_DETAIL
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_officehour_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /officehour/:id" por usuarion sin autenticación
+		"""
+		response = self.client.get(
+			self.URL_OFFICEHOUR_DETAIL
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+	def test_update_officehour(self):
+		"""
+			Validar "PUT/PATCH /officehour/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		update_officehour = {
+			"description": faker.text(max_nb_chars = 30),
+		}
+
+		response = self.client.patch(
+			self.URL_OFFICEHOUR_DETAIL,
+			update_officehour
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.officehour.id)
+		self.assertEqual(
+			responseJson["interval_description"], 
+			update_officehour["description"]
+		)
+
+
+	def test_update_officehour_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /officehour/:id" por enviar datos incorrectos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_cases = UPDATE_OFFICEHOUR_WITH_WRONG_DATA
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_OFFICEHOUR_DETAIL,
+					case
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_update_officehour_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /officehour/:id" por actualizar información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_officehour = create_officehour(
+			school = create_school()
+		)
+
+		update_officehour = {
+			"description": faker.text(max_nb_chars = 30)
+		}
+
+		response = self.client.patch(
+			self.get_detail_officehour_url(
+				id = other_officehour.id
+			),
+			update_officehour
+		)
+
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_update_officehour_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /officehour/:id" por falta de permiso de usuario
+		"""
+		test_cases = [
+			{"user": self.user_with_view_perm},
+			{"user": self.user_with_delete_perm},
+			{"user": self.user_with_add_perm},
+		]
+
+		update_officehour = {
+			"description": faker.text(max_nb_chars = 30)
+		}
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				
+				self.client.force_authenticate(user = case["user"])
+				
+				response = self.client.patch(
+					self.URL_OFFICEHOUR_DETAIL,
+					update_officehour
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 403)
+
+
+	def test_update_officehour_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /officehour/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		update_officehour = {
+			"description": faker.text(max_nb_chars = 30)
+		}
+
+		response = self.client.patch(
+			self.URL_OFFICEHOUR_DETAIL,
+			update_officehour
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_update_officehour_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /officehour/:id" por usuario sin autenticación
+		"""
+		update_officehour = {
+			"description": faker.text(max_nb_chars = 30)
+		}
+
+		response = self.client.patch(
+			self.URL_OFFICEHOUR_DETAIL,
+			update_officehour
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+	def test_delete_officehour(self):
+		"""
+			Validar "DELETE /officehour/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_OFFICEHOUR_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_officehour_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /officehour/:id" por eliminar información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate( user = self.user_with_delete_perm)
+
+		officehour = create_officehour(
+			school = create_school()
+		)
+
+		response = self.client.delete(
+			self.get_detail_officehour_url(id = officehour.id)
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_officehour_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /officehour/:id" por falta de permiso de usuario
+		"""
+		test_cases = [
+			{"user": self.user_with_add_perm},
+			{"user": self.user_with_change_perm},
+			{"user": self.user_with_view_perm},
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				self.client.force_authenticate(user = case["user"])
+
+				response = self.client.delete(
+					self.URL_OFFICEHOUR_DETAIL
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_officehour_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /officehour/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_OFFICEHOUR_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_officehour_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /officehour/:id" por usuario sin autenticación
+		"""
+
+		response = self.client.delete(self.URL_OFFICEHOUR_DETAIL)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
