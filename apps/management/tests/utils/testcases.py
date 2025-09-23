@@ -81,6 +81,7 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 ]
 
 
+
 class CommandNewsTest(TransactionTestCase):
 	def setUp(self):
 		self.school = create_school()
@@ -228,10 +229,10 @@ class OfficeHourCreateTest(OfficeHourTest):
 			get_permissions(codenames = ["add_officehour"])
 		)
 		self.user_with_view_perm.user_permissions.set(
-			get_permissions(codenames = ["view_news"])
+			get_permissions(codenames = ["view_officehour"])
 		)
 		self.user_with_delete_perm.user_permissions.set(
-			get_permissions(codenames = ["delete_news"])
+			get_permissions(codenames = ["delete_officehour"])
 		)
 
 		admin = get_administrator(school_id = self.school.id)
@@ -249,9 +250,23 @@ class OfficeHourListTest(OfficeHourCreateTest):
 		self.user_with_change_perm = create_user(role = 0)
 
 		self.user_with_change_perm.user_permissions.set(
-			get_permissions(codenames = ["add_officehour"])
+			get_permissions(codenames = ["change_officehour"])
 		)
 
 		admin = get_administrator(school_id = self.school.id)
 		admin.users.add(self.user_with_change_perm)
 
+
+
+class OfficeHourDetailUpdateDeleteTest(OfficeHourCreateTest):
+	def setUp(self):
+		super().setUp()
+		
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_officehour"])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(self.user_with_change_perm)
