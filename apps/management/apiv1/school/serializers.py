@@ -223,6 +223,23 @@ class NewsUpdateImagesRequest(serializers.Serializer):
 		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME)
 	)
 
+	def update(self, instance, validated_data) -> models.News:
+		validated = school_dto.NewsUpdateImages(
+			images = validated_data.get("media")
+		)
+
+		command = commands.update_news_media(images = validated.images)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+		
+		instance.media.add(*command.query)		
+
+		return instance
 
 
 DAYWEEK_INVALID_CHOICE = f"El día de la semana elegido es invalido, debe ser entre: {models.DaysNumber.values}"
