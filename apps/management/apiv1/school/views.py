@@ -40,7 +40,13 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 
 	def post(self, request, pk = None):
 
-		serializer = self.get_serializer(data = request.data)
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {
+				"pk": pk,
+				"images": request.FILES
+			}
+		)
 
 		if not serializer.is_valid():
 			return response.Response(
@@ -48,21 +54,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 				status = status.HTTP_400_BAD_REQUEST
 			)
 
-		command = commands.create_news(
-			school_id = pk,
-			news = serializer.data,
-			images = request.FILES
-		)
-
-		if not command.status:
-			return response.Response(
-				data = ResponseError(
-					errors = command.errors
-				).model_dump(),
-				status = command.error_code
-			)
-
-		news = command.query
+		news = serializer.save()
 
 		return response.Response(
 			data = self.serializer_class(news).data,
