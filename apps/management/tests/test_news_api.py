@@ -2,6 +2,8 @@ import unittest, tempfile
 
 from django.urls import reverse
 
+from PIL import Image
+
 from freezegun import freeze_time
 
 from apps.user.tests.utils.utils import create_user
@@ -14,7 +16,6 @@ from apps.school.tests.utils.utils import(
 from apps.school import models as school_models
 
 from . import faker
-from .utils.utils import create_list_images
 
 from .utils.testcases import (
 	NewsListTest,
@@ -42,30 +43,32 @@ class NewsCreateAPITest(NewsCreateTest):
 
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
-		images = create_list_images()
+		with tempfile.NamedTemporaryFile(suffix = ".jpg") as ntf:
+			img = Image.new("RGB", (10, 10))
+			img.save(ntf, format="JPEG")
+			ntf.seek(0)
+
+			images = [ntf]
 		
-		add_news = {
-			"title": faker.text(max_nb_chars=20),
-			"description": faker.paragraph(),
-			"media": images
-		}
+			add_news = {
+				"title": faker.text(max_nb_chars=20),
+				"description": faker.paragraph(),
+				"media": images
+			}
 
-		response = self.client.post(
-			self.URL_NEWS,
-			add_news,
-			format="multipart"
-		)
+			response = self.client.post(
+				self.URL_NEWS,
+				add_news,
+				format="multipart"
+			)
 
-		for image in images:
-			image.close()
+			responseJson = response.data
+			responseStatus = response.status_code
 
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 201)
-		self.assertEqual(responseJson["title"], add_news["title"])
-		self.assertEqual(responseJson["description"], add_news["description"])
-		self.assertEqual(responseJson["status"], "publicado")
+			self.assertEqual(responseStatus, 201)
+			self.assertEqual(responseJson["title"], add_news["title"])
+			self.assertEqual(responseJson["description"], add_news["description"])
+			self.assertEqual(responseJson["status"], "publicado")
 
 
 	def test_create_news_without_images(self):
@@ -789,20 +792,22 @@ class NewsUpdateImagesAPITest(NewsDetailUpdateDeleteTest):
 		"""
 			Validar "PATCH /news-upload-images/:id"
 		"""
-		images = create_list_images()
-
 		self.client.force_authenticate(user = self.user_with_update_perm)
 
-		response = self.client.patch(
-			self.URL_NEWS_UPDATE_IMAGES,
-			{"media": images},
-			format="multipart"
-		)
+		with tempfile.NamedTemporaryFile(suffix = ".jpg") as ntf:
+			img = Image.new("RGB", (10, 10))
+			img.save(ntf, format="JPEG")
+			ntf.seek(0)
 
-		responseJson = response.data
-		responseStatus = response.status_code
+			images = [ntf]
 
-		self.assertEqual(responseStatus, 200)
+			response = self.client.patch(
+				self.URL_NEWS_UPDATE_IMAGES,
+				{"media": images},
+				format="multipart"
+			)
 
-		for image in images:
-			image.close()
+			responseJson = response.data
+			responseStatus = response.status_code
+
+			self.assertEqual(responseStatus, 200)
