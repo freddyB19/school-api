@@ -475,7 +475,7 @@ class NewsDetailUpdateDeleteAPITest(NewsDetailUpdateDeleteTest):
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["id"], self.news.id)
 		self.assertEqual(responseJson["title"], self.news.title)
-		self.assertEqual(responseJson["school"]["id"], self.school.id)
+		self.assertEqual(responseJson["school"], self.school.id)
 
 
 	def test_detail_news_without_school_permission(self):
