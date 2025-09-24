@@ -170,14 +170,29 @@ class NewsRequest(serializers.ModelSerializer):
 
 		return command.query
 
-class NewsResponse(school_serializer.NewsDetailResponse):
 
+class NewsMediaSerializer(serializers.ModelSerializer):
+	class Meta:
+		model = models.NewsMedia
+		fields = "__all__"
+
+
+class NewsMediaField(serializers.RelatedField):
+	def to_representation(self, value):
+		image = value.first()
+		return image.photo if image else None
+
+
+class NewsResponse(serializers.ModelSerializer):
+	media = NewsMediaSerializer(many = True)
+	
 	class Meta:
 		model = models.News
 		fields = "__all__"
 
 
-class NewsListResponse(school_serializer.NewsListResponse):
+class NewsListResponse(serializers.ModelSerializer):
+	media = NewsMediaField(read_only = True)
 
 	class Meta:
 		model = models.News
