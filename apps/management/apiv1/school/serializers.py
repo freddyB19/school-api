@@ -146,6 +146,28 @@ class NewsRequest(serializers.ModelSerializer):
 			}
 		}
 
+	def create(self, validated_data) -> models.News:
+		
+		validated = school_dto.NewsCreateDTO(**validated_data)
+
+		school_id = self.context.get("pk")
+		images = self.context.get("images")
+
+		command = commands.create_news(
+			school_id = school_id,
+			news = validated.data,
+			images = images
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors,
+				).model_dump(exclude_defaults = True)
+			)
+
+		return command.query
+
 class NewsResponse(school_serializer.NewsDetailResponse):
 
 	class Meta:
@@ -322,7 +344,7 @@ class OfficeHourUpdateRequest(serializers.Serializer):
 	)
 
 	def update(self, instance: OfficeHour, validated_data: dict[str, str]) -> OfficeHour:
-		validated = school_dto.OfficeHourDTO(
+		validated = school_dto.OfficeHourUpdateDTO(
 			interval_description = validated_data.get(
 				"description", 
 				instance.interval_description
