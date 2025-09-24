@@ -112,7 +112,9 @@ class NewsDetailUpdateDeleteVS(BaseVS):
 	def upload_images(self, request, pk = None):
 		news = self.get_object()
 		serializer = self.get_serializer(
+			news,
 			data=request.data,
+			partial = True
 		)
 
 		if not serializer.is_valid():
@@ -121,18 +123,7 @@ class NewsDetailUpdateDeleteVS(BaseVS):
 				status = status.HTTP_400_BAD_REQUEST,
 			)
 
-		command = commands.update_news_media(images = request.FILES)
-
-		if not command.status:
-			return response.Response(
-				data = ResponseError(
-					errors = command.errors
-				).model_dump(),
-				status = status.HTTP_400_BAD_REQUEST
-			)
-		
-		news.media.add(*command.query)
-		news.save()
+		news = serializer.save()
 
 		return response.Response(
 			data = self.serializer_class(news).data,
