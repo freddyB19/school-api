@@ -1,25 +1,35 @@
 import datetime
-from pydantic import BaseModel
-from dataclasses import dataclass
+from typing import TypeVar
 
-@dataclass(frozen = True)
-class TimeGroupDTO:
-	type: str 
-	daysweek: list[int]
+from django.core.files.uploadedfile import InMemoryUploadedFile
+
+from pydantic import BaseModel, ConfigDict
+
+UploadedFile = TypeVar("UploadedFile", bound=InMemoryUploadedFile)
+ListUploadedFile = TypeVar("ListUploadedFile", bound = list[UploadedFile])
+
+class BaseDTO(BaseModel):
+	model_config = ConfigDict(extra = "ignore", frozen = True, arbitrary_types_allowed = True)
+
+	@property
+	def data(self) -> dict:
+		return self.model_dump(exclude_defaults = True)
+
+class NewsCreateDTO(BaseDTO):
+	title: str
+	status: str | None = None
+	description: str | None = None
+	images: ListUploadedFile | None = None
+
+
+class TimeGroupDTO(BaseDTO):
+	type: str
+	daysweek: list[int] | None = None
 	opening: datetime.time
 	closing: datetime.time
-	active: bool
-	overview: str
+	active: bool | None = None
+	overview: str | None = None
 
-	@property
-	def data(self):
-		return self.__getstate__()
 
-@dataclass(frozen = True)
-class OfficeHourDTO:
-	interval_description: str
-
-	@property
-	def data(self):
-		return self.__getstate__()
-
+class OfficeHourUpdateDTO(BaseDTO):
+	interval_description: str | None = None
