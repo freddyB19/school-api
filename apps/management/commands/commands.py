@@ -14,6 +14,7 @@ from .utils.errors_messages import SchoolErrorsMessages
 from .utils.props import (
 	NewsParam,
 	DjangoDict,
+	ListUploadedFile,
 	UploadedFile,
 	TimeGroupParam,
 	OfficeHourParam,
@@ -58,7 +59,7 @@ def get_school_by_id(id: int) -> ResultCommand:
 
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def add_newsmedia(media: list[UploadedFile]) -> models.NewsMedia:
+def add_newsmedia(media: ListUploadedFile) -> models.NewsMedia:
 	# Conectarme a un servicio para subir la imagen
 	upload_images = [
 		{
@@ -93,7 +94,7 @@ def add_news(news:NewsParam, school_id:int) -> models.News:
 
 
 @handler_validation_errors
-def create_news(school_id: int, news:NewsParam, images:DjangoDict = None, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
+def create_news(school_id: int, news:NewsParam, images:ListUploadedFile = None, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
 	if errors:
 		return ResultCommand(
 			status = False, 
@@ -112,9 +113,9 @@ def create_news(school_id: int, news:NewsParam, images:DjangoDict = None, errors
 	
 	news_created = add_news(news = news, school_id = school_id)
 
-	if images and images.get("media", False):
+	if images:
 		news_created.media.set( 
-			add_newsmedia(media = images.getlist("media")) 
+			add_newsmedia(media = images) 
 		)
 
 	context.update({"query": news_created, "status": True})
