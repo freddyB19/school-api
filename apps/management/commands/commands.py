@@ -1,4 +1,4 @@
-from typing import TypeVar, Optional
+from typing import Optional
 
 from rest_framework import status as status_code
 from pydantic import validate_call, ConfigDict
@@ -14,10 +14,10 @@ from .utils.errors_messages import SchoolErrorsMessages
 from .utils.props import (
 	NewsParam,
 	DjangoDict,
-	ListUploadedFile,
 	UploadedFile,
 	TimeGroupParam,
 	OfficeHourParam,
+	ListUploadedFile,
 	IntervalDescription
 )
 
@@ -94,7 +94,7 @@ def add_news(news:NewsParam, school_id:int) -> models.News:
 
 
 @handler_validation_errors
-def create_news(school_id: int, news:NewsParam, images:ListUploadedFile = None, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
+def create_news(school_id: int, news:NewsParam, images:ListUploadedFile | None = None, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
 	if errors:
 		return ResultCommand(
 			status = False, 
