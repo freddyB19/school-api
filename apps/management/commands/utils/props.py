@@ -24,6 +24,7 @@ from .errors_messages import (
 
 
 UploadedFile = TypeVar("UploadedFile", bound=InMemoryUploadedFile)
+ListUploadedFile = TypeVar("ListUploadedFile", bound = list[UploadedFile])
 DjangoDict = TypeVar("DjangoDict", bound=MultiValueDict)
 TimeGroupModel = TypeVar("TimeGroupModel", bound=models.TimeGroup)
 
