@@ -2,6 +2,8 @@ import tempfile, datetime
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
+import factory
+
 from apps.management import models
 from apps.management.tests import faker
 from apps.school import models as school_models
@@ -22,38 +24,23 @@ def get_long_string():
 	return f"{faker.paragraph(nb_sentences = 5)}{faker.paragraph(nb_sentences = 5)}"
 
 
-def create_list_images() -> list:
-	images = []
-		
-	for _ in range(3):
-		temp_file = tempfile.NamedTemporaryFile(suffix = ".jpg")
-
-		image = Image.new("RGB", (10, 10))
-		image.save(temp_file, format="JPEG")
-		temp_file.seek(0)
-		
-		images.append(temp_file)
-
+def create_list_images(size:int = 1) -> list:
+	images = [
+		faker.file_name(category = 'image')
+		for _ in range(size)
+	]
 	return images
 
+def list_upload_images(size: int = 1) -> list:
 
-def list_upload_images() -> list:
 	images = [
 		SimpleUploadedFile(
-			"test_image1.jpg", 
-			content=b"content_image1", 
+			faker.file_name(category = 'image'), 
+			content=b"content_image", 
 			content_type="image/jpeg"
-		),
-		SimpleUploadedFile(
-			"test_image2.jpg", 
-			content=b"content_image2", 
-			content_type="image/jpeg"
-		),
-		SimpleUploadedFile(
-			"test_image3.jpg", 
-			content=b"content_image3", 
-			content_type="image/jpeg"
-		),
+		)
+
+		for num in range(size)
 	]
 
 	return images
