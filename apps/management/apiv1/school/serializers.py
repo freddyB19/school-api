@@ -147,16 +147,18 @@ class NewsRequest(serializers.ModelSerializer):
 		}
 
 	def create(self, validated_data) -> models.News:
-		
-		validated = school_dto.NewsCreateDTO(**validated_data)
 
 		school_id = self.context.get("pk")
-		images = self.context.get("images")
+		
+		validated = school_dto.NewsCreateDTO(
+			images = validated_data.get("media"),
+			**validated_data
+		)
 
 		command = commands.create_news(
 			school_id = school_id,
 			news = validated.data,
-			images = images
+			images = validated.images
 		)
 
 		if not command.status:
