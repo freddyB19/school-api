@@ -42,10 +42,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 
 		serializer = self.get_serializer(
 			data = request.data,
-			context = {
-				"pk": pk,
-				"images": request.FILES
-			}
+			context = {"pk": pk}
 		)
 
 		if not serializer.is_valid():
