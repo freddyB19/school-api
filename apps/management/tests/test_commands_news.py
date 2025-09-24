@@ -4,8 +4,6 @@
 """
 import unittest
 
-from django.utils.datastructures import MultiValueDict
-from django.core.files.uploadedfile import SimpleUploadedFile
 from . import faker
 from pydantic import ValidationError
 
@@ -84,43 +82,22 @@ class CommandAddNewsMediaTest(CommandNewsTest):
 		"""
 			Validar crear 'newsmedia'
 		"""
-		images = [
-			SimpleUploadedFile(
-				"test_image1.jpg", 
-				content=b"content_image1", 
-				content_type="image/jpeg"
-			),
-			SimpleUploadedFile(
-				"test_image2.jpg", 
-				content=b"content_image2", 
-				content_type="image/jpeg"
-			),
-			SimpleUploadedFile(
-				"test_image3.jpg", 
-				content=b"content_image3", 
-				content_type="image/jpeg"
-			),
-		]
+		images = list_upload_images(size = 3)
 
 		list_newsmedia = commands.add_newsmedia(media = images)
 
 		self.assertTrue(list_newsmedia)
 		self.assertEqual(len(list_newsmedia), len(images))
 
-
 		
 	def test_add_newsmedia_with_wrong_data(self):
 		"""
 			Generar un error por enviar una lista de datos invalidos
 		"""
-
 		images = create_list_images()
 
 		with self.assertRaises(ValidationError):
 			list_newsmedia = commands.add_newsmedia(media = images)
-
-		for image in images:
-			image.close()
 	
 
 	def test_add_newsmedia_without_list_images(self):
@@ -135,7 +112,7 @@ class CommandCreateNewsTest(CommandNewsTest):
 	def setUp(self):
 		super().setUp()
 
-		self.images = MultiValueDict({"media": list_upload_images()})
+		self.images = list_upload_images(size = 5)
 
 		self.data_news = {
 			"title": faker.text(max_nb_chars=20),
@@ -163,7 +140,7 @@ class CommandCreateNewsTest(CommandNewsTest):
 		self.assertEqual(news_created.description, self.data_news["description"])
 		self.assertEqual(news_created.status, models.News.TypeStatus.published)
 
-		self.assertEqual(news_created.media.count(), len(self.images.getlist("media")))
+		self.assertEqual(news_created.media.count(), len(self.images))
 
 
 	def test_create_news_without_images(self):
@@ -174,7 +151,6 @@ class CommandCreateNewsTest(CommandNewsTest):
 		command = commands.create_news(
 			school_id = self.school.id, 
 			news = self.data_news,
-			images = MultiValueDict()
 		)
 
 		self.assertTrue(command.status)
