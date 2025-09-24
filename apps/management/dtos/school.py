@@ -22,6 +22,10 @@ class NewsCreateDTO(BaseDTO):
 	images: ListUploadedFile | None = None
 
 
+class NewsUpdateImages(BaseDTO):
+	images: ListUploadedFile
+
+
 class TimeGroupDTO(BaseDTO):
 	type: str
 	daysweek: list[int] | None = None
