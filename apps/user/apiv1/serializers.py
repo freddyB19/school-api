@@ -4,14 +4,19 @@ from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
 from apps.user import models
-from apps.user.models import (
-    MAX_LENGTH_NAME,
-    MIN_LENGTH_NAME,
-    MIN_LENGTH_PASSWORD
-)
+
+from apps.user.commands.commands import create_user
 
 
-from apps.user.commands.commands import is_valid_email, create_user
+REQUIRED_PASSWORD_CONFIRM = "Debe enviar un password de confirmación"
+REQUIRED_EMAIL = "Debe enviar un email para el usuario"
+REQUIRED_PASSWORD = "Debe enviar un password"
+REQUIRED_NAME = "Debe enviar un nombre para el usuario"
+MIN_LEN_NAME = "El nombre es muy corto"
+MAX_LEN_NAME = "El nombre de usuario es muy largo"
+MIN_LEN_PASSWORD = "La contraseña es muy corta"
+EMAIL_ALREADY_REGISTERED = "Ya existe un usuario con este email"
+PASSWORDS_NOT_MATCH = "Las contraseñas no coinciden"
 
 class UserRegisterSerializer(serializers.ModelSerializer):
     password_confirm = serializers.CharField(
@@ -19,7 +24,7 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             "input_type":"password"
         }, 
         write_only = True,
-        error_messages = {"required": "Debe enviar un password de confirmación"}
+        error_messages = {"required": REQUIRED_PASSWORD_CONFIRM}
     )
     
     class Meta:
@@ -35,49 +40,40 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                 "validators": [
                     UniqueValidator(
                         queryset = models.User.objects.all(),
-                        message = "Ya existe un usuario con este email"
+                        message = EMAIL_ALREADY_REGISTERED
                     )
                 ],
                 "error_messages": {
-                    'required': "Debe enviar un email para el usuario",
+                    'required': REQUIRED_EMAIL,
                 }
             },
             "password": {
+                "min_length": models.MIN_LENGTH_PASSWORD,
                 "error_messages": {
-                    'required': "Debe enviar un password",
+                    'required': REQUIRED_PASSWORD,
+                    'min_length': MIN_LEN_PASSWORD
                 }
             },
             "name": {
                 "required": True,
-                "max_length": MAX_LENGTH_NAME,
+                "max_length": models.MAX_LENGTH_NAME,
+                "min_length": models.MIN_LENGTH_NAME,
+
                 "error_messages": {
-                    'max_length': "El nombre de usuario es muy largo",
-                    'required': "Debe enviar un nombre para el usuario",
+                    'max_length': MAX_LEN_NAME,
+                    'min_length': MIN_LEN_NAME,
+                    'required': REQUIRED_NAME,
                 }
             }
         }
     
-    def validate_name(self, value):
-
-        if len(value) < MIN_LENGTH_NAME:
-            raise serializers.ValidationError("El nombre es muy corto")
-
-        return value
-
-    def validate_password(self, value):
-        
-        if len(value) < MIN_LENGTH_PASSWORD:
-            raise serializers.ValidationError("La contraseña es muy corta")
-        
-        return value
-
     def validate(self, data):
 
         password = data.get("password")
         password_confirm = data.get("password_confirm")
 
         if password != password_confirm:
-            raise serializers.ValidationError("Las contraseñas no coinciden")
+            raise serializers.ValidationError(PASSWORDS_NOT_MATCH)
 
         return data
 
@@ -124,13 +120,13 @@ class UserChangePassword(serializers.Serializer):
         style={
             "input_type":"password"
         }, 
-        min_length = MIN_LENGTH_PASSWORD
+        min_length = models.MIN_LENGTH_PASSWORD
     )
     password_confirm = serializers.CharField(
         style={
             "input_type":"password"
         },
-        min_length = MIN_LENGTH_PASSWORD
+        min_length = models.MIN_LENGTH_PASSWORD
     )
 
     def validate(self, data):
@@ -138,23 +134,21 @@ class UserChangePassword(serializers.Serializer):
         password_confirm = data.get("password_confirm")
 
         if password != password_confirm:
-            raise serializers.ValidationError("Las contraseñas no coinciden")
+            raise serializers.ValidationError(PASSWORDS_NOT_MATCH)
 
         return data
-
-
 
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField(
         error_messages = {
-            "required": "Debe enviar un email"
+            "required": REQUIRED_EMAIL
         }
     )
     password = serializers.CharField(
         style={'input_type': 'password'},
         error_messages = {
-            "required": "Debe enviar un password"
+            "required": REQUIRED_PASSWORD
         }
     )
 
