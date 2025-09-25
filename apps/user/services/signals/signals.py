@@ -1,16 +1,28 @@
+from typing import TypeVar
+
 import django.dispatch
-from django.conf import settings
+
 from apps.user.models import TypeRole, User
 
-reset_password = django.dispatch.Signal()
+from .utils.exceptions import (
+	InvalidValue,
+	InvalidParams,
+	InvalidUserRole
+)
+
+
+UserM = TypeVar("UserM", bound = User)
 
 change_role = django.dispatch.Signal()
+reset_password = django.dispatch.Signal()
+
+
 
 class SignalResetPassword:
 
 	def send(self, plain_password:str = None, name:str = None, email:str = None):
 		if not plain_password or not name or not email:
-			raise ValueError("Debe pasar [plain_password, name, email]")
+			raise InvalidParams()
 
 		result = reset_password.send(
 			sender=self.__class__, 
@@ -21,12 +33,12 @@ class SignalResetPassword:
 
 class SignalChangeRole:
 
-	def send(self, role:int = None, user:User = None):
+	def send(self, role:int = None, user:UserM = None):
 		if role not in TypeRole.values:
-			raise ValueError(f"Debe ser un role valido {TypeRole.choices}")
+			raise InvalidUserRole()
 
 		if not isinstance(user, User):
-			raise ValueError(f"Debe enviar un usuario, no un [{type(user)}] - {user}")
+			raise InvalidValue(f"Debe enviar un usuario, no un [{type(user)}] - {user}")
 
 
 
