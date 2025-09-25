@@ -1,15 +1,11 @@
-
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 
 import factory
-from faker import Faker
+
+from tests import faker
 
 from apps.user import models
-
-
-
-faker = Faker(locale="es")
 
 EMAIL = faker.email()
 NAME = faker.name()
