@@ -1,35 +1,34 @@
 from typing_extensions import Annotated
 
-from pydantic import BaseModel
-from pydantic import TypeAdapter
-from pydantic import ValidationInfo
-from pydantic import WrapValidator
+from pydantic import BaseModel, ValidationInfo, WrapValidator
 
 from apps.utils.functions import validate_choice
 
 from apps.user import models
-from apps.user.models import User
-from apps.user.models import MAX_LENGTH_NAME
-from apps.user.models import MIN_LENGTH_NAME
-from apps.user.models import MIN_LENGTH_PASSWORD
 
-
-UserModel = TypeAdapter(type[User])
 
 def validate_length_name(value:str, handler, info: ValidationInfo) -> str:
-	if len(value) >= MIN_LENGTH_NAME and len(value) <= MAX_LENGTH_NAME:
+	min_length_name = models.MIN_LENGTH_NAME
+	max_length_name = models.MAX_LENGTH_NAME
+
+	total_len_name = len(value)
+
+	if total_len_name >= min_length_name and total_len_name <= max_length_name:
 		return value
 
-	message_error = f"La longitud debe ser entre {MIN_LENGTH_NAME} y {MAX_LENGTH_NAME} caracteres"
+	message_error = f"La longitud debe ser entre {min_length_name} y {max_length_name} caracteres"
 	message_error += f" en ({info.field_name})"
 
 	raise ValueError(message_error)
 
 def validate_length_password(value:str, handler, info: ValidationInfo) -> str:
-	if len(value) >= MIN_LENGTH_PASSWORD:
+	min_length_password = models.MIN_LENGTH_PASSWORD
+	total_len_password = len(value)
+	
+	if total_len_password >= min_length_password:
 		return value
 
-	message_error = f"La contraseña es muy corta, debe ser mayor a {MIN_LENGTH_PASSWORD} caractéres"
+	message_error = f"La contraseña es muy corta, debe ser mayor a {min_length_password} caractéres"
 
 	raise ValueError(message_error)
 
