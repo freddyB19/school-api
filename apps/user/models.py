@@ -50,9 +50,3 @@ class User(AbstractBaseUser, PermissionsMixin):
 		indexes = [
 			models.Index(fields = ["email"], name="email_user_idx")
 		]
-
-
-class ManagerRole:
-	@classmethod
-	def get(cls):
-		return TypeRole
