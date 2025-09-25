@@ -17,14 +17,6 @@ from .utils.props import (
 
 SIZE_PASSWORD_GENERATE = 12
 
-@validate_call
-def is_valid_email(email: str = None) -> ResultCommand:
-	if not email:
-		raise ValueError("Se necesita un valor para el parametro 'email'")
-
-	return ResultCommand(
-		query = models.User.objects.filter(email = email).exists()
-	)
 
 @handler_validation_errors
 def create_user(user: CreateUserParam, errors: Optional[list] = None):
@@ -60,44 +52,6 @@ def get_user(pk: int = None) -> ResultCommand:
 			error_code = status_code.HTTP_404_NOT_FOUND
 		)
 
-@handler_validation_errors
-def change_user(update: UpdateUserParam, pk: int = None, errors: Optional[list] = None) -> ResultCommand:
-	if not pk:
-		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
-
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors,
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
-
-	context = {
-		"status": False,
-		"errors": [{"message": f"No existe información para el usuario {pk}"}],
-		"error_code": status_code.HTTP_404_NOT_FOUND
-	}
-	
-	update_columns = update.model_dump(exclude_defaults = True)
-
-	user = models.User.objects.filter(pk = pk).update(
-		**update_columns
-	)
-
-	if user:
-		context.update({
-			"status": True,
-			"errors": None,
-			"query": models.User.objects.values(
-				"id", 
-				"name", 
-				"role", 
-				"email",
-				"is_active"
-			).get(pk = pk)
-		})
-
-	return ResultCommand(**context)
 
 @handler_validation_errors
 def change_password(new_password: PropPassword, pk: int = None, errors: Optional[list] = None) -> ResultCommand:
@@ -121,6 +75,7 @@ def change_password(new_password: PropPassword, pk: int = None, errors: Optional
 	user.save()
 	return ResultCommand(status = True)
 
+
 @validate_call
 def get_user_by_email(email: str = None) -> ResultCommand:
 	if not email:
@@ -136,6 +91,7 @@ def get_user_by_email(email: str = None) -> ResultCommand:
 		)
 
 	return ResultCommand(status = True, query = has_user.first())
+
 
 def generate_password(size:int = SIZE_PASSWORD_GENERATE) -> ResultCommand:
 
