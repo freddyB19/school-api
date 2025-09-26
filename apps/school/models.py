@@ -938,3 +938,112 @@ class Repository(models.Model):
 
 	def __repr__(self):
 		return f"Repository(id = {self.id}, name_project = {self.name_project}, school = {self.school.name})"
+
+
+class ExtraActivityPhoto(SchoolPhoto):
+	class Meta:
+		verbose_name = "Foto de actividad extracurricular"
+		verbose_name_plural = "Fotos de actividades extracurriculares"
+		db_table = "extra_activity_photo"
+
+	def __str__(self):
+		return self.title if self.title else f"Archivo de imagen"
+
+	def __repr__(self):
+		return f"ExtraActivityPhoto(id = {self.id}, title = {self.title}, photo = {self.photo})"
+
+
+class ExtraActivityFile(SchoolFile):
+	class Meta:
+		verbose_name = "Archivo de actividad extracurricular"
+		verbose_name_plural = "Archivos de actividades extracurriculares"
+		db_table = "extra_activity_file"
+
+
+	def __str__(self):
+		return self.title if self.title else f"Archivo de imagen"
+
+	def __repr__(self):
+		return f"ExtraActivityFile(id = {self.id}, title = {self.title}, file = {self.file})"
+
+
+MIN_LENGTH_EXTRA_ACT_SCH_TYPE = 5
+MAX_LENGTH_EXTRA_ACT_SCH_TYPE = 50
+MESSAGE_MIN_LEN_EXTRA_ACT_SCHEDULE_TYPE = "La descripción del horario de la actividad, es muy corta"
+
+class ExtraActivitySchedule(models.Model):
+	type = models.CharField(
+		max_length = MAX_LENGTH_EXTRA_ACT_SCH_TYPE,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_EXTRA_ACT_SCH_TYPE, 
+				message = MESSAGE_MIN_LEN_EXTRA_ACT_SCHEDULE_TYPE
+			)
+		]
+	)
+	daysweek = models.ManyToManyField(DaysWeek)
+	opening_time = models.TimeField()
+	closing_time = models.TimeField()
+	active = models.BooleanField(default = True)
+
+	class Meta:
+		verbose_name = "Horario de actividade extracurricular"
+		verbose_name_plural = "Horarios de actividades extracurriculares"
+		db_table = "extra_activity_schedule"
+
+	def validate_opening_closing_time(self):
+		if self.closing_time <= self.opening_time:
+			raise ValidationError('La hora de cierre debe ser posterior a la hora de apertura', params = {'closing_time': self.closing_time})
+
+	def __str__(self):
+		TIME_FORMAT = '%H:%M'
+		return f"[{self.type}] : en un horario desde {self.opening_time.strftime(TIME_FORMAT)} hasta {self.closing_time.strftime(TIME_FORMAT)}"
+
+	def __repr__(self):
+		return f"ExtraActivitySchedule(id = {self.id}, type = {self.type}, active = {self.active}, opening_time = {self.opening_time.strftime(TIME_FORMAT)}, closing_time = {self.closing_time.strftime(TIME_FORMAT)})"
+
+
+
+MIN_LENGTH_EXTRA_ACT_TITLE = 5
+MAX_LENGTH_EXTRA_ACT_TITLE = 100
+MESSAGE_MIN_LEN_EXTRA_ACT_TITLE = "El titulo de la actividad es muy corto"
+
+class ExtraActivity(models.Model):
+	title = models.CharField(
+		max_length = MAX_LENGTH_EXTRA_ACT_TITLE,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_EXTRA_ACT_TITLE, 
+				message = MESSAGE_MIN_LEN_EXTRA_ACT_TITLE
+			)
+		]
+	)
+	description = models.TextField(null = True, blank = True)
+	files = models.ManyToManyField(ExtraActivityPhoto)
+	photos = models.ManyToManyField(ExtraActivityFile)
+	schedules = models.ManyToManyField(ExtraActivitySchedule)
+	created = models.DateTimeField(auto_now_add = True)
+	updated = models.DateTimeField(auto_now = True)
+	school = models.ForeignKey(
+		School, 
+		on_delete=models.CASCADE,
+		related_name="activitiesList",
+		blank=True,
+		null=True
+	)
+
+	class Meta:
+		verbose_name = "Actividad extracurricular"
+		verbose_name_plural = "Actividades extracurriculares"
+		db_table = "extra_activity"
+		ordering = ["-created", "-updated"]
+		indexes = [
+			models.Index(fields = ["school"], name = "extra_activity_school_idx"),
+			models.Index(fields = ["created"], name = "extra_activity_created_idx")
+		]
+
+	def __str__(self):
+		return f"[{self.title}], actividad extracurricular de la escuela: ({self.school.name})"
+
+	def __repr__(self):
+		return f"ExtraActivity(id = {self.id}, title = {self.title}, school = {self.school.name})"
