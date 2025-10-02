@@ -192,13 +192,19 @@ class Grade(models.Model):
 		EducationalStage, 
 		on_delete=models.CASCADE,
 		related_name="stagesList",
+		blank = True, 
+		null = True,
 	)
 	level = models.PositiveSmallIntegerField(
-		max_length = MAX_LENGTH_GRADE_LEVEL,
+		default = MIN_LENGTH_GRADE_LEVEL,
 		validators = [
+			MaxLengthValidator(
+				limit_value = MAX_LENGTH_GRADE_LEVEL,
+				message = "El nivel elegido es muy alto"
+			),
 			MinLengthValidator(
 				limit_value = MIN_LENGTH_GRADE_LEVEL, 
-				message = "El nivel elegido es incorrecto"
+				message = "El nivel elegido es muy bajo"
 			)
 		]
 	)
