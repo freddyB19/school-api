@@ -129,6 +129,7 @@ class SchoolStaff(models.Model):
 # secundaria - 2
 # ...
 
+
 class TypeGradeByNumber(models.IntegerChoices):
 	preschool = 0
 	primary = 1
@@ -146,7 +147,6 @@ MAX_LENGTH_GRADE_SECTION = 3
 MIN_LENGTH_GRADE_SECTION = 1
 
 class Grade(models.Model):
-	
 	name = models.CharField(
 		max_length=MAX_LENGTH_GRADE_NAME,
 		validators = [
@@ -156,7 +156,6 @@ class Grade(models.Model):
 			)
 		]
 	)
-	description = models.TextField(blank = True, null = True)
 	type = models.CharField(
 		choices = TypeGrade, 
 		default = TypeGrade.primary, 
@@ -174,6 +173,7 @@ class Grade(models.Model):
 			)
 		]
 	)
+	description = models.TextField(blank = True, null = True)
 	school = models.ForeignKey(
 		School, 
 		on_delete=models.CASCADE,
@@ -970,7 +970,7 @@ class ExtraActivityFile(SchoolFile):
 MIN_LENGTH_EXTRA_ACT_SCH_TYPE = 5
 MAX_LENGTH_EXTRA_ACT_SCH_TYPE = 50
 MESSAGE_MIN_LEN_EXTRA_ACT_SCHEDULE_TYPE = "La descripción del horario de la actividad, es muy corta"
-
+EXTRA_ACT_TIME_FORMAT = '%H:%M'
 class ExtraActivitySchedule(models.Model):
 	type = models.CharField(
 		max_length = MAX_LENGTH_EXTRA_ACT_SCH_TYPE,
@@ -996,11 +996,10 @@ class ExtraActivitySchedule(models.Model):
 			raise ValidationError('La hora de cierre debe ser posterior a la hora de apertura', params = {'closing_time': self.closing_time})
 
 	def __str__(self):
-		TIME_FORMAT = '%H:%M'
-		return f"[{self.type}] : en un horario desde {self.opening_time.strftime(TIME_FORMAT)} hasta {self.closing_time.strftime(TIME_FORMAT)}"
+		return f"[{self.type}] : en un horario desde {self.opening_time.strftime(EXTRA_ACT_TIME_FORMAT)} hasta {self.closing_time.strftime(EXTRA_ACT_TIME_FORMAT)}"
 
 	def __repr__(self):
-		return f"ExtraActivitySchedule(id = {self.id}, type = {self.type}, active = {self.active}, opening_time = {self.opening_time.strftime(TIME_FORMAT)}, closing_time = {self.closing_time.strftime(TIME_FORMAT)})"
+		return f"ExtraActivitySchedule(id = {self.id}, active = {self.active}, opening_time = {self.opening_time.strftime(EXTRA_ACT_TIME_FORMAT)}, closing_time = {self.closing_time.strftime(EXTRA_ACT_TIME_FORMAT)})"
 
 
 
