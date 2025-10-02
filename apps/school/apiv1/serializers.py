@@ -320,18 +320,18 @@ class SchoolSettingColorsSerializer(serializers.Serializer):
 	colors = serializers.ListField(child = serializers.CharField())
 
 
-class ExtraActivitiePhotoSerializer(serializers.ModelSerializer):
+class ExtraActivityPhotoSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = models.ExtraActivitiePhoto
+		model = models.ExtraActivityPhoto
 		fields = "__all__"
 
-class ExtraActivitieFileSerializer(serializers.ModelSerializer):
+class ExtraActivityFileSerializer(serializers.ModelSerializer):
 	class Meta:
-		model = models.ExtraActivitieFile
+		model = models.ExtraActivityFile
 		fields = "__all__"
 
 
-class ExtraActivitieScheduleSerializer(serializers.ModelSerializer):
+class ExtraActivityScheduleSerializer(serializers.ModelSerializer):
 	
 	daysweek = serializers.SlugRelatedField(
 		many=True,
@@ -340,11 +340,11 @@ class ExtraActivitieScheduleSerializer(serializers.ModelSerializer):
     )
 
 	class Meta:
-		model = models.ExtraActivitieSchedule
+		model = models.ExtraActivitySchedule
 		exclude = ["active"]
 
 
-class ExtraActivitieScheduleShortSerializer(serializers.ModelSerializer):
+class ExtraActivityScheduleShortSerializer(serializers.ModelSerializer):
 	daysweek = serializers.SlugRelatedField(
 		many=True,
 		read_only=True,
@@ -352,33 +352,33 @@ class ExtraActivitieScheduleShortSerializer(serializers.ModelSerializer):
     )
 
 	class Meta:
-		model = models.ExtraActivitieSchedule
+		model = models.ExtraActivitySchedule
 		fields = ["daysweek", "opening_time", "closing_time"]
 
 @extend_schema_field(OpenApiTypes.URI)
-class ExtraActivitiePhotoField(serializers.RelatedField):
+class ExtraActivityPhotoField(serializers.RelatedField):
 	def to_representation(self, value):
 		image = value.first()
 		return image.photo
 
 
-class ExtraActivitieListResponse(serializers.ModelSerializer):
-	photos = ExtraActivitiePhotoField(read_only = True)
-	schedules = ExtraActivitieScheduleShortSerializer(many = True)
+class ExtraActivityListResponse(serializers.ModelSerializer):
+	photos = ExtraActivityPhotoField(read_only = True)
+	schedules = ExtraActivityScheduleShortSerializer(many = True)
 
 	class Meta:
-		model = models.ExtraActivitie
+		model = models.ExtraActivity
 		fields = ["id", "title", "photos", "schedules"]
 
 
-class ExtraActivitieDetailResponse(serializers.ModelSerializer):
-	photos = ExtraActivitiePhotoSerializer(many = True)
-	files = ExtraActivitieFileSerializer(many = True)
-	schedules = ExtraActivitieScheduleSerializer(many = True)
+class ExtraActivityDetailResponse(serializers.ModelSerializer):
+	photos = ExtraActivityPhotoSerializer(many = True)
+	files = ExtraActivityFileSerializer(many = True)
+	schedules = ExtraActivityScheduleSerializer(many = True)
 	school = SchoolShortResponse(read_only = True)
 
 	class Meta:
-		model = models.ExtraActivitie
+		model = models.ExtraActivity
 		fields = [
 			"id", 
 			"title", 
