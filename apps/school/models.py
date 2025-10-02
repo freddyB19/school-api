@@ -122,29 +122,59 @@ class SchoolStaff(models.Model):
 	def __repr__(self):
 		return f"SchoolStaff(id = {self.id}, name = {self.name}, occupation = {self.occupation})"
 
-# Hay que implementar un campo que nos ayude con la ordenación
-# Ej: (Podemos aprovechar el TypeGrade) y asignar un numero al tipo de grado
-# preescolar - 0
-# básica - 1
-# secundaria - 2
-# ...
 
+class TypeEducationalStageByNumber(models.IntegerChoices):
+	preschool = 1
+	primary = 2
+	high = 3
 
-class TypeGradeByNumber(models.IntegerChoices):
-	preschool = 0
-	primary = 1
-	high = 2
-
-class TypeGrade(models.TextChoices):
+class TypeEducationalStage(models.TextChoices):
 	preschool = "preescolar"
 	primary = "básica"
 	high = "secundaria"
 
+MAX_LENGTH_EDUCATIONAL_STAGE_TYPE = 11
+
+class EducationalStage(models.Model):
+	type = models.CharField(
+		choices = TypeEducationalStage, 
+		default = TypeEducationalStage.primary, 
+		max_length = MAX_LENGTH_EDUCATIONAL_STAGE_TYPE
+	)
+
+	type_number = models.PositiveSmallIntegerField(
+		editable = False,
+		choices = TypeEducationalStageByNumber,
+		default = TypeEducationalStageByNumber.primary
+	)
+
+	class Meta:
+		verbose_name = "Etapa educativa"
+		verbose_name_plural = "Etapas educativas"
+		db_table = "educational_stage"
+		ordering = ['type_number']
+
+	def save(self, **kwargs):
+		type_educational = {stage.value: str(stage.name) for stage in TypeEducationalStage}
+		which_educational_stage = type_educational[self.type]
+
+		self.type_number = TypeEducationalStageByNumber[which_educational_stage].value
+		
+		super().save(**kwargs)
+
+	def __str__(self):
+		return self.type
+
+	def __repr__(self):
+		return f"EducationalStage(id = {self.id}, type = {self.type}, type_number = {self.type_number})"
+
+
 MIN_LENGTH_GRADE_NAME = 5
 MAX_LENGTH_GRADE_NAME = 50
-MAX_LENGTH_GRADE_TYPE = 11
 MAX_LENGTH_GRADE_SECTION = 3
 MIN_LENGTH_GRADE_SECTION = 1
+MIN_LENGTH_GRADE_LEVEL = 1
+MAX_LENGTH_GRADE_LEVEL = 10
 
 class Grade(models.Model):
 	name = models.CharField(
@@ -156,12 +186,23 @@ class Grade(models.Model):
 			)
 		]
 	)
-	type = models.CharField(
-		choices = TypeGrade, 
-		default = TypeGrade.primary, 
-		max_length = MAX_LENGTH_GRADE_TYPE
+	description = models.TextField(blank = True, null = True)
+
+	stage = models.ForeignKey(
+		EducationalStage, 
+		on_delete=models.CASCADE,
+		related_name="stagesList",
 	)
-	type_number = models.IntegerField(choices = TypeGradeByNumber, default = TypeGradeByNumber.preschool)
+	level = models.PositiveSmallIntegerField(
+		max_length = MAX_LENGTH_GRADE_LEVEL,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_GRADE_LEVEL, 
+				message = "El nivel elegido es incorrecto"
+			)
+		]
+	)
+	
 	section = models.CharField(
 		max_length = MAX_LENGTH_GRADE_SECTION, 
 		blank = True, 
@@ -173,7 +214,7 @@ class Grade(models.Model):
 			)
 		]
 	)
-	description = models.TextField(blank = True, null = True)
+	
 	school = models.ForeignKey(
 		School, 
 		on_delete=models.CASCADE,
@@ -191,21 +232,16 @@ class Grade(models.Model):
 		verbose_name = "Grado"
 		verbose_name_plural = "Grados de la escuela"
 		db_table = "grade"
-
-	def save(self, **kwargs):
-		type_grade = {grade.value: str(grade.name) for grade in TypeGrade}
-		which_grade = type_grade[self.type]
-
-		self.type_number = TypeGradeByNumber[which_grade].value
-		
-		super().save(**kwargs)
+		ordering = [
+			"stage__type_number", "level"
+		]
 
 	def __str__(self):
 		return f"{self.name} - {self.section}"
 
 
 	def __repr__(self):
-		return f"Grade(id = {self.id}, name = {self.name}, type = {self.type}, school = {self.school.name})"
+		return f"Grade(id = {self.id}, name = {self.name}, stage = {self.stage.type}, school = {self.school.name})"
 
 
 
