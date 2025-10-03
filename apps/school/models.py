@@ -250,18 +250,16 @@ class Grade(models.Model):
 		return f"Grade(id = {self.id}, name = {self.name}, stage = {self.stage.type}, school = {self.school.name})"
 
 
-
 class InfraestructureMedia(SchoolPhoto):
 	class Meta:
 		verbose_name = "Foto de la infraestructura"
 		verbose_name_plural = "Fotos de las infraestructuras"
 
 	def __str__(self):
-		return self.title if self.title else f"Archivo de imagen"
+		return self.title or "Archivo de imagen"
 
 	def __repr__(self):
 		return f"InfraestructureMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
-
 
 
 MIN_LENGTH_INFRA_NAME = 5
@@ -271,7 +269,10 @@ class Infraestructure(models.Model):
 	name = models.CharField(
 		max_length = MAX_LENGTH_INFRA_NAME,
 		validators = [
-			MinLengthValidator(limit_value = MIN_LENGTH_INFRA_NAME, message = "El nombre es muy corto")
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_INFRA_NAME, 
+				message = "El nombre es muy corto"
+			)
 		]
 	)
 	description = models.TextField(blank = True, null = True)
