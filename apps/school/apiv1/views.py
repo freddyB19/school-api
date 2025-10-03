@@ -495,11 +495,11 @@ class PaymentInfoAPIViewDetailAPIView(generics.RetrieveAPIView):
 
 		return response.Response(data = serializer.data, status = status.HTTP_200_OK)
 
+
 class ContactInfoAPIView(generics.ListAPIView):
 	queryset = models.ContactInfo.objects.all()
 	serializer_class = serializers.ContactInfoResponse
 	pagination_class = paginations.BasicPaginate
-
 
 	def get_queryset(self):
 		return self.queryset.filter(
@@ -531,8 +531,8 @@ class ExtraActivityDetailAPIView(generics.RetrieveAPIView):
 			).select_related(
 				"school"
 			).get(pk = self.kwargs.get("pk"))
-		except models.ExtraActivitie.DoesNotExist as e:
-			return None
+		except models.ExtraActivity.DoesNotExist as e:
+			return models.ExtraActivity.objects.none()
 
 
 	def retrieve(self, request, *args, **kwargs):
