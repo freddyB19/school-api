@@ -37,16 +37,18 @@ class SchoolStaffSerializerResponse(serializers.ModelSerializer):
 		model = models.SchoolStaff
 		fields = ["id", "name", "occupation"]
 
-
 class GradeListResponse(serializers.ModelSerializer):
+	stage = serializers.CharField(source = "stage.type")
+	
 	class Meta:
 		model = models.Grade
-		fields = ["id", "name", "type", "section"]
+		fields = ["id", "name", "stage", "section"]
 
 
 class GradeDetailResponse(serializers.ModelSerializer):
 	school = SchoolShortResponse(read_only = True)
 	teacher = SchoolStaffSerializerResponse(many = True, read_only = True)
+	stage = serializers.CharField(source = "stage.type")
 	
 	class Meta:
 		model = models.Grade
