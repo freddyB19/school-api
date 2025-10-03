@@ -146,13 +146,12 @@ class OfficeHourDetailAPIView(generics.RetrieveAPIView):
 
 		return response.Response(data = serializer.data, status = status.HTTP_200_OK)
 
-		
-
 
 class CalendarListAPIView(generics.ListAPIView):
 	queryset = models.Calendar.objects.all()
 	serializer_class = serializers.CalendarListResponse
 	pagination_class = paginations.BasicPaginate
+	#Se puede cambiar el filtro usando 'djago_filter'
 
 	def get_queryset(self):
 		query_param = self.request.query_params.get("month")
