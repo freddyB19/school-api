@@ -1061,8 +1061,8 @@ class ExtraActivity(models.Model):
 		]
 	)
 	description = models.TextField(null = True, blank = True)
-	files = models.ManyToManyField(ExtraActivityPhoto)
-	photos = models.ManyToManyField(ExtraActivityFile)
+	files = models.ManyToManyField(ExtraActivityFile)
+	photos = models.ManyToManyField(ExtraActivityPhoto)
 	schedules = models.ManyToManyField(ExtraActivitySchedule)
 	created = models.DateTimeField(auto_now_add = True)
 	updated = models.DateTimeField(auto_now = True)
