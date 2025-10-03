@@ -27,8 +27,8 @@ class GradeAdmin(admin.ModelAdmin):
 	list_display = [
 		"id",
 		"name",
-		"type",
 		"section",
+		"stage__type",
 		"school__name",
 	]
 	
@@ -54,7 +54,7 @@ class InfraestructureAdmin(admin.ModelAdmin):
 
 	list_filter = ["school"]
 
-class ExtrarActivitiesAdmin(admin.ModelAdmin):
+class ExtrarActivityAdmin(admin.ModelAdmin):
 	list_display = [
 		"id",
 		"title",
@@ -88,8 +88,8 @@ admin.site.register(models.SettingFormat)
 admin.site.register(models.Download)
 admin.site.register(models.RepositoryMediaFile)
 admin.site.register(models.Repository)
-admin.site.register(models.ExtraActivitieFile)
-admin.site.register(models.ExtraActivitiePhoto)
-admin.site.register(models.ExtraActivitieSchedule)
-admin.site.register(models.ExtraActivitie, ExtrarActivitiesAdmin)
+admin.site.register(models.ExtraActivityFile)
+admin.site.register(models.ExtraActivityPhoto)
+admin.site.register(models.ExtraActivitySchedule)
+admin.site.register(models.ExtraActivity, ExtrarActivityAdmin)
 
