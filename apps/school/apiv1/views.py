@@ -154,7 +154,6 @@ class CalendarListAPIView(generics.ListAPIView):
 	serializer_class = serializers.CalendarListResponse
 	pagination_class = paginations.BasicPaginate
 
-	
 	def get_queryset(self):
 		query_param = self.request.query_params.get("month")
 		
@@ -175,8 +174,9 @@ class CalendarDetailAPIView(generics.RetrieveAPIView):
 class SocialMediaListAPIView(generics.ListAPIView):
 	queryset = models.SocialMedia.objects.all()
 	serializer_class = serializers.SocialMediaResponse
+	pagination_class = paginations.BasicPaginate
+	#Necesita una paginación diferente
 
-	
 	def get_queryset(self):
 		return self.queryset.filter(
 			school_id = self.kwargs.get("pk")
