@@ -186,6 +186,8 @@ class SocialMediaListAPIView(generics.ListAPIView):
 class CoordinateListAPIView(generics.ListAPIView):
 	queryset = models.Coordinate.objects.all()
 	serializer_class = serializers.CoordinateResponse
+	pagination_class = paginations.BasicPaginate
+	#Necesita una paginación diferente
 
 	def get_queryset(self):
 		return self.queryset.filter(
