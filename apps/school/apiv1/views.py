@@ -1,4 +1,4 @@
-from datetime import datetime
+from django.utils import timezone
 
 from django.db.models import F
 
@@ -154,6 +154,7 @@ class CalendarListAPIView(generics.ListAPIView):
 	serializer_class = serializers.CalendarListResponse
 	pagination_class = paginations.BasicPaginate
 
+	
 	def get_queryset(self):
 		query_param = self.request.query_params.get("month")
 		
@@ -175,10 +176,11 @@ class SocialMediaListAPIView(generics.ListAPIView):
 	queryset = models.SocialMedia.objects.all()
 	serializer_class = serializers.SocialMediaResponse
 
+	
 	def get_queryset(self):
 		return self.queryset.filter(
 			school_id = self.kwargs.get("pk")
-		)
+		).order_by("id")
 
 
 class CoordinateListAPIView(generics.ListAPIView):
@@ -188,7 +190,7 @@ class CoordinateListAPIView(generics.ListAPIView):
 	def get_queryset(self):
 		return self.queryset.filter(
 			school_id = self.kwargs.get("pk")
-		)
+		).order_by("id")
 
 
 class GradesListAPiView(generics.ListAPIView):
@@ -199,7 +201,7 @@ class GradesListAPiView(generics.ListAPIView):
 	def get_queryset(self):
 		return self.queryset.filter(
 			school_id = self.kwargs.get("pk")
-		).order_by("type_number", "name", "section")
+		)
 
 
 class GradeDetailAPIView(generics.RetrieveAPIView):
@@ -501,9 +503,9 @@ class ContactInfoAPIView(generics.ListAPIView):
 		).order_by("id")
 
 
-class ExtraActivitiesListAPIView(generics.ListAPIView):
-	queryset = models.ExtraActivitie.objects.all()
-	serializer_class = serializers.ExtraActivitieListResponse
+class ExtraActivityListAPIView(generics.ListAPIView):
+	queryset = models.ExtraActivity.objects.all()
+	serializer_class = serializers.ExtraActivityListResponse
 	pagination_class = paginations.BasicPaginate
 
 	def get_queryset(self):
@@ -514,9 +516,9 @@ class ExtraActivitiesListAPIView(generics.ListAPIView):
 		).order_by("-created", "-updated")
 
 
-class ExtraActivitiesDetailAPIView(generics.RetrieveAPIView):
-	queryset = models.ExtraActivitie.objects.all()
-	serializer_class = serializers.ExtraActivitieDetailResponse
+class ExtraActivityDetailAPIView(generics.RetrieveAPIView):
+	queryset = models.ExtraActivity.objects.all()
+	serializer_class = serializers.ExtraActivityDetailResponse
 
 	def get_object(self):
 		try:
@@ -543,5 +545,3 @@ class ExtraActivitiesDetailAPIView(generics.RetrieveAPIView):
 		serializer = self.get_serializer(obj)
 
 		return response.Response(data = serializer.data, status = status.HTTP_200_OK)
-
-		
