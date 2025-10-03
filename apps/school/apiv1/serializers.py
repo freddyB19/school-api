@@ -64,7 +64,7 @@ class InfraestructureMediaSerializer(serializers.ModelSerializer):
 class InfraestructureMediaField(serializers.RelatedField):
 	def to_representation(self, value):
 		image = value.first()
-		return image.photo
+		return image.photo if image else None
 
 class InfraestructureListResponse(serializers.ModelSerializer):
 	media = InfraestructureMediaField(read_only = True)
@@ -72,8 +72,6 @@ class InfraestructureListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Infraestructure
 		fields = ["id", "name", "media"]
-
-
 
 
 class InfraestructureDetailResponse(serializers.ModelSerializer):
