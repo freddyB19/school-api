@@ -112,8 +112,13 @@ urlpatterns = [
 	),
 	path(
 		"<int:pk>/payment", 
-		views.PaymentInfoAPIView.as_view(), 
+		views.PaymentInfoAPIViewListAPIView.as_view(), 
 		name='payment-info'
+	),
+	path(
+		"payment/<int:pk>", 
+		views.PaymentInfoAPIViewDetailAPIView.as_view(), 
+		name='payment-info-detail'
 	),
 	path(
 		"<int:pk>/contact", 
