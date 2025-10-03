@@ -5,9 +5,6 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.school import models as school_models
 
-from apps.management.commands import commands
-from apps.utils.result_commands import ResponseError
-
 from . import serializers, permissions, filters, paginations
 
 
