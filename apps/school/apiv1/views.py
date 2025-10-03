@@ -451,46 +451,49 @@ class CulturalEventsDetailAPIView(generics.RetrieveAPIView):
 		return response.Response(data = serializer.data, status = status.HTTP_200_OK)
 
 
-class PaymentInfoAPIView(views.APIView):
-	@extend_schema(
-		methods=["GET"],
-		auth=None,
-		responses = {
-			404: ResponseError, 
-			200: serializers.PaymentInfoResponse
-		},
-		parameters=[
-			OpenApiParameter(
-                name="pk",
-                type=int,
-                location=OpenApiParameter.PATH,
-                description="Search PaymentInfo by ID"
-            )
-		]
-	)
-	def get(self, request, pk:int = None):
-		payment_info = models.PaymentInfo.objects.filter(
-			school_id = pk
-		).order_by('-id').first()
-		
-		if not payment_info:
+class PaymentInfoAPIViewListAPIView(generics.ListAPIView):
+	queryset = models.PaymentInfo.objects.all()
+	serializer_class = serializers.PaymentInfoResponse
+	pagination_class = paginations.BasicPaginate
 
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		)
+
+class PaymentInfoAPIViewDetailAPIView(generics.RetrieveAPIView):
+	queryset = models.PaymentInfo.objects.all()
+	serializer_class = serializers.PaymentInfoDetailResponse
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		)
+
+	def get_object(self):
+		try:
+			return self.queryset.select_related(
+				"school"
+			).get(
+				pk = self.kwargs.get("pk")
+			)
+		except models.PaymentInfo.DoesNotExist as e:
+			return models.PaymentInfo.objects.none()
+	
+	def retrieve(self, request, *args, **kwargs):
+		obj = self.get_object()
+
+		if not obj:
 			return response.Response(
-				ResponseError(
-					errors=[
-						{"message": "No existe información sobre esta escuela"}
-					]
-				).model_dump(), 
+				data = {
+					"error": {"message": f"No existe algún información de pago con este id ({kwargs.get('pk')})"}
+				},
 				status = status.HTTP_404_NOT_FOUND
 			)
 
-		de_serializer = serializers.PaymentInfoResponse(payment_info)
+		serializer = self.get_serializer(obj)
 
-		return response.Response(
-			data = de_serializer.data,
-			status = status.HTTP_200_OK
-		)
-
+		return response.Response(data = serializer.data, status = status.HTTP_200_OK)
 
 class ContactInfoAPIView(generics.ListAPIView):
 	queryset = models.ContactInfo.objects.all()
