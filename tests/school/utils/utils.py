@@ -186,7 +186,7 @@ class  CoordinateFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = models.Coordinate
 
-	title = factory.LazyAttribute(lambda x: faker.url())
+	title = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = 20))
 	latitude = factory.LazyAttribute(lambda x: faker.local_latlng(country_code = 'VE')[0])
 	longitude = factory.LazyAttribute(lambda x: faker.local_latlng(country_code = 'VE')[1])
 	school = factory.SubFactory(SchoolFactory)
