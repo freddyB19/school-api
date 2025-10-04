@@ -15,7 +15,9 @@ class UserInput(graphene.InputObjectType):
 	password = graphene.String(required = True)
 	password_confirm = graphene.String(required = True)
 
+
 AdministratorDoesNotExist = None
+GraphQLErrorMessage = "Error en los datos enviados"
 
 class AdministratorUserMutation(graphene.Mutation):
 
@@ -44,7 +46,7 @@ class AdministratorUserMutation(graphene.Mutation):
 		
 		if not serializer_register.is_valid():
 			raise GraphQLError(
-				"Error en los datos enviados",
+				GraphQLErrorMessage,
 				extensions = {"invalidArguments": serializer_register.errors}
 			)
 
