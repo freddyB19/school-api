@@ -1,11 +1,4 @@
-import datetime
 from unittest import mock
-
-from django.conf import settings
-from django.contrib.auth import get_user_model
-from django.test import TestCase, RequestFactory
-
-import jwt
 
 from graphql import GraphQLError
 
@@ -18,29 +11,19 @@ from apps.graphql.utils import (
 	get_http_authorization,
 )
 from apps.graphql import exceptions
-from apps.user.tests.utils.utils import create_user
 
 from .utils import encode_token, PAYLOAD_SET_EXP
-
-HEADER_NAME = settings.GRAPHENE_JWT['JWT_AUTH_HEADER_NAME']
-HEADER_PREFIX = settings.GRAPHENE_JWT['JWT_AUTH_HEADER_PREFIX']
-ALGOTITHM = settings.GRAPHENE_JWT['ALGORITHM']
-SECRET_KEY =  settings.GRAPHENE_JWT['GRAPHENE_PRIVATE_KEY'] or settings.GRAPHENE_JWT['GRAPHENE_KEY']
+from .utils import testcases
 
 
-class GetHTTPAuthorizationTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
-		self.token = encode_token(user = self.user)
-		self.request_factory = RequestFactory()
-
+class GetHTTPAuthorizationTest(testcases.GetHTTPAuthorizationTestCase):		
 
 	def test_get_authorization_header(self):
 		"""
 			Obtener token del 'header'
 		"""
 		headers = {
-			HEADER_NAME: f"{HEADER_PREFIX} {self.token}"
+			self.HEADER_NAME: f"{self.HEADER_PREFIX} {self.token}"
 		}
 
 		request = self.request_factory.get("/", **headers)
@@ -55,7 +38,7 @@ class GetHTTPAuthorizationTest(TestCase):
 			Obtener un 'None' por pasar un prefijo incorrecto en el 'header'
 		"""
 		headers = {
-			HEADER_NAME: f"Token {self.token}"
+			self.HEADER_NAME: f"Token {self.token}"
 		}
 
 		request = self.request_factory.get("/", **headers)
@@ -77,9 +60,7 @@ class GetHTTPAuthorizationTest(TestCase):
 		self.assertIsNone(auth_header)
 
 
-class DecodeTokenTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
+class DecodeTokenTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_expired_token(self):
 		"""
@@ -101,9 +82,7 @@ class DecodeTokenTest(TestCase):
 			decode_token(token[1:])
 
 
-class GetUserByIDTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
+class GetUserByIDTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_get_user(self):
 		"""
@@ -128,9 +107,7 @@ class GetUserByIDTest(TestCase):
 		self.assertIsNone(user)
 
 
-class GetUserbyPayloadTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
+class GetUserbyPayloadTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_get_user_by_payload(self):
 		"""
@@ -178,10 +155,7 @@ class GetUserbyPayloadTest(TestCase):
 			user = get_user_by_payload(payload)
 
 
-class GetPayloadTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
-
+class GetPayloadTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_get_payload_from_token(self):
 		"""
@@ -200,10 +174,7 @@ class GetPayloadTest(TestCase):
 			payload = get_payload(token)
 
 
-class GetUserTest(TestCase):
-	def setUp(self):
-		self.user = create_user()
-
+class GetUserTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_get_user_from_payload(self):
 		"""

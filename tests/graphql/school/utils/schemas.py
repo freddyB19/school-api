@@ -18,11 +18,14 @@ query School($subdomain: String!) {
 		news {
 			id
 			title
+			photo
 		}
 
 		coordinates {
 			id
 			title
+			latitude
+			longitude
 		}
 
 	}
@@ -45,7 +48,7 @@ query SchoolService($schoolId: Int!){
 	}
 
 	schoolServiceOffline(schoolId: $schoolId) {
-		infraestructure {
+		infraestructures {
 			id
 			photo
 		}

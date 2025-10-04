@@ -1,40 +1,13 @@
 import json
 
-from faker import Faker
-from graphene_django.utils.testing import GraphQLTestCase
+from tests import faker
 
-from apps.school.tests.utils.utils import create_school
-from apps.user.tests.utils.utils import FakerCreateUser, create_user
+from .utils import testcases, utils
+from apps.user.apiv1 import serializers
+from apps.graphql.management_user.mutations import GraphQLErrorMessage
 
-faker = Faker(locale="es")
 
-class AdministratorUserMutationTest(GraphQLTestCase):
-	def setUp(self):
-		self.faker_user = FakerCreateUser()
-		self.school = create_school()
-		self.user = create_user()
-
-		self.query_create_user = """
-			mutation CreateUser($school_id: Int!, $user: UserInput!){
-				createUser(schoolId: $school_id, user: $user){
-					user {
-						id
-						name
-						email
-						role
-					}
-				}
-			}
-		"""
-		self.variables_create_user = {
-			"school_id": self.school.id,
-			"user": {
-				"name": self.faker_user.name,
-				"email": self.faker_user.email, 
-				"password": self.faker_user.password, 
-				"passwordConfirm": self.faker_user.password
-			}
-		}
+class AdministratorUserMutationTest(testcases.AdminCreateUserTestCase):
 
 	def test_create_user(self):
 		"""
@@ -49,12 +22,14 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
+		user = response["data"]["createUser"]["user"]
+
 		self.assertEqual(
-			response["data"]["createUser"]["user"]["name"], 
+			user["name"], 
 			self.variables_create_user["user"]["name"],
 		)
 		self.assertEqual(
-			response["data"]["createUser"]["user"]["email"], 
+			user["email"], 
 			self.variables_create_user["user"]["email"],
 		)
 
@@ -73,7 +48,9 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
-		self.assertIsNone(response["data"]["createUser"])
+		user = response["data"]["createUser"]
+
+		self.assertIsNone(user["user"])
 
 
 	def test_create_user_with_existent_email(self):
@@ -92,10 +69,13 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
-		self.assertEqual(response["errors"][0]["message"], "Error en los datos enviados")
+		error_message = response["errors"][0]["message"]
+		error_arguments = response["errors"][0]["extensions"]["invalidArguments"]
+
+		self.assertEqual(error_message, GraphQLErrorMessage)
 		self.assertEqual(
-			response["errors"][0]["extensions"]["invalidArguments"]["email"], 
-			["Ya existe un usuario con este email"]
+			error_arguments["email"], 
+			[serializers.EMAIL_ALREADY_REGISTERED]
 		)
 
 
@@ -115,9 +95,11 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 
+		error = response["errors"][0]["extensions"]["invalidArguments"]
+
 		self.assertEqual(
-			response["errors"][0]["extensions"]["invalidArguments"]["non_field_errors"], 
-			["Las contraseñas no coinciden"]
+			error["non_field_errors"], 
+			[serializers.PASSWORDS_NOT_MATCH]
 		)
 
 
@@ -137,10 +119,12 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 		)
 
 		response = json.loads(result.content)
+
+		error = response["errors"][0]["extensions"]["invalidArguments"]
 		
 		self.assertEqual(
-			response["errors"][0]["extensions"]["invalidArguments"]["password"], 
-			["La contraseña es muy corta"]
+			error["password"], 
+			[serializers.MIN_LEN_PASSWORD]
 		)
 
 
@@ -160,9 +144,11 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 
 		response = json.loads(result.content)
 		
+		error = response["errors"][0]["extensions"]["invalidArguments"]
+		
 		self.assertEqual(
-			response["errors"][0]["extensions"]["invalidArguments"]["name"], 
-			["El nombre es muy corto"]
+			error["name"], 
+			[serializers.MIN_LEN_NAME]
 		)
 
 	def test_create_user_with_to_long_name(self):
@@ -170,7 +156,7 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 			Intentar crear un usuario con un nombre muy largo
 		"""
 		new_user = self.variables_create_user["user"]
-		long_name = f"{faker.paragraph(nb_sentences = 5)}{faker.paragraph(nb_sentences = 5)}"
+		long_name = utils.GET_LONG_NAME()
 		new_user.update({"name": long_name})
 
 		self.variables_create_user.update({"user": new_user})
@@ -181,8 +167,10 @@ class AdministratorUserMutationTest(GraphQLTestCase):
 		)
 
 		response = json.loads(result.content)
+
+		error = response["errors"][0]["extensions"]["invalidArguments"]
 		
 		self.assertEqual(
-			response["errors"][0]["extensions"]["invalidArguments"]["name"], 
-			["El nombre de usuario es muy largo"]
+			error["name"], 
+			[serializers.MAX_LEN_NAME]
 		)

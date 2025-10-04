@@ -1,53 +1,22 @@
 from unittest import mock
 
-from django.conf import settings
-from django.test import TestCase, RequestFactory
 from django.contrib.auth.models import AnonymousUser
 
 from graphql import GraphQLError
-from graphql.type.definition import GraphQLResolveInfo
 
-from apps.user.tests.utils.utils import create_user
-from apps.graphql.middleware import AuthorizationMiddleware
 from apps.graphql import exceptions 
 
-from .utils import encode_token
+from .utils import testcases
 
 
-HEADER_NAME = settings.GRAPHENE_JWT['JWT_AUTH_HEADER_NAME']
-HEADER_PREFIX = settings.GRAPHENE_JWT['JWT_AUTH_HEADER_PREFIX']
-
-class MiddlewareTestCase(TestCase):
-	def setUp(self):
-		self.request_factory = RequestFactory()
-
-	def info_mock(self, user = None, header = None, **kwargs):
-		request = self.request_factory.get("/", **(header or {}))
-
-		if user:
-			request.user = user
-
-		return mock.Mock(
-			context = request,
-			spec = GraphQLResolveInfo,
-			**kwargs
-		)
-
-
-class AuthorizationMiddlewareTest(MiddlewareTestCase):
-
-	def setUp(self):
-		super().setUp()
-		self.user = create_user()
-		self.token = encode_token(user = self.user)
-		self.middleware = AuthorizationMiddleware()
+class AuthorizationMiddlewareTest(testcases.AuthorizationMiddlewareTestCase):
 
 	def test_authorization_user(self):
 		"""
 			Validar la autenticación de un usuario
 		"""
 		header = {
-			HEADER_NAME: f"{HEADER_PREFIX} {self.token}"
+			self.HEADER_NAME: f"{self.HEADER_PREFIX} {self.token}"
 		}
 
 		next_mock = mock.Mock()
@@ -66,7 +35,7 @@ class AuthorizationMiddlewareTest(MiddlewareTestCase):
 			No autenticar por enviar un prefijo invalido en el 'header'
 		"""
 		header = {
-			HEADER_NAME: f"Token {self.token}"
+			self.HEADER_NAME: f"Token {self.token}"
 		}
 
 		next_mock = mock.Mock()
@@ -101,7 +70,7 @@ class AuthorizationMiddlewareTest(MiddlewareTestCase):
 			No autenticar por enviar un token invalido en el 'header'
 		"""
 		header = {
-			HEADER_NAME: f"{HEADER_PREFIX} invalid"
+			self.HEADER_NAME: f"{self.HEADER_PREFIX} invalid"
 		}
 
 		next_mock = mock.Mock()

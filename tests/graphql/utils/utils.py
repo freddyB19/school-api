@@ -5,7 +5,6 @@ from django.urls import reverse
 from django.test import Client
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from apps.user.tests.utils.utils import FakerCreateUser
 
 import jwt
 
