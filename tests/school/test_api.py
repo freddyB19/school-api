@@ -71,7 +71,9 @@ class SchoolAPITest(testcases.SchoolTestCase):
 		"""
 			Generar [Error 404] "GET /school/:id" por información que no existe
 		"""
-		wrong_pk = 34
+		school_id = models.School.objects.last().id
+		# Nos basamos en el último ID y le sumamos 1, para generar un ID falso
+		wrong_pk = faker.random_int(min = school_id + 1)
 
 		response = self.client.get(
 			self.get_detail_school_url(id = wrong_pk)
@@ -169,7 +171,7 @@ class OfficeHourAPITest(testcases.OfficeHourTestCase):
 		wrong_pk = faker.random_int(min = office_hour_id + 1)
 
 		response = self.client.get(
-			reverse("school:office-hour-detail", kwargs={"pk": wrong_pk})
+			self.get_detail_officehour_url(id = wrong_pk)
 		)
 
 		responseStatus = response.status_code
@@ -298,7 +300,7 @@ class CalendarAPITests(testcases.CalendarTestCase):
 		wrong_pk = faker.random_int(min = calendar_id + 1)
 
 		response = self.client.get(
-			reverse("school:calendar-detail", kwargs={"pk": wrong_pk})
+			self.get_detail_calendar_url(id = wrong_pk)
 		)
 
 		responseJson = response.data
