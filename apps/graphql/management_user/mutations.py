@@ -1,7 +1,6 @@
 import graphene
 from graphql import GraphQLError
 
-from apps.school.models import School
 from apps.management.models import Administrator
 
 from apps.user.apiv1.serializers import UserRegisterSerializer
@@ -16,7 +15,6 @@ class UserInput(graphene.InputObjectType):
 	password_confirm = graphene.String(required = True)
 
 
-AdministratorDoesNotExist = None
 GraphQLErrorMessage = "Error en los datos enviados"
 
 class AdministratorUserMutation(graphene.Mutation):
@@ -32,8 +30,7 @@ class AdministratorUserMutation(graphene.Mutation):
 		try:
 			admin = Administrator.objects.get(school_id = school_id)
 		except Administrator.DoesNotExist as e:
-			return AdministratorDoesNotExist
-
+			return Administrator.objects.none()
 
 		serializer_register = UserRegisterSerializer(
 			data = {
