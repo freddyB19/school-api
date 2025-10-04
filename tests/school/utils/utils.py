@@ -83,7 +83,7 @@ class ColorHexFormatFactory(factory.django.DjangoModelFactory):
 def create_color_hex_format(**kwargs) -> models.ColorHexFormat:
 	return ColorHexFormatFactory.create(**kwargs)
 
-def bulk_color_hex_format(size: int = 1) -> list[models.ColorHexFormat]:
+def bulk_create_color_hex_format(size: int = 1, **kwargs) -> list[models.ColorHexFormat]:
 	return ColorHexFormatFactory.create_batch(size = size, **kwargs)
 
 
