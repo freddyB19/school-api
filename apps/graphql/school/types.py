@@ -124,4 +124,4 @@ class ServiceOnlineType(graphene.ObjectType):
 
 
 class ServiceOfflineType(graphene.ObjectType):
-	infraestructure = graphene.List(InfraestructureType) # DjangoListField(InfraestructureType)
+	infraestructures = graphene.List(InfraestructureType) # DjangoListField(InfraestructureType)
