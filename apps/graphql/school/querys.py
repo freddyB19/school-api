@@ -84,9 +84,11 @@ class SchoolQuery(graphene.ObjectType):
 	
 
 	def resolve_schoolServiceOffline(root, info, schoolId):
+		MAX_LEN_SERVICE_OFFLINE = 11
+
 		infraestructure = models.Infraestructure.objects.filter(
 			school_id = schoolId
-		)
+		)[:MAX_LEN_SERVICE_OFFLINE]
 		
 		return ServiceOfflineType(
 			infraestructure = infraestructure
@@ -94,13 +96,15 @@ class SchoolQuery(graphene.ObjectType):
 
 
 	def resolve_schoolServiceOnline(root, info, schoolId):
+		MAX_LEN_SERVICE_ONLINE = 11
+
 		downloads = models.Download.objects.filter(
 			school_id = schoolId
-		)[:11]
+		)[:MAX_LEN_SERVICE_ONLINE]
 
 		repositories = models.Repository.objects.filter(
 			school_id = schoolId
-		)[:11]
+		)[:MAX_LEN_SERVICE_ONLINE]
 
 		return ServiceOnlineType(
 			downloads = downloads,
