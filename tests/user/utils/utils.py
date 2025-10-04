@@ -43,7 +43,7 @@ def create_user(**kwargs) -> models.User:
 	return UserFactory.create(**kwargs)
 
 
-def bulk_create_user(size: int = 1) -> models.User:
+def bulk_create_user(size: int = 1, **kwargs) -> models.User:
 	
 	"""
 		Nos permite crear multiples usuarios en una sola consulta
