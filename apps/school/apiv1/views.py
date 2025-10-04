@@ -157,7 +157,7 @@ class CalendarListAPIView(generics.ListAPIView):
 		query_param = self.request.query_params.get("month")
 		
 		if not query_param:
-			query_param = timezone.now().month
+			query_param = timezone.localtime().month
  
 		return self.queryset.filter(
 			school_id = self.kwargs.get("pk"),
