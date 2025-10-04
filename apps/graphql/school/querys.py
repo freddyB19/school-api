@@ -23,8 +23,6 @@ from .types import (
 )
 
 
-SchoolDoesNotExist = None
-
 class SchoolQuery(graphene.ObjectType):
 	schoolBySubdomain = graphene.Field(
 		SchoolHomePageType, 
@@ -52,7 +50,7 @@ class SchoolQuery(graphene.ObjectType):
 		try:
 			school = models.School.objects.get(subdomain = subdomain)
 		except models.School.DoesNotExist as e:
-			return SchoolDoesNotExist
+			return models.School.objects.none()
 
 		current_month = timezone.localtime().month
 
