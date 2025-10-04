@@ -54,7 +54,7 @@ class SchoolQuery(graphene.ObjectType):
 		except models.School.DoesNotExist as e:
 			return SchoolDoesNotExist
 
-		current_month = timezone.now().month
+		current_month = timezone.localtime().month
 
 		settings = school.setting
 		news = school.newsList.filter(status = "publicado")[:10]		
