@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from apps.management.commands.utils.functions import set_name_image
 
-from . import faker
+from tests import faker
 
 class SetImageNameTest(TestCase):
 

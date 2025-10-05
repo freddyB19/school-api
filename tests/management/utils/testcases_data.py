@@ -1,13 +1,13 @@
 from apps.school import models as school_models
 
-from apps.management.tests import faker
+from tests import faker
 
 from .utils import set_daysweek, get_long_string
 
 UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	{
 		"update": {
-			"name": "Av12"
+			"name": faker.pystr(max_chars = school_models.MIN_LENGTH_SCHOOL_NAME - 1)
 		},
 		"expect": {
 			"code": 400,
@@ -34,7 +34,7 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	},
 	{
 		"update": {
-			"address": "short"
+			"address": faker.pystr(max_chars = school_models.MIN_LENGTH_SCHOOL_ADDRESS - 1)
 		},
 		"expect": {
 			"code": 400,
@@ -43,7 +43,7 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	},
 	{
 		"update": {
-			"mission": "short"
+			"mission":faker.pystr(max_chars = 4)
 		},
 		"expect": {
 			"code": 400,
@@ -52,7 +52,7 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	},
 	{
 		"update": {
-			"vision": "short"
+			"vision": faker.pystr(max_chars = 4)
 		},
 		"expect": {
 			"code": 400,
@@ -61,7 +61,7 @@ UPDATE_SCHOOL_WITH_WRONG_DATA = [
 	},
 	{
 		"update": {
-			"history": "short"
+			"history": faker.pystr(max_chars = 4)
 		},
 		"expect": {
 			"code": 400,

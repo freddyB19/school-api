@@ -1,11 +1,11 @@
 from django.urls import reverse
 
-from apps.user.tests.utils.utils import create_user
+from tests.user.utils.utils import create_user
 
-from .utils.testcases import AdministratorUserTest
+from .utils import testcases
 
 
-class UserUpdatePermissionsTest(AdministratorUserTest):
+class UserUpdatePermissionsTest(testcases.AdministratorUserTestCase):
 	
 	def setUp(self):
 		super().setUp()

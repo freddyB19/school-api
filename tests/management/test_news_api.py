@@ -6,25 +6,22 @@ from PIL import Image
 
 from freezegun import freeze_time
 
-from apps.user.tests.utils.utils import create_user
+from apps.school import models as school_models
 
-from apps.school.tests.utils.utils import(
+from tests import faker
+
+from tests.user.utils import create_user
+
+from tests.school.utils import(
 	create_news,
 	create_school, 
 	bulk_create_news, 
 )
-from apps.school import models as school_models
 
-from . import faker
-
-from .utils.testcases import (
-	NewsListTest,
-	NewsCreateTest,
-	NewsDetailUpdateDeleteTest
-)
+from .utils import testcases
 
 
-class NewsCreateAPITest(NewsCreateTest):
+class NewsCreateAPITest(testcases.NewsCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -224,8 +221,7 @@ class NewsCreateAPITest(NewsCreateTest):
 		self.assertEqual(responseStatus, 401)
 
 
-
-class NewsListAPITest(NewsListTest):
+class NewsListAPITest(testcases.NewsListTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -443,8 +439,7 @@ class NewsListAPITest(NewsListTest):
 		self.assertEqual(responseStatus, 401)
 
 
-
-class NewsDetailUpdateDeleteAPITest(NewsDetailUpdateDeleteTest):
+class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -770,8 +765,7 @@ class NewsDetailUpdateDeleteAPITest(NewsDetailUpdateDeleteTest):
 		self.assertEqual(responseStatus, 401)
 
 
-
-class NewsUpdateImagesAPITest(NewsDetailUpdateDeleteTest):
+class NewsUpdateImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 

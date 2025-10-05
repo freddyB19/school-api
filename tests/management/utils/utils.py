@@ -1,19 +1,15 @@
-import tempfile, datetime
+import datetime
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-import factory
+from tests import faker
 
 from apps.management import models
-from apps.management.tests import faker
 from apps.school import models as school_models
-
-from PIL import Image
 
 def get_administrator(school_id: int = None):
 	if not school_id:
 		raise ValueError("Debe ser el ID de 'school'")
-
 	try:
 		return models.Administrator.objects.get(school_id = school_id)
 	except models.Administrator.DoesNotExist as e:

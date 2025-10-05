@@ -2,36 +2,32 @@ import unittest, random, datetime
 
 from django.urls import reverse
 
-from . import faker
-
 from apps.school import models
-from apps.school.tests.utils.utils import (
+
+from tests import faker
+from tests.school.utils import (
 	create_school,
 	create_officehour,
 	create_time_group,
 	bulk_create_officehour,
 	bulk_create_officehour_without_daysweek,
 )
+from tests.user.utils import create_user
 
-from apps.user.tests.utils.utils import create_user
-
-from .utils.utils import (
+from .utils import (
 	set_time, 
 	set_daysweek, 
 	set_format_dasyweek_query,
 	selected_daysweek_to_names
 )
-from .utils.testcases import (
-	OfficeHourListTest,
-	OfficeHourCreateTest,
-	OfficeHourDetailUpdateDeleteTest
-)
+from .utils import testcases
+
 from .utils.testcases_data import (
 	UPDATE_OFFICEHOUR_WITH_WRONG_DATA
 )
 
 
-class OfficeHourCreateAPITest(OfficeHourCreateTest):
+class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -378,7 +374,7 @@ class OfficeHourCreateAPITest(OfficeHourCreateTest):
 		self.assertEqual(responseStatus, 401)
 
 
-class OfficeHourListAPITest(OfficeHourListTest):
+class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 
 	def setUp(self):
 		super().setUp()
@@ -643,7 +639,7 @@ class OfficeHourListAPITest(OfficeHourListTest):
 		self.assertEqual(responseStatus, 401)
 
 
-class OfficeHourDetailUpdateDeleteAPITest(OfficeHourDetailUpdateDeleteTest):
+class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 

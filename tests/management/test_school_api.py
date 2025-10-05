@@ -4,14 +4,15 @@ from django.urls import reverse
 
 from PIL import Image
 
-from apps.school.tests.utils.utils import create_school
+from tests.school.utils import create_school
+
+from .utils import testcases
 
 from .utils.testcases_data import(
 	UPDATE_SCHOOL_WITH_WRONG_DATA
 )
-from .utils.testcases import SchoolUpdateTest
 
-class SchoolUpdateAPITest(SchoolUpdateTest):
+class SchoolUpdateAPITest(testcases.SchoolUpdateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -138,7 +139,7 @@ class SchoolUpdateAPITest(SchoolUpdateTest):
 
 
 
-class SchoolUpdateLogoAPITest(SchoolUpdateTest):
+class SchoolUpdateLogoAPITest(testcases.SchoolUpdateTestCase):
 	def setUp(self):
 		super().setUp()
 

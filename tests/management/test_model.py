@@ -1,17 +1,16 @@
 import unittest
+
 from django.test import TransactionTestCase
 from django.core.exceptions import ValidationError
+
 from apps.management import models
-from apps.user.tests.utils.utils import create_user, FakerCreateUser
-from apps.school.tests.utils.utils import create_school
 
-class AdministratorModelTest(TransactionTestCase):
-	serialized_rollback = True
+from tests.user.utils.utils import create_user
+from tests.school.utils.utils import create_school
 
+from .utils import testcases
 
-	def setUp(self):
-		self.school = create_school()
-		
+class AdministratorModelTest(testcases.AdministratorModelTestCase):
 
 	def test_create_administrator(self):
 		"""

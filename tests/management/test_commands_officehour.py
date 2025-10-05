@@ -4,7 +4,7 @@
 """
 import random, datetime
 
-from . import faker
+from tests import faker
 
 from pydantic import ValidationError
 
@@ -15,13 +15,11 @@ from apps.management.commands.utils.errors_messages import (
 	TimeGroupErrorsMessages,
 	OfficeHourErrorsMessages
 )
-from .utils.testcases import (
-	CommandTimeGroupTest,
-	CommandOfficeHourTest,
-)
-from apps.school.tests.utils.utils import create_daysweek
+from .utils import testcases
 
-class CommandAddTimeGroupTest(CommandTimeGroupTest):
+from tests.school.utils.utils import create_daysweek
+
+class CommandAddTimeGroupTest(testcases.CommandTimeGroupTestCase):
 
 	def setUp(self):
 		super().setUp()
@@ -183,7 +181,7 @@ class CommandAddTimeGroupTest(CommandTimeGroupTest):
 			)
 
 
-class CommandAddOfficeHourTest(CommandOfficeHourTest):
+class CommandAddOfficeHourTest(testcases.CommandOfficeHourTestCase):
 	
 	def test_add_office_hour(self):
 		"""
@@ -239,7 +237,7 @@ class CommandAddOfficeHourTest(CommandOfficeHourTest):
 					)
 
 
-class CommandCreateOfficeHourTest(CommandOfficeHourTest):
+class CommandCreateOfficeHourTest(testcases.CommandOfficeHourTestCase):
 	def setUp(self):
 		super().setUp()
 

@@ -1,9 +1,8 @@
 from django.urls import reverse
 
-from .utils.testcases import AdministratorTest
+from .utils import testcases
 
-
-class AdministratorAPITest(AdministratorTest):
+class AdministratorAPITest(testcases.AdministratorTestCase):
 
 	def setUp(self):
 		super().setUp()

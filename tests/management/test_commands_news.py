@@ -4,17 +4,17 @@
 """
 import unittest
 
-from . import faker
+from tests import faker
 from pydantic import ValidationError
 
 from apps.school import models
 from apps.management.commands import commands
-from .utils.testcases import CommandNewsTest
+from .utils import testcases
 
-from .utils.utils import create_list_images, list_upload_images
+from .utils import create_list_images, list_upload_images
 
 
-class CommandAddNewsTest(CommandNewsTest):
+class CommandAddNewsTest(testcases.CommandNewsTestCase):
 
 	def test_add_news(self):
 		"""
@@ -76,7 +76,7 @@ class CommandAddNewsTest(CommandNewsTest):
 			)
 
 
-class CommandAddNewsMediaTest(CommandNewsTest):
+class CommandAddNewsMediaTest(testcases.CommandNewsTestCase):
 
 	def test_add_newsmedia(self):
 		"""
@@ -108,7 +108,7 @@ class CommandAddNewsMediaTest(CommandNewsTest):
 			commands.add_newsmedia()
 
 
-class CommandCreateNewsTest(CommandNewsTest):
+class CommandCreateNewsTest(testcases.CommandNewsTestCase):
 	def setUp(self):
 		super().setUp()
 

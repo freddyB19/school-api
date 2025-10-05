@@ -2,33 +2,40 @@ from django.test import TransactionTestCase
 
 from rest_framework.test import APIClient, APITestCase
 
-from apps.management.tests import faker
-from apps.user.tests.utils.utils import (
+from tests import faker
+
+from tests.user.utils import (
 	create_user, 
 	create_permissions, 
 	get_permissions
 )
-from apps.school.tests.utils.utils import create_school, create_daysweek
+from tests.school.utils import create_school, create_daysweek
 
 from .utils import get_long_string, get_administrator
 
+class AdministratorModelTestCase(TransactionTestCase):
+	# serialized_rollback = True
 
-class CommandNewsTest(TransactionTestCase):
 	def setUp(self):
 		self.school = create_school()
 
 
-class CommandTimeGroupTest(TransactionTestCase):
+class CommandNewsTestCase(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+
+
+class CommandTimeGroupTestCase(TransactionTestCase):
 	def setUp(self):
 		self.dayweek = create_daysweek()
 
 
-class CommandOfficeHourTest(TransactionTestCase):
+class CommandOfficeHourTestCase(TransactionTestCase):
 	def setUp(self):
 		self.school = create_school()
 
 
-class AdministratorTest(APITestCase):
+class AdministratorTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
 
@@ -39,7 +46,7 @@ class AdministratorTest(APITestCase):
 		self.administrator.users.add(*[self.user_role_admin, self.user_role_staff])
 
 
-class AdministratorUserTest(APITestCase):
+class AdministratorUserTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
 		
@@ -54,7 +61,7 @@ class AdministratorUserTest(APITestCase):
 		create_permissions("Update test", "update_test")
 
 
-class SchoolUpdateTest(TransactionTestCase):
+class SchoolUpdateTestCase(TransactionTestCase):
 	def setUp(self):
 		self.client = APIClient()
 
@@ -70,7 +77,7 @@ class SchoolUpdateTest(TransactionTestCase):
 		admin.users.add(*(self.user_with_perm, self.user_without_perm))
 
 
-class NewsTest(APITestCase):
+class NewsTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
 		self.school = create_school()
@@ -90,7 +97,7 @@ class NewsTest(APITestCase):
 		admin.users.add(self.user_with_all_perm)
 
 
-class NewsCreateTest(NewsTest):
+class NewsCreateTestCase(NewsTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -108,7 +115,7 @@ class NewsCreateTest(NewsTest):
 		admin.users.add(*(self.user_with_view_perm, self.user_with_delete_perm))
 
 
-class NewsDetailUpdateDeleteTest(NewsCreateTest):
+class NewsDetailUpdateDeleteTestCase(NewsCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -122,12 +129,12 @@ class NewsDetailUpdateDeleteTest(NewsCreateTest):
 		admin.users.add(self.user_with_update_perm)
 
 
-class NewsListTest(NewsTest):
+class NewsListTestCase(NewsTestCase):
 	def setUp(self):
 		super().setUp()
 
 
-class OfficeHourTest(APITestCase):
+class OfficeHourTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
 
@@ -148,7 +155,7 @@ class OfficeHourTest(APITestCase):
 		admin.users.add(self.user_with_all_perm)
 
 
-class OfficeHourCreateTest(OfficeHourTest):
+class OfficeHourCreateTestCase(OfficeHourTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -174,7 +181,7 @@ class OfficeHourCreateTest(OfficeHourTest):
 		))
 
 
-class OfficeHourListTest(OfficeHourCreateTest):
+class OfficeHourListTestCase(OfficeHourCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -189,7 +196,7 @@ class OfficeHourListTest(OfficeHourCreateTest):
 
 
 
-class OfficeHourDetailUpdateDeleteTest(OfficeHourCreateTest):
+class OfficeHourDetailUpdateDeleteTestCase(OfficeHourCreateTestCase):
 	def setUp(self):
 		super().setUp()
 		
