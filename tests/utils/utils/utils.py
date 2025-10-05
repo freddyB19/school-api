@@ -3,9 +3,13 @@ from pydantic import BaseModel, Field
 from apps.utils.result_commands import MessageError
 from apps.utils.decorators import handler_validation_errors
 
+MIN_LEN_NAME = 5
+MAX_LEN_NAME = 30
+AGE_GT = 18
+
 class User(BaseModel):
-	name: str = Field(max_length = 30, min_length = 5)
-	age: int = Field(gt = 18)
+	name: str = Field(max_length = MAX_LEN_NAME, min_length = MIN_LEN_NAME)
+	age: int = Field(gt = AGE_GT)
 
 
 @handler_validation_errors

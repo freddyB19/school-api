@@ -9,6 +9,8 @@ from apps.utils.result_commands import (
 	WITHOUT_ERROR_CODE_AND_ERRORS
 )
 
+from tests import faker
+
 class ResultCommandTest(TestCase):
 
 	def test_validate_without_errors(self):
@@ -16,7 +18,7 @@ class ResultCommandTest(TestCase):
 			Retornar instancia de 'ResultCommand' sin generar algún error
 		"""
 		context = {
-			"query": 12,
+			"query": faker.random_int(),
 			"status": True
 		}
 

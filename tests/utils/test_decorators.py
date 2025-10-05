@@ -1,11 +1,8 @@
-from django.test import TestCase
 
-from .utils.utils import set_user
+from .utils import set_user
+from .utils import testcases
 
-
-class DecoratorHandlerValidationErrorTest(TestCase):
-	def setUp(self):
-		self.user = {"name": "a" * 40, "age": 12}
+class DecoratorHandlerValidationErrorTest(testcases.DecoratorHandlerTestCase):
 	
 	def test_decorator_with_errors(self):
 		"""
@@ -20,7 +17,7 @@ class DecoratorHandlerValidationErrorTest(TestCase):
 
 	def test_decorator_with_valida_data(self):
 		"""
-			Retornar los resultados esperados por lafunción
+			Retornar los resultados esperados por la función
 		"""
 		self.user.update({"name": "Freddy", "age": 25})
 
@@ -29,8 +26,3 @@ class DecoratorHandlerValidationErrorTest(TestCase):
 		self.assertEqual(result["status"], "success")
 		self.assertIsInstance(result["details"], dict)
 		self.assertEqual(result["details"], self.user)
-
-
-
-
-
