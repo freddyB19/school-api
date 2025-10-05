@@ -398,7 +398,7 @@ class NewsFactory(factory.django.DjangoModelFactory):
 		return obj
 
 def create_news(**kwargs) -> models.News:
-	return NewsFactory.create(**kwargs, media = create_news_media(size = 5))
+	return NewsFactory.create(**kwargs)
 
 def bulk_create_news(size: int = 1, **kwargs) -> list[models.News]:
 	return NewsFactory.create_batch(size = size, **kwargs)
