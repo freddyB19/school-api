@@ -213,6 +213,8 @@ EMAIL_PORT = email.get("port")
 #GRAPHENE Settings
 
 GRAPHENE = {
+    'SCHEMA': "apps.graphql.schema.schema",
+    'SCHEMA_OUTPUT': 'graphql_schema.json', 
     'MIDDLEWARE': [
         'apps.graphql.middleware.AuthorizationMiddleware',
     ]
