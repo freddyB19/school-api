@@ -1,0 +1,3614 @@
+openapi: 3.0.3
+info:
+  title: School API
+  version: 0.0.1
+  description: Your project description
+paths:
+  /api/v1/management/{id}/:
+    get:
+      operationId: management_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministratorDetailResponse'
+          description: ''
+  /api/v1/management/school/{id}/:
+    put:
+      operationId: management_school_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Escuela.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchoolUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/SchoolUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/SchoolUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolUpdateRequest'
+          description: ''
+    patch:
+      operationId: management_school_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Escuela.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolUpdateRequest'
+          description: ''
+  /api/v1/management/school/{id}/news/:
+    get:
+      operationId: management_school_news_list
+      parameters:
+      - in: query
+        name: created
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: created_day
+        schema:
+          type: number
+      - in: query
+        name: created_month
+        schema:
+          type: number
+      - in: query
+        name: created_year
+        schema:
+          type: number
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: status
+        schema:
+          type: string
+          enum:
+          - pendiente
+          - publicado
+        description: |-
+          * `pendiente` - Pending
+          * `publicado` - Published
+      - in: query
+        name: updated
+        schema:
+          type: string
+          format: date-time
+      - in: query
+        name: updated_day
+        schema:
+          type: number
+      - in: query
+        name: updated_month
+        schema:
+          type: number
+      - in: query
+        name: updated_year
+        schema:
+          type: number
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMSchoolNewsListResponseList'
+          description: ''
+    post:
+      operationId: management_school_news_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolNewsRequest'
+          description: ''
+  /api/v1/management/school/{id}/officehour/:
+    get:
+      operationId: management_school_officehour_list
+      parameters:
+      - in: query
+        name: days
+        schema:
+          type: array
+          items:
+            type: integer
+        description: Multiple values may be separated by commas.
+        explode: false
+        style: form
+      - in: query
+        name: description
+        schema:
+          type: string
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - in: query
+        name: is_active
+        schema:
+          type: boolean
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      - in: query
+        name: undays
+        schema:
+          type: boolean
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMSchoolOfficeHourListResponseList'
+          description: ''
+    post:
+      operationId: management_school_officehour_create
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolOfficeHourRequest'
+          description: ''
+  /api/v1/management/school/{id}/upload_image/:
+    patch:
+      operationId: management_school_upload_image_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Escuela.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateLogoRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateLogoRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedSchoolUpdateLogoRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolUpdateLogoRequest'
+          description: ''
+  /api/v1/management/school/{school_id}/admin:
+    get:
+      operationId: administrator_by_school_id
+      parameters:
+      - in: path
+        name: school_id
+        schema:
+          type: integer
+        description: Search 'admins' by school ID
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdministratorResponse'
+          description: ''
+  /api/v1/management/school/news/{id}/:
+    get:
+      operationId: management_school_news_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Noticia.
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolNewsResponse'
+          description: ''
+    put:
+      operationId: management_school_news_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Noticia.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MSchoolNewsUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolNewsUpdateRequest'
+          description: ''
+    patch:
+      operationId: management_school_news_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Noticia.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolNewsUpdateRequest'
+          description: ''
+    delete:
+      operationId: management_school_news_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Noticia.
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/management/school/news/{id}/upload_images/:
+    patch:
+      operationId: management_school_news_upload_images_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        description: A unique integer value identifying this Noticia.
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateImagesRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateImagesRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolNewsUpdateImagesRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolNewsUpdateImagesRequest'
+          description: ''
+  /api/v1/management/school/officehour/{id}/:
+    get:
+      operationId: management_school_officehour_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolOfficeHourResponse'
+          description: ''
+    put:
+      operationId: management_school_officehour_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/MSchoolOfficeHourUpdateRequest'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolOfficeHourUpdateRequest'
+          description: ''
+    patch:
+      operationId: management_school_officehour_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolOfficeHourUpdateRequest'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolOfficeHourUpdateRequest'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedMSchoolOfficeHourUpdateRequest'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MSchoolOfficeHourUpdateRequest'
+          description: ''
+    delete:
+      operationId: management_school_officehour_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/management/user/{id}/permission/:
+    put:
+      operationId: management_user_permission_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+    patch:
+      operationId: management_user_permission_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - management
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+  /api/v1/school/:
+    get:
+      operationId: school_retrieve_by_query
+      parameters:
+      - in: query
+        name: subdomain
+        schema:
+          type: string
+        description: Search school by subdomain
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolResponse'
+          description: ''
+  /api/v1/school/{id}/:
+    get:
+      operationId: school_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolDetailResponse'
+          description: ''
+  /api/v1/school/{id}/activity:
+    get:
+      operationId: school_activity_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedExtraActivityListResponseList'
+          description: ''
+  /api/v1/school/{id}/calendar:
+    get:
+      operationId: school_calendar_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCalendarListResponseList'
+          description: ''
+  /api/v1/school/{id}/contact:
+    get:
+      operationId: school_contact_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedContactInfoResponseList'
+          description: ''
+  /api/v1/school/{id}/coordinate:
+    get:
+      operationId: school_coordinate_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCoordinateResponseList'
+          description: ''
+  /api/v1/school/{id}/download:
+    get:
+      operationId: school_download_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedDownloadListResponseList'
+          description: ''
+  /api/v1/school/{id}/event:
+    get:
+      operationId: school_event_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedCulturalEventListResponseList'
+          description: ''
+  /api/v1/school/{id}/grade:
+    get:
+      operationId: school_grade_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedGradeListResponseList'
+          description: ''
+  /api/v1/school/{id}/infraestructure:
+    get:
+      operationId: school_infraestructure_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedInfraestructureListResponseList'
+          description: ''
+  /api/v1/school/{id}/news:
+    get:
+      operationId: school_news_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedNewsListResponseList'
+          description: ''
+  /api/v1/school/{id}/office/:
+    get:
+      operationId: school_office_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOfficeHourListResponseList'
+          description: ''
+  /api/v1/school/{id}/payment:
+    get:
+      operationId: school_payment_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPaymentInfoResponseList'
+          description: ''
+  /api/v1/school/{id}/repository:
+    get:
+      operationId: school_repository_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedRepositoryListResponseList'
+          description: ''
+  /api/v1/school/{id}/social/media/:
+    get:
+      operationId: school_social_media_list
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      - name: page
+        required: false
+        in: query
+        description: A page number within the paginated result set.
+        schema:
+          type: integer
+      - name: size
+        required: false
+        in: query
+        description: Number of results to return per page.
+        schema:
+          type: integer
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSocialMediaResponseList'
+          description: ''
+  /api/v1/school/activity/{id}/:
+    get:
+      operationId: school_activity_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ExtraActivityDetailResponse'
+          description: ''
+  /api/v1/school/calendar/{id}/:
+    get:
+      operationId: school_calendar_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CalendarDetailResponse'
+          description: ''
+  /api/v1/school/download/{id}:
+    get:
+      operationId: school_download_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DownloadDetailResponse'
+          description: ''
+  /api/v1/school/event/{id}/:
+    get:
+      operationId: school_event_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CulturalEventDetailResponse'
+          description: ''
+  /api/v1/school/grade/{id}:
+    get:
+      operationId: school_grade_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GradeDetailResponse'
+          description: ''
+  /api/v1/school/infraestructure/{id}:
+    get:
+      operationId: school_infraestructure_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InfraestructureDetailResponse'
+          description: ''
+  /api/v1/school/news/{id}:
+    get:
+      operationId: school_news_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewsDetailResponse'
+          description: ''
+  /api/v1/school/office/{id}/:
+    get:
+      operationId: school_office_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OfficeHourDetailResponse'
+          description: ''
+  /api/v1/school/payment/{id}:
+    get:
+      operationId: school_payment_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaymentInfoDetailResponse'
+          description: ''
+  /api/v1/school/repository/{id}:
+    get:
+      operationId: school_repository_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RepositoryDetailResponse'
+          description: ''
+  /api/v1/school/settings/{id}/:
+    get:
+      operationId: school_settings_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - school
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SettingFormatResponse'
+          description: ''
+  /api/v1/user/{id}/:
+    get:
+      operationId: user_retrieve
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+    put:
+      operationId: user_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRespose'
+        required: true
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+    patch:
+      operationId: user_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserRespose'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+    delete:
+      operationId: user_destroy
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      responses:
+        '204':
+          description: No response body
+  /api/v1/user/{id}/password/:
+    patch:
+      operationId: user_password_partial_update
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserChangePassword'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserChangePassword'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserChangePassword'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseSuccess'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageError'
+          description: ''
+  /api/v1/user/{id}/role/:
+    patch:
+      operationId: user_update_role
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: integer
+        required: true
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRole'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRole'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/PatchedUserUpdateRole'
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+  /api/v1/user/api/token/:
+    post:
+      operationId: user_api_token_create
+      description: |-
+        Takes a set of user credentials and returns an access and refresh JSON web
+        token pair to prove the authentication of those credentials.
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenObtainPair'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenObtainPair'
+          description: ''
+  /api/v1/user/api/token/refresh/:
+    post:
+      operationId: user_api_token_refresh_create
+      description: |-
+        Takes a refresh type JSON web token and returns an access type JSON web
+        token if the refresh token is valid.
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/TokenRefresh'
+        required: true
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenRefresh'
+          description: ''
+  /api/v1/user/login/:
+    post:
+      operationId: user_login
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Login'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/Login'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/Login'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponseLogin'
+          description: ''
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageError'
+          description: ''
+  /api/v1/user/register/:
+    post:
+      operationId: user_register
+      tags:
+      - user
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+          application/x-www-form-urlencoded:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UserRegister'
+        required: true
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '201':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserRespose'
+          description: ''
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageError'
+          description: ''
+  /api/v1/user/reset/password/:
+    patch:
+      operationId: user_reset_password_partial_update
+      parameters:
+      - in: query
+        name: email
+        schema:
+          type: string
+        description: Search user by email
+      tags:
+      - user
+      security:
+      - jwtAuth: []
+      - {}
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseSuccess'
+          description: ''
+        '404':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+        '422':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ResponseError'
+          description: ''
+components:
+  schemas:
+    AdministratorDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserRespose'
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        total_users:
+          type: integer
+          readOnly: true
+      required:
+      - id
+      - school
+      - total_users
+      - users
+    AdministratorResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        users:
+          type: integer
+          readOnly: true
+        detail:
+          type: string
+          readOnly: true
+        total_users:
+          type: integer
+          readOnly: true
+      required:
+      - detail
+      - id
+      - total_users
+      - users
+    BaseMessage:
+      properties:
+        message:
+          default: Algo ha ocurrido
+          title: Message
+          type: string
+      title: BaseMessage
+      type: object
+    CalendarDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 50
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - title
+    CalendarListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 50
+          minLength: 5
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - title
+    ContactInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        email:
+          type: string
+          format: email
+          nullable: true
+          maxLength: 254
+        phone:
+          type: string
+          nullable: true
+          maxLength: 11
+          minLength: 11
+      required:
+      - id
+    CoordinateResponse:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 100
+          minLength: 4
+        latitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,5})?$
+        longitude:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,3}(?:\.\d{0,5})?$
+      required:
+      - latitude
+      - longitude
+      - title
+    CulturalEventDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/CulturalEventMedia'
+          readOnly: true
+        title:
+          type: string
+          maxLength: 50
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+        date:
+          type: string
+          format: date
+      required:
+      - date
+      - id
+      - media
+      - school
+      - title
+    CulturalEventListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 50
+          minLength: 5
+        date:
+          type: string
+          format: date
+        media:
+          type: string
+          format: uri
+          readOnly: true
+      required:
+      - date
+      - id
+      - media
+      - title
+    CulturalEventMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - id
+      - photo
+    DaysWeekResponse:
+      type: object
+      properties:
+        name:
+          type: string
+          readOnly: true
+      required:
+      - name
+    DownloadDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        file:
+          type: string
+          format: uri
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+      required:
+      - file
+      - id
+      - school
+      - title
+    DownloadListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        file:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - file
+      - id
+      - title
+    ExtraActivityDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        photos:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtraActivityPhoto'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtraActivityFile'
+        schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtraActivitySchedule'
+        description:
+          type: string
+          nullable: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+      required:
+      - files
+      - id
+      - photos
+      - schedules
+      - school
+      - title
+    ExtraActivityFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        file:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - file
+      - id
+      - title
+    ExtraActivityListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        photos:
+          type: string
+          format: uri
+          readOnly: true
+        schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtraActivityScheduleShort'
+      required:
+      - id
+      - photos
+      - schedules
+      - title
+    ExtraActivityPhoto:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - id
+      - photo
+    ExtraActivitySchedule:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        daysweek:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+      required:
+      - closing_time
+      - daysweek
+      - id
+      - opening_time
+      - type
+    ExtraActivityScheduleShort:
+      type: object
+      properties:
+        daysweek:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+      required:
+      - closing_time
+      - daysweek
+      - opening_time
+    GradeDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        teacher:
+          type: array
+          items:
+            $ref: '#/components/schemas/SchoolStaffSerializerResponse'
+          readOnly: true
+        stage:
+          type: string
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+        level:
+          type: integer
+          maximum: 32767
+          minimum: 0
+        section:
+          type: string
+          nullable: true
+          maxLength: 3
+          minLength: 1
+      required:
+      - id
+      - name
+      - school
+      - stage
+      - teacher
+    GradeListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        stage:
+          type: string
+        section:
+          type: string
+          nullable: true
+          maxLength: 3
+          minLength: 1
+      required:
+      - id
+      - name
+      - stage
+    InfraestructureDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfraestructureMedia'
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+      required:
+      - id
+      - media
+      - name
+      - school
+    InfraestructureListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+          minLength: 5
+        media:
+          type: string
+          format: uri
+          readOnly: true
+      required:
+      - id
+      - media
+      - name
+    InfraestructureMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - id
+      - photo
+    Login:
+      type: object
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+      required:
+      - email
+      - password
+    MSchoolNewsListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+        media:
+          type: string
+          format: uri
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+      required:
+      - created
+      - id
+      - media
+      - title
+      - updated
+    MSchoolNewsMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - id
+      - photo
+    MSchoolNewsRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        media:
+          type: array
+          items:
+            type: string
+            format: uri
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        description:
+          type: string
+          nullable: true
+      required:
+      - title
+    MSchoolNewsResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/MSchoolNewsMedia'
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        school:
+          type: integer
+          nullable: true
+      required:
+      - created
+      - id
+      - media
+      - title
+      - updated
+    MSchoolNewsUpdateImagesRequest:
+      type: object
+      properties:
+        media:
+          type: array
+          items:
+            type: string
+            format: uri
+      required:
+      - media
+    MSchoolNewsUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        description:
+          type: string
+          nullable: true
+      required:
+      - id
+      - title
+    MSchoolOfficeHourListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        interval_description:
+          type: string
+          maxLength: 100
+          minLength: 4
+        time_group:
+          allOf:
+          - $ref: '#/components/schemas/MSchoolTimeGroupListResponse'
+          readOnly: true
+      required:
+      - id
+      - interval_description
+      - time_group
+    MSchoolOfficeHourRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 100
+          minLength: 4
+        time_group:
+          $ref: '#/components/schemas/MSchoolTimeGroupRequest'
+      required:
+      - description
+      - time_group
+    MSchoolOfficeHourResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        time_group:
+          allOf:
+          - $ref: '#/components/schemas/MSchoolTimeGroupResponse'
+          readOnly: true
+        interval_description:
+          type: string
+          maxLength: 100
+          minLength: 4
+        school:
+          type: integer
+          nullable: true
+      required:
+      - id
+      - interval_description
+      - time_group
+    MSchoolOfficeHourUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 100
+          minLength: 4
+      required:
+      - description
+    MSchoolTimeGroupListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        daysweek:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+        active:
+          type: boolean
+      required:
+      - closing_time
+      - daysweek
+      - id
+      - opening_time
+      - type
+    MSchoolTimeGroupRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        daysweek:
+          type: array
+          items:
+            type: integer
+            maximum: 5
+            minimum: 1
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+        active:
+          type: boolean
+        overview:
+          type: string
+          nullable: true
+      required:
+      - closing_time
+      - id
+      - opening_time
+      - type
+    MSchoolTimeGroupResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        daysweek:
+          type: array
+          items:
+            type: string
+          readOnly: true
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+        active:
+          type: boolean
+        overview:
+          type: string
+          nullable: true
+      required:
+      - closing_time
+      - daysweek
+      - id
+      - opening_time
+      - type
+    MessageError:
+      properties:
+        message:
+          default: Algo ha ocurrido
+          title: Message
+          type: string
+        field:
+          title: Field
+          type: string
+        details:
+          anyOf:
+          - additionalProperties:
+              type: string
+            type: object
+          - type: 'null'
+          default: null
+          title: Details
+      required:
+      - field
+      title: MessageError
+      type: object
+    NewsDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsMedia'
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        description:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - id
+      - media
+      - school
+      - title
+      - updated
+    NewsListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+        media:
+          type: string
+          format: uri
+          readOnly: true
+      required:
+      - created
+      - id
+      - media
+      - title
+      - updated
+    NewsMedia:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - id
+      - photo
+    OccupationEnum:
+      enum:
+      - profesor
+      - administrativo
+      type: string
+      description: |-
+        * `profesor` - Teacher
+        * `administrativo` - Administrative
+    OfficeHourDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        time_group:
+          allOf:
+          - $ref: '#/components/schemas/TimeGroupDetailResponse'
+          readOnly: true
+        interval_description:
+          type: string
+          maxLength: 100
+          minLength: 4
+      required:
+      - id
+      - interval_description
+      - school
+      - time_group
+    OfficeHourListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        interval_description:
+          type: string
+          maxLength: 100
+          minLength: 4
+        time_group:
+          allOf:
+          - $ref: '#/components/schemas/TimeGroupListResponse'
+          readOnly: true
+      required:
+      - id
+      - interval_description
+      - time_group
+    PaginatedCalendarListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CalendarListResponse'
+    PaginatedContactInfoResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ContactInfoResponse'
+    PaginatedCoordinateResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CoordinateResponse'
+    PaginatedCulturalEventListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/CulturalEventListResponse'
+    PaginatedDownloadListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/DownloadListResponse'
+    PaginatedExtraActivityListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExtraActivityListResponse'
+    PaginatedGradeListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/GradeListResponse'
+    PaginatedInfraestructureListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/InfraestructureListResponse'
+    PaginatedMSchoolNewsListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MSchoolNewsListResponse'
+    PaginatedMSchoolOfficeHourListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/MSchoolOfficeHourListResponse'
+    PaginatedNewsListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewsListResponse'
+    PaginatedOfficeHourListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/OfficeHourListResponse'
+    PaginatedPaymentInfoResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/PaymentInfoResponse'
+    PaginatedRepositoryListResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryListResponse'
+    PaginatedSocialMediaResponseList:
+      type: object
+      required:
+      - count
+      - results
+      properties:
+        count:
+          type: integer
+          example: 123
+        next:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=4
+        previous:
+          type: string
+          nullable: true
+          format: uri
+          example: http://api.example.org/accounts/?page=2
+        results:
+          type: array
+          items:
+            $ref: '#/components/schemas/SocialMediaResponse'
+    PatchedMSchoolNewsUpdateImagesRequest:
+      type: object
+      properties:
+        media:
+          type: array
+          items:
+            type: string
+            format: uri
+    PatchedMSchoolNewsUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 70
+          minLength: 5
+        status:
+          $ref: '#/components/schemas/StatusEnum'
+        description:
+          type: string
+          nullable: true
+    PatchedMSchoolOfficeHourUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          maxLength: 100
+          minLength: 4
+    PatchedSchoolUpdateLogoRequest:
+      type: object
+      properties:
+        logo:
+          type: string
+          format: uri
+    PatchedSchoolUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+          minLength: 10
+        subdomain:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        address:
+          type: string
+          maxLength: 100
+          minLength: 10
+        mission:
+          type: string
+          nullable: true
+          minLength: 10
+        vision:
+          type: string
+          nullable: true
+          minLength: 10
+        history:
+          type: string
+          nullable: true
+          minLength: 10
+    PatchedUserChangePassword:
+      type: object
+      properties:
+        password:
+          type: string
+          minLength: 8
+        password_confirm:
+          type: string
+          minLength: 8
+    PatchedUserRespose:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        is_active:
+          type: boolean
+        user_permissions:
+          type: array
+          items:
+            type: string
+          readOnly: true
+    PatchedUserUpdateRole:
+      type: object
+      properties:
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+    PaymentInfoDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+      required:
+      - id
+      - photo
+      - school
+    PaymentInfoResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          nullable: true
+          maxLength: 100
+          minLength: 5
+        photo:
+          type: string
+          format: uri
+          maxLength: 200
+        description:
+          type: string
+          nullable: true
+      required:
+      - id
+      - photo
+    RepositoryDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        school:
+          allOf:
+          - $ref: '#/components/schemas/SchoolShortResponse'
+          readOnly: true
+        media:
+          type: array
+          items:
+            $ref: '#/components/schemas/RepositoryMediaFile'
+          readOnly: true
+        name_project:
+          type: string
+          maxLength: 100
+          minLength: 4
+        description:
+          type: string
+          nullable: true
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - id
+      - media
+      - name_project
+      - school
+      - updated
+    RepositoryListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name_project:
+          type: string
+          maxLength: 100
+          minLength: 4
+        created:
+          type: string
+          format: date-time
+          readOnly: true
+        updated:
+          type: string
+          format: date-time
+          readOnly: true
+      required:
+      - created
+      - id
+      - name_project
+      - updated
+    RepositoryMediaFile:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        title:
+          type: string
+          maxLength: 100
+          minLength: 5
+        file:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - file
+      - id
+      - title
+    ResponseError:
+      properties:
+        errors:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/BaseMessage'
+            type: array
+          - items:
+              $ref: '#/components/schemas/ResponseMessage'
+            type: array
+          - items:
+              $ref: '#/components/schemas/MessageError'
+            type: array
+          title: Errors
+      required:
+      - errors
+      title: ResponseError
+      type: object
+    ResponseMessage:
+      properties:
+        message:
+          default: A message
+          title: Message
+          type: string
+      title: ResponseMessage
+      type: object
+    ResponseSuccess:
+      properties:
+        success:
+          anyOf:
+          - items:
+              $ref: '#/components/schemas/ResponseMessage'
+            type: array
+          - items:
+              $ref: '#/components/schemas/BaseMessage'
+            type: array
+          title: Success
+      required:
+      - success
+      title: ResponseSuccess
+      type: object
+    RoleEnum:
+      enum:
+      - 0
+      - 1
+      type: integer
+      description: |-
+        * `0` - Admin
+        * `1` - Staff
+    SchoolDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        subdomain:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        logo:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        address:
+          type: string
+          maxLength: 100
+          minLength: 10
+        mission:
+          type: string
+          nullable: true
+        vision:
+          type: string
+          nullable: true
+        history:
+          type: string
+          nullable: true
+        private:
+          type: boolean
+      required:
+      - address
+      - id
+      - name
+      - subdomain
+    SchoolResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        subdomain:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+        logo:
+          type: string
+          format: uri
+          nullable: true
+          maxLength: 200
+        address:
+          type: string
+          maxLength: 100
+          minLength: 10
+        mission:
+          type: string
+          nullable: true
+        private:
+          type: boolean
+      required:
+      - address
+      - id
+      - name
+      - subdomain
+    SchoolShortResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        subdomain:
+          type: string
+          maxLength: 50
+          pattern: ^[-a-zA-Z0-9_]+$
+      required:
+      - id
+      - name
+      - subdomain
+    SchoolStaffSerializerResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 50
+          minLength: 5
+        occupation:
+          $ref: '#/components/schemas/OccupationEnum'
+      required:
+      - id
+      - name
+    SchoolUpdateLogoRequest:
+      type: object
+      properties:
+        logo:
+          type: string
+          format: uri
+      required:
+      - logo
+    SchoolUpdateRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+          minLength: 10
+        subdomain:
+          type: string
+          readOnly: true
+          pattern: ^[-a-zA-Z0-9_]+$
+        address:
+          type: string
+          maxLength: 100
+          minLength: 10
+        mission:
+          type: string
+          nullable: true
+          minLength: 10
+        vision:
+          type: string
+          nullable: true
+          minLength: 10
+        history:
+          type: string
+          nullable: true
+          minLength: 10
+      required:
+      - address
+      - id
+      - name
+      - subdomain
+    SettingFormatResponse:
+      type: object
+      properties:
+        colors:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - colors
+    SocialMediaResponse:
+      type: object
+      properties:
+        profile:
+          type: string
+          format: uri
+          maxLength: 200
+      required:
+      - profile
+    StatusEnum:
+      enum:
+      - pendiente
+      - publicado
+      type: string
+      description: |-
+        * `pendiente` - Pending
+        * `publicado` - Published
+    TimeGroupDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        daysweek:
+          type: array
+          items:
+            $ref: '#/components/schemas/DaysWeekResponse'
+          readOnly: true
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+        overview:
+          type: string
+          nullable: true
+      required:
+      - closing_time
+      - daysweek
+      - id
+      - opening_time
+      - type
+    TimeGroupListResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        type:
+          type: string
+          maxLength: 50
+          minLength: 5
+        daysweek:
+          type: array
+          items:
+            $ref: '#/components/schemas/DaysWeekResponse'
+          readOnly: true
+        opening_time:
+          type: string
+          format: time
+        closing_time:
+          type: string
+          format: time
+      required:
+      - closing_time
+      - daysweek
+      - id
+      - opening_time
+      - type
+    Token:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    TokenObtainPair:
+      type: object
+      properties:
+        email:
+          type: string
+          writeOnly: true
+        password:
+          type: string
+          writeOnly: true
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+          readOnly: true
+      required:
+      - access
+      - email
+      - password
+      - refresh
+    TokenRefresh:
+      type: object
+      properties:
+        access:
+          type: string
+          readOnly: true
+        refresh:
+          type: string
+      required:
+      - access
+      - refresh
+    UserRegister:
+      type: object
+      properties:
+        name:
+          type: string
+          maxLength: 100
+          minLength: 4
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        password:
+          type: string
+          maxLength: 128
+          minLength: 8
+        password_confirm:
+          type: string
+          writeOnly: true
+      required:
+      - email
+      - name
+      - password
+      - password_confirm
+    UserResponseLogin:
+      type: object
+      properties:
+        user:
+          allOf:
+          - $ref: '#/components/schemas/UserRespose'
+          readOnly: true
+        token:
+          $ref: '#/components/schemas/Token'
+      required:
+      - token
+      - user
+    UserRespose:
+      type: object
+      properties:
+        id:
+          type: integer
+          readOnly: true
+        name:
+          type: string
+          maxLength: 100
+        email:
+          type: string
+          format: email
+          maxLength: 100
+        role:
+          allOf:
+          - $ref: '#/components/schemas/RoleEnum'
+          minimum: -2147483648
+          maximum: 2147483647
+        last_login:
+          type: string
+          format: date-time
+          readOnly: true
+        date_joined:
+          type: string
+          format: date-time
+          readOnly: true
+        is_active:
+          type: boolean
+        user_permissions:
+          type: array
+          items:
+            type: string
+          readOnly: true
+      required:
+      - date_joined
+      - email
+      - id
+      - last_login
+      - user_permissions
+  securitySchemes:
+    jwtAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
