@@ -1,9 +1,5 @@
 #Files
-schema.yml
-
 *.sqlite3
-*.yml
-
 
 
 # Byte-compiled / optimized / DLL files
