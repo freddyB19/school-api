@@ -263,7 +263,7 @@ class MSchoolNewsUpdateImagesRequest(serializers.Serializer):
 
 DAYWEEK_INVALID_CHOICE = f"El día de la semana elegido es invalido, debe ser entre: {models.DaysNumber.values}"
 
-class TimeGroupRequest(serializers.ModelSerializer):
+class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 	daysweek = serializers.ListField(
 		child = serializers.IntegerField(
 			min_value = 1,
@@ -314,8 +314,8 @@ class TimeGroupRequest(serializers.ModelSerializer):
 		return data
 
 
-class OfficeHourRequest(serializers.ModelSerializer):
-	time_group = TimeGroupRequest()
+class MSchoolOfficeHourRequest(serializers.ModelSerializer):
+	time_group = MSchoolTimeGroupRequest()
 	description = serializers.CharField(
 		max_length = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
 		min_length = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D,
@@ -360,7 +360,7 @@ class OfficeHourRequest(serializers.ModelSerializer):
 
 OfficeHour = TypeVar("OfficeHour", bound = models.OfficeHour)
 
-class OfficeHourUpdateRequest(serializers.Serializer):
+class MSchoolOfficeHourUpdateRequest(serializers.Serializer):
 	description = serializers.CharField(
 		required = True,
 		max_length = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
@@ -394,7 +394,7 @@ class OfficeHourUpdateRequest(serializers.Serializer):
 		return instance
 
 
-class TimeGroupResponse(serializers.ModelSerializer):
+class MSchoolTimeGroupResponse(serializers.ModelSerializer):
 	daysweek = serializers.SlugRelatedField(
 		many=True,
 		read_only=True,
@@ -406,21 +406,21 @@ class TimeGroupResponse(serializers.ModelSerializer):
 		fields = "__all__"
 
 
-class TimeGroupListResponse(TimeGroupResponse):
+class MSchoolTimeGroupListResponse(MSchoolTimeGroupResponse):
 	class Meta:
 		model = models.TimeGroup
 		exclude = ["overview"]
 
-class OfficeHourResponse(serializers.ModelSerializer):
-	time_group = TimeGroupResponse(read_only = True)
+class MSchoolOfficeHourResponse(serializers.ModelSerializer):
+	time_group = MSchoolTimeGroupResponse(read_only = True)
 	
 	class Meta:
 		model = models.OfficeHour
 		fields = "__all__"
 
 
-class OfficeHourListResponse(serializers.ModelSerializer):
-	time_group = TimeGroupListResponse(read_only = True)
+class MSchoolOfficeHourListResponse(serializers.ModelSerializer):
+	time_group = MSchoolTimeGroupListResponse(read_only = True)
 
 	class Meta:
 		model = models.OfficeHour

@@ -58,7 +58,7 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 
 class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 	queryset = school_models.OfficeHour.objects.all()
-	serializer_class = serializers.OfficeHourResponse 
+	serializer_class = serializers.MSchoolOfficeHourResponse 
 	pagination_class = paginations.BasicPaginate
 	permission_classes = [
 		IsAuthenticated, 
@@ -77,9 +77,9 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 	def get_serializer_class(self):
 		
 		if self.request.method == "POST":
-			return serializers.OfficeHourRequest
+			return serializers.MSchoolOfficeHourRequest
 		elif self.request.method == "GET":
-			return serializers.OfficeHourListResponse	
+			return serializers.MSchoolOfficeHourListResponse	
 		
 		return self.serializer_class
 
@@ -106,7 +106,7 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 
 class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView):
 	queryset = school_models.OfficeHour.objects.all()
-	serializer_class = serializers.OfficeHourResponse
+	serializer_class = serializers.MSchoolOfficeHourResponse
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission,
@@ -117,7 +117,7 @@ class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView)
 		updated = ["PUT", "PATCH"]
 
 		if self.request.method in updated:
-			return serializers.OfficeHourUpdateRequest
+			return serializers.MSchoolOfficeHourUpdateRequest
 
 		return self.serializer_class
 
