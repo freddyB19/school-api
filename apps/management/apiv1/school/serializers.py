@@ -3,6 +3,10 @@ from datetime import datetime
 
 from rest_framework import serializers
 
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
+
+
 from apps.school import models
 
 from apps.utils.result_commands import ResponseError
@@ -104,7 +108,7 @@ MAX_LENGTH_IMAGE_NAME = 20
 
 STATUS_INVALID_CHOICE = "La opción elegida es invalida"
 
-class NewsRequest(serializers.ModelSerializer):
+class MSchoolNewsRequest(serializers.ModelSerializer):
 	media = serializers.ListField(
 		required = False,
 		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME), 
@@ -171,35 +175,35 @@ class NewsRequest(serializers.ModelSerializer):
 		return command.query
 
 
-class NewsMediaSerializer(serializers.ModelSerializer):
+class MSchoolNewsMediaSerializer(serializers.ModelSerializer):
 	class Meta:
 		model = models.NewsMedia
 		fields = "__all__"
 
-
-class NewsMediaField(serializers.RelatedField):
+@extend_schema_field(OpenApiTypes.URI)
+class MSchoolNewsMediaField(serializers.RelatedField):
 	def to_representation(self, value):
 		image = value.first()
 		return image.photo if image else None
 
 
-class NewsResponse(serializers.ModelSerializer):
-	media = NewsMediaSerializer(many = True)
+class MSchoolNewsResponse(serializers.ModelSerializer):
+	media = MSchoolNewsMediaSerializer(many = True)
 	
 	class Meta:
 		model = models.News
 		fields = "__all__"
 
 
-class NewsListResponse(serializers.ModelSerializer):
-	media = NewsMediaField(read_only = True)
+class MSchoolNewsListResponse(serializers.ModelSerializer):
+	media = MSchoolNewsMediaField(read_only = True)
 
 	class Meta:
 		model = models.News
 		fields = ["id", "title", "created", "updated", "media", "status"]
 
 
-class NewsUpdateRequest(serializers.ModelSerializer):
+class MSchoolNewsUpdateRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.News
 		fields = ["id", "title", "status", "description"]
@@ -233,7 +237,7 @@ class NewsUpdateRequest(serializers.ModelSerializer):
 		}
 
 
-class NewsUpdateImagesRequest(serializers.Serializer):
+class MSchoolNewsUpdateImagesRequest(serializers.Serializer):
 	media = serializers.ListField(
 		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME)
 	)

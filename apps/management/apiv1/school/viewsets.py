@@ -97,14 +97,14 @@ class SchoolUpdateVS(BaseSchoolVS):
 
 class NewsDetailUpdateDeleteVS(BaseVS):
 	queryset = school_models.News.objects.all()
-	serializer_class = serializers.NewsResponse
+	serializer_class = serializers.MSchoolNewsResponse
 
 	def get_serializer_class(self):
 
 		if self.action == "update" or self.action == "partial_update":
-			return serializers.NewsUpdateRequest
+			return serializers.MSchoolNewsUpdateRequest
 		elif self.action == "upload_images":
-			return serializers.NewsUpdateImagesRequest
+			return serializers.MSchoolNewsUpdateImagesRequest
 
 		return self.serializer_class
 

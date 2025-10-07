@@ -10,7 +10,7 @@ from . import serializers, permissions, filters, paginations
 
 class NewsListCreateAPIView(generics.ListCreateAPIView):
 	queryset = school_models.News.objects.all()
-	serializer_class = serializers.NewsResponse
+	serializer_class = serializers.MSchoolNewsResponse
 	pagination_class = paginations.BasicPaginate
 	permission_classes = [
 		IsAuthenticated, 
@@ -28,9 +28,9 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 	def get_serializer_class(self):
 
 		if self.request.method == "POST":
-			return serializers.NewsRequest
+			return serializers.MSchoolNewsRequest
 		elif self.request.method == "GET":
-			return serializers.NewsListResponse
+			return serializers.MSchoolNewsListResponse
 
 		return self.serializer_class
 
