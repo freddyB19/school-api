@@ -8,7 +8,15 @@ from rest_framework import (
 )
 from rest_framework.permissions import IsAuthenticated
 
+from drf_spectacular.utils import (
+    extend_schema,
+    extend_schema_view,
+    OpenApiParameter,
+)
+from drf_spectacular.types import OpenApiTypes
 
+
+from apps.user import models as user_models
 from apps.user.commands.commands import get_user
 from apps.user.apiv1.serializers import (
 	UserResposeSerializer, 
@@ -29,6 +37,23 @@ from apps.management.models import Administrator
 class AdministratorAPIView(views.APIView):
 	permission_classes = [IsAuthenticated]
 
+	@extend_schema(
+		methods=["GET"],
+		auth=None,
+		operation_id = "administrator_by_school_id",
+		responses = {
+			404: ResponseError, 
+			200: serializers.AdministratorResponse
+		},
+		parameters=[
+			OpenApiParameter(
+                name="school_id",
+                type=int,
+                location=OpenApiParameter.PATH,
+                description="Search 'admins' by school ID"
+            )
+		]
+	)
 	def get(self, request, school_id: int = None):
 		try:
 		
@@ -83,21 +108,14 @@ class AdministratorDetailAPIView(generics.RetrieveAPIView):
 		)
 
 
-class UpdatePermissionsUser(views.APIView):
+class UpdateUserPermissions(generics.UpdateAPIView):
+	queryset = user_models.User.objects.all()
+	serializer_class = UserResposeSerializer
 	permission_classes = [IsAuthenticated, IsRoleAdminOrReadOnly]
 
-	def patch(self, request, pk):
 
-		command = get_user(pk = pk)
-
-		if not command.status:
-			return response.Response(
-				data = ResponseError(
-					errors = command.errors
-				).model_dump(),
-				status = status.HTTP_404_NOT_FOUND
-			)
-
+	def update(self, request, pk):
+		user = self.get_object()
 		serializer = UserPermissionsSerializer(data = request.data)
 
 		if not serializer.is_valid():
@@ -106,8 +124,6 @@ class UpdatePermissionsUser(views.APIView):
 				status = status.HTTP_400_BAD_REQUEST
 			)
 
-		user = command.query
-
 		permissions = Permission.objects.filter(
 			codename__in = serializer.data['permissions']
 		)
@@ -115,6 +131,6 @@ class UpdatePermissionsUser(views.APIView):
 		user.user_permissions.set(permissions)
 
 		return response.Response(
-			data = UserResposeSerializer(user).data,
+			data = self.get_serializer(user).data,
 			status = status.HTTP_200_OK
 		) 

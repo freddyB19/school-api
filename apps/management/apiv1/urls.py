@@ -21,7 +21,7 @@ urlpatterns = [
 	),
 	path(
 		"user/<int:pk>/permission/", 
-		views.UpdatePermissionsUser.as_view(), 
+		views.UpdateUserPermissions.as_view(), 
 		name = "user-permission"
 	),
 
