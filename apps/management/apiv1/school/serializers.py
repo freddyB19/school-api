@@ -16,7 +16,7 @@ from apps.school.apiv1 import serializers as school_serializer
 from apps.management.commands import commands
 from apps.management.dtos import school as school_dto
 
-ERROR_FIELD = lambda field, type, simbol, value: f"El campo '{field}' es muy {type}, debe ser {simbol} a {value}" 
+ERROR_FIELD = lambda field, type, symbol, value: f"El campo '{field}' es muy {type}, debe ser {symbol} a {value}" 
 
 MIN_LENGTH_FIELDS = 10
 
@@ -35,13 +35,13 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 					"max_length": ERROR_FIELD(
 						field = "nombre", 
 						type = "largo",
-						simbol = "menor o igual",
+						symbol = "menor o igual",
 						value = models.MAX_LENGTH_SCHOOL_NAME
 					),
 					"min_length": ERROR_FIELD(
 						field = "nombre", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = models.MIN_LENGTH_SCHOOL_NAME
 					)
 				}
@@ -53,13 +53,13 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 					"max_length": ERROR_FIELD(
 						field = "dirección", 
 						type = "largo",
-						simbol = "menor o igual",
+						symbol = "menor o igual",
 						value = models.MAX_LENGTH_SCHOOL_ADDRESS
 					),
 					"min_length": ERROR_FIELD(
 						field = "misión",
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = models.MIN_LENGTH_SCHOOL_ADDRESS
 					)
 				}
@@ -70,7 +70,7 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 					"min_length": ERROR_FIELD(
 						field = "misión", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = MIN_LENGTH_FIELDS
 					)
 				}
@@ -81,7 +81,7 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 					"min_length": ERROR_FIELD(
 						field = "visión", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = MIN_LENGTH_FIELDS
 					)
 				}
@@ -92,7 +92,7 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 					"min_length": ERROR_FIELD(
 						field = "historia", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = MIN_LENGTH_FIELDS
 					)
 				}
@@ -131,13 +131,13 @@ class MSchoolNewsRequest(serializers.ModelSerializer):
 					"max_length": ERROR_FIELD(
 						field = "titulo", 
 						type = "largo",
-						simbol = "menor o igual",
+						symbol = "menor o igual",
 						value = models.MAX_LENGTH_NEWS_TITLE
 					),
 					"min_length": ERROR_FIELD(
 						field = "titulo", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = models.MIN_LENGTH_NEWS_TITLE
 					)
 				}
@@ -217,13 +217,13 @@ class MSchoolNewsUpdateRequest(serializers.ModelSerializer):
 					"max_length": ERROR_FIELD(
 						field = "titulo", 
 						type = "largo",
-						simbol = "menor o igual",
+						symbol = "menor o igual",
 						value = models.MAX_LENGTH_NEWS_TITLE
 					),
 					"min_length": ERROR_FIELD(
 						field = "titulo", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = models.MIN_LENGTH_NEWS_TITLE
 					)
 				}
@@ -288,13 +288,13 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 					"max_length":ERROR_FIELD(
 						field = "tipo", 
 						type = "largo",
-						simbol = "menor o igual",
+						symbol = "menor o igual",
 						value = models.MAX_LENGTH_TYPEGROUP_TYPE
 					),
 					"min_length": ERROR_FIELD(
 						field = "tipo", 
 						type = "corto",
-						simbol = "mayor o igual",
+						symbol = "mayor o igual",
 						value = models.MIN_LENGTH_TYPEGROUP_TYPE
 					)
 				}
@@ -323,13 +323,13 @@ class MSchoolOfficeHourRequest(serializers.ModelSerializer):
 			"max_length":ERROR_FIELD(
 				field = "descripción del intervalo", 
 				type = "largo",
-				simbol = "menor o igual",
+				symbol = "menor o igual",
 				value = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
 			),
 			"min_length": ERROR_FIELD(
 				field = "descripción del intervalo", 
 				type = "corto",
-				simbol = "mayor o igual",
+				symbol = "mayor o igual",
 				value = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D
 			)
 		}
@@ -369,13 +369,13 @@ class MSchoolOfficeHourUpdateRequest(serializers.Serializer):
 			"max_length":ERROR_FIELD(
 				field = "descripción del intervalo", 
 				type = "largo",
-				simbol = "menor o igual",
+				symbol = "menor o igual",
 				value = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
 			),
 			"min_length": ERROR_FIELD(
 				field = "descripción del intervalo", 
 				type = "corto",
-				simbol = "mayor o igual",
+				symbol = "mayor o igual",
 				value = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D
 			)
 		}
