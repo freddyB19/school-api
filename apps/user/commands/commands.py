@@ -36,21 +36,20 @@ def create_user(user: CreateUserParam, errors: Optional[list] = None):
 	)
 
 @validate_call
-def get_user(pk: int = None) -> ResultCommand:
+def get_user(pk: int) -> ResultCommand:
+	user =  models.User.objects.filter(pk = pk).first()
 
-	if not pk:
-		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
-
-	try:
-		return ResultCommand(
-			query = models.User.objects.get(pk = pk)
-		)
-	except models.User.DoesNotExist as e:
+	if not user:
 		return ResultCommand(
 			status = False,
 			errors = [{"message": f"No existe información para el usuario {pk}"}],
 			error_code = status_code.HTTP_404_NOT_FOUND
 		)
+
+	return ResultCommand(
+		status = True,
+		query = user
+	)
 
 
 @handler_validation_errors
