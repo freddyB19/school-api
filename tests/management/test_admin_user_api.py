@@ -7,7 +7,7 @@ from tests.user.utils.utils import create_user
 from .utils import testcases
 
 
-class UserUpdatePermissionsTest(testcases.AdministratorUserTestCase):
+class AdminUpdateUserPermissionsAPITest(testcases.AdministratorUserTestCase):
 	
 	def setUp(self):
 		super().setUp()
