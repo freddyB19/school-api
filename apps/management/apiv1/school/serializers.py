@@ -313,9 +313,16 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 
 		return data
 
+SCHOOL_DOES_NOT_EXIST = "No existe una 'escuela' con ese id"
+TIMEGROUP_DOES_NOT_EXIST = "No existe un 'grupo horario' con ese id"
+INVALID_TIMEGROUP = "Debe definir un nuevo 'grupo horario' o seleccionar uno ya existente"
 
 class MSchoolOfficeHourRequest(serializers.ModelSerializer):
-	time_group = MSchoolTimeGroupRequest()
+	time_group = MSchoolTimeGroupRequest(required = False)
+	time_group_id = serializers.IntegerField(
+		required = False,
+		min_value = 1
+	)
 	description = serializers.CharField(
 		max_length = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D,
 		min_length = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D,
@@ -337,14 +344,62 @@ class MSchoolOfficeHourRequest(serializers.ModelSerializer):
 
 	class Meta:
 		model = models.OfficeHour
-		fields = ["description", "time_group"]
+		fields = ["description", "time_group", 'time_group_id']
+
+	def validate_time_group_id(self, value):
+		school = commands.get_school_by_id(
+			id = self.context.get("pk")
+		).query
+
+		if not school:
+			raise serializers.ValidationError(
+				SCHOOL_DOES_NOT_EXIST,
+				code="does-not-exist"
+			)
+			
+		if not school.officeHoursList.filter(time_group_id = value).exists():
+			raise serializers.ValidationError(
+				TIMEGROUP_DOES_NOT_EXIST,
+				code="does-not-exist"
+			)
+
+		return value
+
+
+	def validate(self, data):
+		time_group = data.get("time_group")
+		time_group_id = data.get("time_group_id")
+
+		if not time_group and not time_group_id:
+			raise serializers.ValidationError(
+				INVALID_TIMEGROUP,
+				code="required"
+			)
+
+		if time_group and time_group_id:
+			raise serializers.ValidationError(
+				INVALID_TIMEGROUP,
+				code="invalid"
+			)
+
+		return data
 
 
 	def create(self, validated_data):
 
+		new_time_group = validated_data.get("time_group")
+		time_group_id = validated_data.get("time_group_id")
+
+		time_group = new_time_group or school_dto.TimeGroupByIdDTO(id = time_group_id)
+
+		office_hour = school_dto.OffiHourCreateDTO(
+			description = validated_data.get("description"),
+			time_group = time_group
+		).data
+
 		command = commands.create_office_hour(
 			school_id = self.context.get("pk"),
-			office_hour = validated_data,
+			office_hour = office_hour,
 		)
 
 		if not command.status:
