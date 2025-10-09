@@ -92,6 +92,35 @@ class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 		)
 		self.assertTrue(responseJson["time_group"]["daysweek"])
 
+	def test_create_officehour_with_time_group_by_id(self):
+		"""
+			Validar "POST /officehour"
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+		
+		# Creamos un 'time_group' donde asociamos 
+		# la escuela a la que pertecemos como admin
+
+		time_group = create_time_group()
+		
+		create_officehour(
+			school = self.school,
+			time_group = time_group
+		)
+		
+		self.create_officehour.pop("time_group")
+		self.create_officehour.update({"time_group_id": time_group.id})
+
+		response = self.client.post(
+			self.URL_OFFICEHOUR,
+			self.create_officehour
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 201)
+
 
 	def test_create_officehour_without_dasyweek(self):
 		"""
@@ -298,6 +327,76 @@ class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 
 		responseStatus = response.status_code
 
+		self.assertEqual(responseStatus, 400)
+
+	
+	def test_create_officehour_with_time_group_id_does_not_exist(self):
+		"""
+			Generar [Error 400] "POST /officehour" por ID de time_group que no forma parte nuestra administración
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		time_group = create_time_group()
+		
+		create_officehour(
+			time_group = time_group
+		)
+
+		self.create_officehour.pop("time_group")
+		self.create_officehour.update({"time_group_id": time_group.id})
+
+		response = self.client.post(
+			self.URL_OFFICEHOUR,
+			self.create_officehour
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 400)
+
+	def test_create_officehour_with_invalid_time_group(self):
+		"""
+			Generar [Error 400] "POST /officehour" por enviar datos incorrectos para 'time_group'
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		time_group = create_time_group()
+		
+		create_officehour(
+			school = self.school,
+			time_group = time_group
+		)
+
+		self.create_officehour.update({"time_group_id": time_group.id})
+
+		response = self.client.post(
+			self.URL_OFFICEHOUR,
+			self.create_officehour
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 400)
+
+
+	def test_create_officehour_without_time_group(self):
+		"""
+			Generar [Error 400] "POST /officehour" por no enviar datos para 'time_group'
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		self.create_officehour.pop('time_group')
+
+		response = self.client.post(
+			self.URL_OFFICEHOUR,
+			self.create_officehour
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+		
 		self.assertEqual(responseStatus, 400)
 
 
