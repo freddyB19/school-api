@@ -72,6 +72,8 @@ VALIDATE_CHOICES_DAY = lambda daysweek: list(
 		daysweek
 	)
 )
+class TimeGroupByIdParam(BaseModel):
+	id: int
 
 class TimeGroupParam(BaseModel):
 	type: str
@@ -129,4 +131,4 @@ IntervalDescription = Annotated[str, AfterValidator(check_len_description)]
 
 class OfficeHourParam(BaseModel):
 	description: IntervalDescription
-	time_group: TimeGroupParam
+	time_group: TimeGroupParam | TimeGroupByIdParam
