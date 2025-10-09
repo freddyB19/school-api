@@ -1,5 +1,3 @@
-from django.contrib.auth.models import Permission
-
 from rest_framework import (
 	views, 
 	status, 
@@ -10,27 +8,13 @@ from rest_framework.permissions import IsAuthenticated
 
 from drf_spectacular.utils import (
     extend_schema,
-    extend_schema_view,
     OpenApiParameter,
 )
-from drf_spectacular.types import OpenApiTypes
 
-
-from apps.user import models as user_models
-from apps.user.commands.commands import get_user
-from apps.user.apiv1.serializers import (
-	UserResposeSerializer, 
-	UserPermissionsSerializer
-)
-from apps.user.apiv1.permissions import IsRoleAdminOrReadOnly
-
-from apps.utils.result_commands import (
-    ResponseError,
-    ResponseSuccess
-)
-
+from apps.utils.result_commands import ResponseError
 
 from . import serializers
+
 from apps.management.models import Administrator
 
 
@@ -106,31 +90,3 @@ class AdministratorDetailAPIView(generics.RetrieveAPIView):
 			data = serializer.data,
 			status = status.HTTP_200_OK
 		)
-
-
-class UpdateUserPermissions(generics.UpdateAPIView):
-	queryset = user_models.User.objects.all()
-	serializer_class = UserResposeSerializer
-	permission_classes = [IsAuthenticated, IsRoleAdminOrReadOnly]
-
-
-	def update(self, request, pk):
-		user = self.get_object()
-		serializer = UserPermissionsSerializer(data = request.data)
-
-		if not serializer.is_valid():
-			return response.Response(
-				data = serializer.errors,
-				status = status.HTTP_400_BAD_REQUEST
-			)
-
-		permissions = Permission.objects.filter(
-			codename__in = serializer.data['permissions']
-		)
-
-		user.user_permissions.set(permissions)
-
-		return response.Response(
-			data = self.get_serializer(user).data,
-			status = status.HTTP_200_OK
-		) 
