@@ -44,19 +44,20 @@ def update_school_logo(image:UploadedFile = None) -> ResultCommand:
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True))
 def get_school_by_id(id: int) -> ResultCommand:
-	try:
+	school = models.School.objects.filter(id = id).first()
 	
-		return ResultCommand(
-			status = True, 
-			query = models.School.objects.get(id = id)
-		)
-	
-	except models.School.DoesNotExist as e:
-		return ResultCommand(
+	if not school:
+		ResultCommand(
 			status = False,
 			errors = [{"message": SchoolErrorsMessages.DoesNotExist}],
 			error_code = status_code.HTTP_404_NOT_FOUND
 		)
+		
+	return ResultCommand(
+		status = True, 
+		query = school
+	)
+	
 
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
