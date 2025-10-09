@@ -17,7 +17,7 @@ from apps.management.commands.utils.errors_messages import (
 )
 from .utils import testcases
 
-from tests.school.utils.utils import create_daysweek
+from tests.school.utils.utils import create_daysweek, create_time_group
 
 class CommandAddTimeGroupTest(testcases.CommandTimeGroupTestCase):
 
@@ -490,7 +490,7 @@ class CommandCreateOfficeHourTest(testcases.CommandOfficeHourTestCase):
 
 	def test_create_office_hour_with_wrong_daysweek(self):
 		"""
-			Generar error por definir un valor [ x < 1 | x > 5]
+			Generar error por definir un valor [ x < 1 | x > 5] para daysweek
 		"""
 
 		self.new_office_hour["time_group"].update({
@@ -597,3 +597,58 @@ class CommandCreateOfficeHourTest(testcases.CommandOfficeHourTestCase):
 				self.assertIsNone(command_query)
 				self.assertTrue(command_errors)
 				self.assertEqual(command_errors[0].message, error_message)
+
+
+	def test_create_office_hour_with_time_group_by_id(self):
+		"""
+			Validar crear un horario de oficina con un 'time_group' ya existente
+		"""
+		time_group = create_time_group()
+
+		self.new_office_hour.update({"time_group": {"id": time_group.id}})
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_query = command.query
+		command_status = command.status
+		command_errors = command.errors
+
+		self.assertTrue(command_query)
+		self.assertTrue(command_status)
+		self.assertIsNone(command_errors)
+
+		self.assertEqual(command_query.time_group.id, time_group.id)
+		self.assertEqual(
+			command_query.interval_description, 
+			self.new_office_hour['description']
+		)
+
+	def test_create_office_hour_with_does_not_exist_time_group(self):
+		"""
+			Generar un error por crear un horario de oficina con un 'time_group' que no existe
+		"""
+		wrong_id = faker.random_int(min = 1)
+		error_message = TimeGroupErrorsMessages.DOES_NOT_EXIST
+
+		self.new_office_hour.update({"time_group": {"id": wrong_id}})
+
+		command = commands.create_office_hour(
+			school_id = self.school.id,
+			office_hour = self.new_office_hour
+		)
+
+		command_query = command.query
+		command_status = command.status
+		command_errors = command.errors
+
+		self.assertIsNone(command_query)
+		self.assertFalse(command_status)
+		self.assertTrue(command_errors)
+
+		self.assertEqual(command_errors[0].message, error_message)
+
+
+
