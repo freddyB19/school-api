@@ -3,7 +3,7 @@ from django.urls import path, include
 from . import views
 from .school.routers import router as school_router
 from .school.urls import urlpatterns as school_urls
-
+from .user.urls import urlpatterns as user_urls
 
 
 app_name = "management"
@@ -19,13 +19,8 @@ urlpatterns = [
 		views.AdministratorAPIView.as_view(), 
 		name = "administrator"
 	),
-	path(
-		"user/<int:pk>/permission/", 
-		views.UpdateUserPermissions.as_view(), 
-		name = "user-permission"
-	),
-
 	path('school/', include(school_urls)),
 	path('', include(school_router.urls)),
 
+	path('user/', include(user_urls)),
 ]
