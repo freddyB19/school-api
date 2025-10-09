@@ -26,14 +26,21 @@ class NewsUpdateImages(BaseDTO):
 	images: ListUploadedFile
 
 
+class TimeGroupByIdDTO(BaseDTO):
+	id: int
+
 class TimeGroupDTO(BaseDTO):
 	type: str
 	daysweek: list[int] | None = None
-	opening: datetime.time
-	closing: datetime.time
+	opening_time: datetime.time
+	closing_time: datetime.time
 	active: bool | None = None
 	overview: str | None = None
 
 
 class OfficeHourUpdateDTO(BaseDTO):
 	interval_description: str | None = None
+
+class OffiHourCreateDTO(BaseDTO):
+	time_group: TimeGroupDTO | TimeGroupByIdDTO
+	description: str
