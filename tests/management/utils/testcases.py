@@ -9,7 +9,11 @@ from tests.user.utils import (
 	create_permissions, 
 	get_permissions
 )
-from tests.school.utils import create_school, create_daysweek
+from tests.school.utils import (
+	create_school, 
+	create_daysweek, 
+	create_time_group
+)
 
 from .utils import get_long_string, get_administrator
 
@@ -29,6 +33,10 @@ class CommandTimeGroupTestCase(TransactionTestCase):
 	def setUp(self):
 		self.dayweek = create_daysweek()
 
+class CommandGetOrCreateTimeGroupTestCase(TransactionTestCase):
+	def setUp(self):
+		self.time_group = create_time_group()
+		
 
 class CommandOfficeHourTestCase(TransactionTestCase):
 	def setUp(self):
