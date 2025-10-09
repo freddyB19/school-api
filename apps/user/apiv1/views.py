@@ -11,32 +11,27 @@ from rest_framework.decorators import permission_classes
 
 from drf_spectacular.utils import (
     extend_schema,
-    extend_schema_view,
     OpenApiParameter,
 )
-from drf_spectacular.types import OpenApiTypes
 
 from . import serializers
 from .permissions import (
     IsRoleAdminOrReadOnly,
     IsUserOrReadOnly,
     IsValidRequestUpdateUser,
-    AdminCannotChangeOwnRole
 )
 
 from apps.user import models
 from apps.user.commands.commands import (
     change_password,
     generate_password,
-    get_user,
     get_user_by_email
 )
 
 from apps.utils.result_commands import (
     MessageError,
     ResponseSuccess,
-    ResponseError,
-    BaseMessage
+    ResponseError
 )
 
 from apps.user.utils.token import Token
@@ -238,49 +233,5 @@ class UserResetPasswordAPIView(views.APIView):
             data=ResponseSuccess(
                 success = [{"message": "Su contraseña se ha restablecido"}]
             ).model_dump(),
-            status = status.HTTP_200_OK
-        )
-
-
-
-class UserUpdateRoleAPIView(views.APIView):
-    permission_classes = [IsAuthenticated, AdminCannotChangeOwnRole]
-
-    @extend_schema(
-        methods=["PATCH"],
-        request=serializers.UserUpdateRoleSerializer,
-        responses={
-            200: serializers.UserResposeSerializer,
-            404: ResponseError
-        },
-        operation_id = "user_update_role"
-    )
-    def patch(self, request, pk):
-
-        validate_role = serializers.UserUpdateRoleSerializer(data = request.data)
-
-        if not validate_role.is_valid():
-            return response.Response(
-                data = validate_role.errors,
-                status = status.HTTP_400_BAD_REQUEST
-            )
-
-        command = get_user(pk = pk)
-
-        if not command.status:
-            return response.Response(
-                data = ResponseError(
-                    errors = command.errors
-                ).model_dump(), 
-                status = status.HTTP_404_NOT_FOUND
-            )
-
-        user = command.query
-
-        user.role = validate_role.data['role']
-        user.save()
-
-        return response.Response(
-            data = serializers.UserResposeSerializer(user).data,
             status = status.HTTP_200_OK
         )
