@@ -57,7 +57,6 @@ class AdministratorTestCase(APITestCase):
 class AdministratorUserTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
-		
 		create_permissions()
 
 		self.user_role_admin = create_user(role = 0)
