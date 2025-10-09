@@ -10,12 +10,13 @@ from apps.utils.result_commands import ResultCommand, BaseMessage
 from apps.utils.decorators import handler_validation_errors
 
 from .utils.functions import set_name_image
-from .utils.errors_messages import SchoolErrorsMessages
+from .utils.errors_messages import SchoolErrorsMessages, TimeGroupErrorsMessages
 from .utils.props import (
 	NewsParam,
 	DjangoDict,
 	UploadedFile,
 	TimeGroupParam,
+	TimeGroupByIdParam,
 	OfficeHourParam,
 	ListUploadedFile,
 	IntervalDescription
@@ -174,6 +175,14 @@ def add_office_hour(school_id: int, description: IntervalDescription) -> models.
 		interval_description = description
 	)
 
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def get_or_create_time_group(time_group: TimeGroupParam | TimeGroupByIdParam) -> models.TimeGroup | None:
+	if isinstance(time_group, TimeGroupParam):
+		return add_time_group(time_group)
+	return models.TimeGroup.objects.filter(id = time_group.id).first()
+
+
 @handler_validation_errors
 def create_office_hour(school_id: int, office_hour: OfficeHourParam, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
 	
@@ -189,9 +198,18 @@ def create_office_hour(school_id: int, office_hour: OfficeHourParam, errors:Opti
 	if not command.status:
 		return command
 
-	officehour = add_office_hour(school_id = school_id, description = office_hour.description)
-	officehour.time_group = add_time_group(time_group = office_hour.time_group)
-	officehour.save()
+	time_group =  get_or_create_time_group(time_group = office_hour.time_group)
 
+	if not time_group:
+		return ResultCommand(
+			status = False, 
+			errors = [{"message": TimeGroupErrorsMessages.DOES_NOT_EXIST}],
+			error_code = status_code.HTTP_404_NOT_FOUND
+		)
+
+	officehour = add_office_hour(school_id = school_id, description = office_hour.description)
+	
+	officehour.time_group = time_group
+	officehour.save()
 
 	return ResultCommand(**{"query": officehour, "status": True})
