@@ -181,6 +181,51 @@ class CommandAddTimeGroupTest(testcases.CommandTimeGroupTestCase):
 			)
 
 
+class CommandGetOrCreateTimeGroupTest(testcases.CommandGetOrCreateTimeGroupTestCase):
+	def test_get_time_group(self):
+		"""
+			Validar que retorna un 'time_group' por su id
+		"""
+		return_time_group = commands.get_or_create_time_group(
+			time_group = {"id": self.time_group.id}
+		)
+
+		self.assertTrue(return_time_group)
+		self.assertEqual(return_time_group.id, self.time_group.id)
+
+
+	def test_get_none_if_does_not_exist(self):
+		"""
+			Validar que retorna un 'None' por un id que no existe
+		"""
+		wrong_id = faker.random_int(min = self.time_group.id + 1)
+
+		return_time_group = commands.get_or_create_time_group(
+			time_group = {"id": wrong_id}
+		)
+
+		self.assertIsNone(return_time_group)
+
+	def test_create_time_group(self):
+		"""
+			Validar que crea un nuevo 'time_group'
+		"""
+
+		new_time_group = {
+			"type": faker.text(max_nb_chars = models.MAX_LENGTH_TYPEGROUP_TYPE),
+			"opening_time": datetime.time(6, 50),
+			"closing_time": datetime.time(17, 50)
+		}
+
+		time_group = commands.get_or_create_time_group(
+			time_group = new_time_group
+		)
+
+		self.assertTrue(time_group)
+		self.assertNotEqual(time_group.id, self.time_group.id)
+		self.assertEqual(time_group.type, new_time_group['type'])
+		self.assertIsInstance(time_group, models.TimeGroup)
+
 class CommandAddOfficeHourTest(testcases.CommandOfficeHourTestCase):
 	
 	def test_add_office_hour(self):
