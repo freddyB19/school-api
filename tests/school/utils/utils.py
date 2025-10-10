@@ -370,6 +370,9 @@ class NewsMediaFactory(SchoolMediaPhotoFactory):
 	class Meta:
 		model = models.NewsMedia
 
+def create_news_media(**kwargs):
+	return NewsMediaFactory.create(**kwargs)
+
 def bulk_create_news_media(size:int = 1,**kwargs) -> list[models.NewsMedia]:
 	return NewsMediaFactory.create_batch(size = size, **kwargs)
 
