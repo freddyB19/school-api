@@ -89,12 +89,6 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         return command.query
 
 
-class UserUpdateRoleSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = models.User
-        fields = ["role"]
-
-
 class UserResposeSerializer(serializers.ModelSerializer):
     user_permissions = serializers.SlugRelatedField(
         many=True,
@@ -160,19 +154,3 @@ class TokenSerializer(serializers.Serializer):
 class UserResponseLogin(serializers.Serializer):
     user = UserResposeSerializer(read_only = True)
     token = TokenSerializer()
-
-
-class UserPermissionsSerializer(serializers.Serializer):
-    permissions = serializers.ListField(child = serializers.CharField())
-
-
-    def validate_permissions(self, value):
-        if not value:
-            raise serializers.ValidationError("Debe indicar que permisos desea agregar al usuario")
-        
-        exists_permissions = Permission.objects.filter(codename__in = value)
-
-        if not exists_permissions:
-            raise serializers.ValidationError("No existe ningún permiso con alguno de esos nombres")
-        
-        return value
