@@ -10,7 +10,7 @@ from tests.user.utils import (
 	get_permissions
 )
 from tests.school.utils import (
-	create_school, 
+	create_school,
 	create_daysweek, 
 	create_time_group
 )
@@ -139,6 +139,29 @@ class NewsDetailUpdateDeleteTestCase(NewsCreateTestCase):
 class NewsListTestCase(NewsTestCase):
 	def setUp(self):
 		super().setUp()
+
+
+class NewsMediaTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+		self.school = create_school()
+
+		self.user_with_add_perm = create_user(role = 0, email = faker.email())
+		self.user_with_delete_perm = create_user(role = 0, email = faker.email())
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ['add_newsmedia'])
+		)
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ['delete_newsmedia'])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(*(
+			self.user_with_add_perm,
+			self.user_with_delete_perm
+		))
+
 
 
 class OfficeHourTestCase(APITestCase):
