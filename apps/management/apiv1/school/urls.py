@@ -9,6 +9,11 @@ urlpatterns = [
 		name = "news-list-create" 
 	),
 	path(
+		"news/images/<int:pk>",
+		views.NewsMediaDeleteAPIView.as_view(),
+		name = "news-images-detail" 
+	),
+	path(
 		"<int:pk>/officehour/",
 		views.OfficeHourListCreateAPIView.as_view(),
 		name = "officehour-list-create" 
