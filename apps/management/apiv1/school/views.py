@@ -3,13 +3,13 @@ from rest_framework import generics, response, status
 
 from django_filters.rest_framework import DjangoFilterBackend
 
-from apps.school import models as school_models
+from apps.school import models
 
 from . import serializers, permissions, filters, paginations
 
 
 class NewsListCreateAPIView(generics.ListCreateAPIView):
-	queryset = school_models.News.objects.all()
+	queryset = models.News.objects.all()
 	serializer_class = serializers.MSchoolNewsResponse
 	pagination_class = paginations.BasicPaginate
 	permission_classes = [
@@ -56,8 +56,28 @@ class NewsListCreateAPIView(generics.ListCreateAPIView):
 		)
 
 
+class NewsMediaDeleteAPIView(generics.RetrieveDestroyAPIView):
+	queryset = models.NewsMedia.objects.all()
+	serializer_class = serializers.MSchoolNewsMediaSerializer
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission
+	]
+	# ¿Es necesario tener un permiso que valide si una imagen forma parte
+	# de una noticia que pertenece a una escuela de la que formamos parte 
+	# como 'admins'?
+	# Se puede, pero, debo hacer esto por cada tabla con esta similitud y
+	# creo que es algo que no vale la pena, ya que serían múltiples permisos
+	# personalizados, por lo que no lo vale.
+	# Además, creo que las consultas para realizar esto tendrían que buscar 
+	# en toda la tabla de noticias, ya que no se tiene un ID sobre 
+	# qué noticia trata o a qué escuela pertenece la noticia que tiene estas
+	# imagenes.
+
+
+
 class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
-	queryset = school_models.OfficeHour.objects.all()
+	queryset = models.OfficeHour.objects.all()
 	serializer_class = serializers.MSchoolOfficeHourResponse 
 	pagination_class = paginations.BasicPaginate
 	permission_classes = [
@@ -105,7 +125,7 @@ class OfficeHourListCreateAPIView(generics.ListCreateAPIView):
 
 
 class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView):
-	queryset = school_models.OfficeHour.objects.all()
+	queryset = models.OfficeHour.objects.all()
 	serializer_class = serializers.MSchoolOfficeHourResponse
 	permission_classes = [
 		IsAuthenticated, 
