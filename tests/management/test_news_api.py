@@ -774,7 +774,7 @@ class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.URL_NEWS_UPDATE_IMAGES = self.get_upload_image_url(
 			id = self.news.id
 		)
-		self.URL_NEWS_DELETE_IMAGES = self.get_delete_image_url(
+		self.URL_NEWS_DELETE_ALL_IMAGES = self.get_delete_all_image_url(
 			id = self.news.id
 		)
 
@@ -784,7 +784,7 @@ class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			kwargs = {"pk": id}
 		)
 
-	def get_delete_image_url(self, id):
+	def get_delete_all_image_url(self, id):
 		return reverse(
 			"management:news-delete-all-images",
 			kwargs = {"pk": id}
