@@ -129,3 +129,14 @@ class NewsDetailUpdateDeleteVS(BaseVS):
 			data = self.serializer_class(news).data,
 			status = status.HTTP_200_OK
 		)
+
+	@action(detail = True, methods = ["delete"], url_name = "delete-all-images")
+	def delete_all_images(self, request, pk=None):
+		news = self.get_object()
+
+		news.media.all().delete()
+
+		return response.Response(
+			data = self.serializer_class(news).data,
+			status = status.HTTP_200_OK
+		)
