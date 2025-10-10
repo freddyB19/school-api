@@ -765,7 +765,7 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.assertEqual(responseStatus, 401)
 
 
-class NewsUpdateImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
+class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -774,10 +774,19 @@ class NewsUpdateImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.URL_NEWS_UPDATE_IMAGES = self.get_upload_image_url(
 			id = self.news.id
 		)
+		self.URL_NEWS_DELETE_IMAGES = self.get_delete_image_url(
+			id = self.news.id
+		)
 
 	def get_upload_image_url(self, id):
 		return reverse(
 			"management:news-upload-images",
+			kwargs = {"pk": id}
+		)
+
+	def get_delete_image_url(self, id):
+		return reverse(
+			"management:news-delete-all-images",
 			kwargs = {"pk": id}
 		)
 
@@ -805,3 +814,21 @@ class NewsUpdateImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			responseStatus = response.status_code
 
 			self.assertEqual(responseStatus, 200)
+
+
+	def test_delete_all_news_images(self):
+		"""
+			Validar "DELETE /news-delete-all-images/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(
+			self.URL_NEWS_DELETE_IMAGES
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.news.id)
+		self.assertFalse(responseJson["media"])
