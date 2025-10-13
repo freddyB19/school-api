@@ -302,8 +302,26 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 		}
 
 	def validate(self, data):
+
 		opening_time = data.get("opening_time")
 		closing_time = data.get("closing_time")
+
+		if not opening_time and not closing_time:
+			return data
+
+		time = [opening_time, closing_time]
+		INVALID_TIME_SENT = None 
+		TOTAL_INVALID_DATA_SENT_TIME = 1
+		ERROR_MESSAGE = "Debe enviar ámbos valores [opening_time, closing_time]"
+
+		if time.count(INVALID_TIME_SENT) == TOTAL_INVALID_DATA_SENT_TIME:
+			# Validamos si solo se ha enviado un solo valor
+			# en relación con [opening_time, closing_time]
+			
+			raise serializers.ValidationError(
+				ERROR_MESSAGE,
+				code="invalid_request"
+			)
 
 		if closing_time <= opening_time:
 			raise serializers.ValidationError(
