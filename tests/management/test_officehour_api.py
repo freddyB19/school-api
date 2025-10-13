@@ -26,6 +26,12 @@ from .utils.testcases_data import (
 	UPDATE_OFFICEHOUR_WITH_WRONG_DATA
 )
 
+def get_detail_officehour_url(id):
+	return reverse(
+		"management:officehour-detail",
+		kwargs={"pk": id}
+	)
+
 
 class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 	def setUp(self):
@@ -738,13 +744,13 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		self.assertEqual(responseStatus, 401)
 
 
-class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
+class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 
 		self.officehour = create_officehour(school = self.school)
 
-		self.URL_OFFICEHOUR_DETAIL = self.get_detail_officehour_url(
+		self.URL_OFFICEHOUR_DETAIL = get_detail_officehour_url(
 			id = self.officehour.id
 		)
 
@@ -789,7 +795,7 @@ class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDelete
 		)
 
 		response = self.client.get(
-			self.get_detail_officehour_url(
+			get_detail_officehour_url(
 				id = other_officehour.id
 			)
 		)
@@ -831,6 +837,16 @@ class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDelete
 
 		self.assertEqual(responseStatus, 401)
 
+
+class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.officehour = create_officehour(school = self.school)
+
+		self.URL_OFFICEHOUR_DETAIL = get_detail_officehour_url(
+			id = self.officehour.id
+		)
 
 	def test_update_officehour(self):
 		"""
@@ -893,7 +909,7 @@ class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDelete
 		}
 
 		response = self.client.patch(
-			self.get_detail_officehour_url(
+			get_detail_officehour_url(
 				id = other_officehour.id
 			),
 			update_officehour
@@ -973,6 +989,17 @@ class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDelete
 		self.assertEqual(responseStatus, 401)
 
 
+class OfficeHourDeleteAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.officehour = create_officehour(school = self.school)
+
+		self.URL_OFFICEHOUR_DETAIL = get_detail_officehour_url(
+			id = self.officehour.id
+		)
+
+
 	def test_delete_officehour(self):
 		"""
 			Validar "DELETE /officehour/:id"
@@ -996,7 +1023,7 @@ class OfficeHourDetailUpdateDeleteAPITest(testcases.OfficeHourDetailUpdateDelete
 		)
 
 		response = self.client.delete(
-			self.get_detail_officehour_url(id = officehour.id)
+			get_detail_officehour_url(id = officehour.id)
 		)
 
 		responseStatus = response.status_code
