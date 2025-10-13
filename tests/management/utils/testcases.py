@@ -225,7 +225,6 @@ class OfficeHourListTestCase(OfficeHourCreateTestCase):
 		admin.users.add(self.user_with_change_perm)
 
 
-
 class OfficeHourDetailUpdateDeleteTestCase(OfficeHourCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -238,3 +237,44 @@ class OfficeHourDetailUpdateDeleteTestCase(OfficeHourCreateTestCase):
 
 		admin = get_administrator(school_id = self.school.id)
 		admin.users.add(self.user_with_change_perm)
+
+
+class TimeGroupTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_with_all_perm = create_user(role = 0)
+
+
+		permissions = get_permissions(codenames = [
+			'add_timegroup', 
+			'change_timegroup', 
+			'delete_timegroup', 
+			'view_timegroup'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(self.user_with_all_perm)
+
+
+class TimeGroupDetailUpdateDeleteTestCase(TimeGroupTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_timegroup"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_timegroup"])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
