@@ -66,7 +66,7 @@ class NewsParam(BaseModel):
 MIN_VALUE_DAY = 1
 MAX_VALUE_DAY = 5
 
-VALIDATE_CHOICES_DAY = lambda daysweek: list(
+INVALID_CHOICES_DAY = lambda daysweek: list(
 	filter(
 		lambda num: num < MIN_VALUE_DAY or num > MAX_VALUE_DAY, 
 		daysweek
@@ -100,9 +100,9 @@ class TimeGroupParam(BaseModel):
 	@field_validator("daysweek", mode= "after")
 	@classmethod
 	def choices_daysweek(cls, value):
-		is_valid = VALIDATE_CHOICES_DAY(daysweek = cls._delete_duplicate(value))
+		is_invalid = INVALID_CHOICES_DAY(daysweek = cls._delete_duplicate(value))
 		
-		if is_valid:
+		if is_invalid:
 			raise ValueError(TimeGroupErrorsMessages.INVALID_DAYSWEEK)
 
 		return value
