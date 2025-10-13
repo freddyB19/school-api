@@ -21,6 +21,13 @@ from tests.school.utils import(
 from .utils import testcases
 
 
+def get_detail_news_url(id):
+	return reverse(
+		"management:news-detail",
+		kwargs = {"pk": id}
+	)
+
+
 class NewsCreateAPITest(testcases.NewsCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -439,20 +446,14 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		self.assertEqual(responseStatus, 401)
 
 
-class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
+class NewsDetailAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 	def setUp(self):
 		super().setUp()
 
 		self.news = create_news(school = self.school)
 
-		self.URL_NEWS_DETAIL = self.get_detail_news_url(
+		self.URL_NEWS_DETAIL = get_detail_news_url(
 			id = self.news.id
-		)
-
-	def get_detail_news_url(self, id):
-		return reverse(
-			"management:news-detail",
-			kwargs = {"pk": id}
 		)
 
 
@@ -484,7 +485,7 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		news = create_news(school = other_school)
 
 		response = self.client.get(
-			self.get_detail_news_url(id = news.id)
+			get_detail_news_url(id = news.id)
 		)
 
 		responseStatus = response.status_code
@@ -518,6 +519,16 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.assertEqual(responseStatus, 401)
 
+
+class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.news = create_news(school = self.school)
+
+		self.URL_NEWS_DETAIL = get_detail_news_url(
+			id = self.news.id
+		)
 
 	def test_update_news(self):
 		"""
@@ -607,7 +618,7 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		}
 
 		response = self.client.patch(
-			self.get_detail_news_url(id = news.id),
+			get_detail_news_url(id = news.id),
 			update_news
 		)
 
@@ -687,6 +698,16 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.assertEqual(responseStatus, 401)
 
 
+class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.news = create_news(school = self.school)
+
+		self.URL_NEWS_DETAIL = get_detail_news_url(
+			id = self.news.id
+		)
+
 	def test_delete_news(self):
 		"""
 			Validar "DELETE /news/:id"
@@ -710,7 +731,7 @@ class NewsDetailUpdateDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.client.force_authenticate(user = self.user_with_delete_perm)
 
 		response = self.client.delete(
-			self.get_detail_news_url(id = news.id)
+			get_detail_news_url(id = news.id)
 		)
 
 		responseStatus = response.status_code
