@@ -2,11 +2,11 @@ import random
 
 from django.test import TestCase
 
-from apps.management.commands.utils.props import VALIDATE_CHOICES_DAY
+from apps.management.commands.utils.props import INVALID_CHOICES_DAY
 
 class ManagementCommandsProp(TestCase):
 	"""
-		Este test se encarga de validar que nuestra función 'VALIDATE_CHOICES_DAY'
+		Este test se encarga de validar que nuestra función 'INVALID_CHOICES_DAY'
 
 		Los días de la semana son calificados en números, partiendo:
 		desde 1 hasta el 5.
@@ -24,7 +24,7 @@ class ManagementCommandsProp(TestCase):
 
 		daysweek = random.choices(valid_choices, k = 3)
 
-		result = VALIDATE_CHOICES_DAY(daysweek = daysweek)
+		result = INVALID_CHOICES_DAY(daysweek = daysweek)
 
 		self.assertFalse(result)
 		self.assertEqual(len(result), 0)
@@ -38,7 +38,7 @@ class ManagementCommandsProp(TestCase):
 		invalid_choices = [6,7,8,10,9]
 		daysweek = random.choices(invalid_choices, k = 3)
 
-		result = VALIDATE_CHOICES_DAY(daysweek = daysweek)
+		result = INVALID_CHOICES_DAY(daysweek = daysweek)
 
 		self.assertTrue(result)
 		self.assertGreaterEqual(len(result), 1)
