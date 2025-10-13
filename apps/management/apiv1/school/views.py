@@ -134,9 +134,9 @@ class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView)
 	]
 
 	def get_serializer_class(self):
-		updated = ["PUT", "PATCH"]
+		update = ["PUT", "PATCH"]
 
-		if self.request.method in updated:
+		if self.request.method in update:
 			return serializers.MSchoolOfficeHourUpdateRequest
 
 		return self.serializer_class
@@ -158,5 +158,40 @@ class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView)
 
 		return response.Response(
 			data = self.serializer_class(officehour).data,
+			status = status.HTTP_200_OK
+		)
+
+
+class TimeGroupDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = models.TimeGroup.objects.all()
+	serializer_class = serializers.MSchoolTimeGroupResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+	]
+
+	def get_serializer_class(self):
+		update = ["PATCH", "PUT"]
+		if self.request.method in update:
+			return serializers.MSchoolTimeGroupRequest
+		return self.serializer_class
+
+	def update(self, request, pk, *args, **kwargs):
+		partial = kwargs.pop('partial', False)
+		
+		instance = self.get_object()
+		
+		serializer = self.get_serializer(
+			instance, 
+			data=request.data, 
+			partial=partial
+		)
+		
+		serializer.is_valid(raise_exception=True)
+		
+		time_group = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(time_group).data,
 			status = status.HTTP_200_OK
 		)
