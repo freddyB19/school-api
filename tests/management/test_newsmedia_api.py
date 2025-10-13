@@ -8,19 +8,20 @@ from tests import faker
 from tests.school.utils import create_news_media
 
 
-class NewsMediaDetailDeleteAPITest(testcases.NewsMediaTestCase):
+def get_detail_newsmedia_url(id):
+	return reverse(
+		"management:news-images-detail",
+		kwargs = {"pk": id}
+	)
+
+
+class NewsMediaDetailAPITest(testcases.NewsMediaTestCase):
 	def setUp(self):
 		super().setUp()
 		self.newsmedia = create_news_media()
 
-		self.URL_DETAIL_NEWSMEDIA = self.get_detail_newsmedia_url(
+		self.URL_DETAIL_NEWSMEDIA = get_detail_newsmedia_url(
 			id = self.newsmedia.id
-		)
-
-	def get_detail_newsmedia_url(self, id):
-		return reverse(
-			"management:news-images-detail",
-			kwargs = {"pk": id}
 		)
 
 	def test_detail_newsmedia(self):
@@ -39,7 +40,6 @@ class NewsMediaDetailDeleteAPITest(testcases.NewsMediaTestCase):
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["id"], self.newsmedia.id)
 
-
 	def test_detail_newsmedia_does_not_exist(self):
 		"""
 			Generar [Error 404] "GET /news/images/:id" por ID que no existe 
@@ -52,7 +52,7 @@ class NewsMediaDetailDeleteAPITest(testcases.NewsMediaTestCase):
 		
 
 		response = self.client.get(
-			self.get_detail_newsmedia_url(id = wrong_id)
+			get_detail_newsmedia_url(id = wrong_id)
 		)
 
 		responseStatus = response.status_code
@@ -71,6 +71,17 @@ class NewsMediaDetailDeleteAPITest(testcases.NewsMediaTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+
+class NewsMediaDeleteAPITest(testcases.NewsMediaTestCase):
+	def setUp(self):
+		super().setUp()
+		self.newsmedia = create_news_media()
+
+		self.URL_DETAIL_NEWSMEDIA = get_detail_newsmedia_url(
+			id = self.newsmedia.id
+		)
 
 	def test_delete_newsmedia(self):
 		"""
@@ -97,7 +108,7 @@ class NewsMediaDetailDeleteAPITest(testcases.NewsMediaTestCase):
 		wrong_id = faker.random_int(min = news_media_id + 1)
 
 		response = self.client.delete(
-			self.get_detail_newsmedia_url(id = wrong_id)
+			get_detail_newsmedia_url(id = wrong_id)
 		)
 
 		responseStatus = response.status_code
