@@ -24,6 +24,11 @@ urlpatterns = [
 		name = "officehour-detail" 
 	),
 	path(
+		"<int:pk>/officehour/time",
+		views.TimeGroupListAPIView.as_view(),
+		name = "timegroup-list" 
+	),
+	path(
 		"officehour/time/<int:pk>",
 		views.TimeGroupDetailDeleteUpdateAPIView.as_view(),
 		name = "timegroup-detail" 
