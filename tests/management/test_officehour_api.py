@@ -583,12 +583,6 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		# Ej: length = 2, [2,3]; length = 1, [4]
 		selected_daysweek = set_daysweek(length = 1)
 
-		# Días de la semana a 'str' 
-		# Ej: [2,4] --> ['Martes', 'Jueves']
-		daysweek_names = selected_daysweek_to_names(
-			selected = selected_daysweek
-		)
-
 		officehour_selected_daysweek = models.OfficeHour.objects.filter(
 			time_group__daysweek__day__in = selected_daysweek,
 			school_id = self.school.id
