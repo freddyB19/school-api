@@ -162,6 +162,24 @@ class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView)
 		)
 
 
+class TimeGroupListAPIView(generics.ListAPIView):
+	queryset = models.TimeGroup.objects.all()
+	serializer_class = serializers.MSchoolTimeGroupListResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.TimeGroupFilter
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			intervalsList__school_id = self.kwargs.get("pk")
+		).order_by("-id")
+
+
 class TimeGroupDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 	queryset = models.TimeGroup.objects.all()
 	serializer_class = serializers.MSchoolTimeGroupResponse
