@@ -50,3 +50,21 @@ class OfficeHourFilter(django_filters.FilterSet):
 	class Meta:
 		mode = models.OfficeHour
 		fields = ["time_group, interval_description"]
+
+
+class TimeGroupFilter(django_filters.FilterSet):
+	type = django_filters.CharFilter(
+		field_name = "type", lookup_expr = "icontains"
+	)
+	
+	is_active = django_filters.BooleanFilter(field_name="active")
+	
+	days = NumberInFilter(
+		field_name = "daysweek", 
+		lookup_expr = "day__in",
+		distinct = True
+	)
+
+	class Meta:
+		mode = models.OfficeHour
+		fields = ["type", "days", "is_active"]
