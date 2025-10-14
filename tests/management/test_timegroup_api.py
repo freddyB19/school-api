@@ -1,3 +1,4 @@
+import pprint
 from django.urls import reverse
 
 from .utils import testcases
@@ -6,8 +7,13 @@ from apps.school import models
 
 from tests import faker
 
-from .utils import testcases_data
-from tests.school.utils import create_time_group
+from .utils import testcases_data, set_daysweek, set_format_dasyweek_query
+from tests.school.utils import (
+	create_school,
+	create_time_group,
+	bulk_create_officehour,
+)
+from tests.user.utils import create_user
 
 
 def get_detail_timegroup_url(id):
@@ -15,6 +21,200 @@ def get_detail_timegroup_url(id):
 		"management:timegroup-detail",
 		kwargs={"pk": id}
 	)
+
+class TimeGroupListAPITest(testcases.TimeGroupTestCase):
+	def setUp(self):
+		super().setUp()
+
+		bulk_create_officehour(size = 5, school = self.school)
+
+		self.URL_TIMEGROUP_LIST = self.get_list_timegroup_url(
+			school_id = self.school.id
+		)
+
+	def get_list_timegroup_url(self, school_id, **extra):
+		return reverse(
+			"management:timegroup-list",
+			kwargs={"pk": school_id},
+			**extra
+		)
+
+	def test_list_timegroup(self):
+		"""
+			Validar "GET school/:id/officehour/time"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		total_time_group = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_TIMEGROUP_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_time_group)
+
+	def test_list_timegroup_filter_by_type(self):
+		"""
+			Validar "GET school/:id/officehour/time?type=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		type = faker.text(max_nb_chars = 15)
+
+		bulk_create_officehour(
+			size = 2,
+			school = self.school,
+			time_group = create_time_group(type = type)
+		)
+
+		type_icontains =  type[:11]
+
+		time_group_filter_by_type = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id,
+			type__icontains = type_icontains
+		).count()
+
+		response = self.client.get(
+			self.get_list_timegroup_url(
+				school_id = self.school.id,
+				query = {"type": type_icontains}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], time_group_filter_by_type)
+
+
+	def test_list_timegroup_filter_by_daysweek(self):
+		"""
+			Validar "GET school/:id/officehour/time?days=<...>, <...>, ..."
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		daysweek = models.DaysWeek.objects.all()
+		time_group = create_time_group(daysweek = faker.random_elements(
+			elements = daysweek,
+			length = 2
+		))
+
+		bulk_create_officehour(
+			size = 3,
+			school = self.school,
+			time_group = time_group
+		)
+
+		#Lista de días de la semana mediante enteros: [1-5]
+		days = [day.day for day in time_group.daysweek.all()]
+
+		time_group_filter_by_daysweek = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id,
+			daysweek__day__in = days
+		).distinct()
+
+		response = self.client.get(
+			self.get_list_timegroup_url(
+				school_id = self.school.id,
+				query = {"days": set_format_dasyweek_query(selected = days)}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], time_group_filter_by_daysweek.count())
+
+
+	def test_list_timegroup_filter_by_active(self):
+		"""
+			Validar "GET school/:id/officehour/time?is_active=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		active = False
+
+		bulk_create_officehour(
+			size = 2,
+			school = self.school,
+			time_group = create_time_group(active = active)
+		)
+
+		time_group_filter_by_active = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id,
+			active = active
+		).count()
+
+		response = self.client.get(
+			self.get_list_timegroup_url(
+				school_id = self.school.id,
+				query = {"is_active": active}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], time_group_filter_by_active)
+
+
+	def test_list_timegroup_without_school_permission(self):
+		"""
+			Generar [Error 403] "school/:id/officehour/time" por acceder a información de otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_school = create_school()
+
+		response = self.client.get(
+			self.get_list_timegroup_url(school_id = other_school.id)
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_list_timegroup_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET school/:id/officehour/time" por usuario que no forma parte de la administración de la escuela
+		"""
+
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		total_time_group = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_TIMEGROUP_LIST)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_list_timegroup_without_authentication(self):
+		"""
+			Generar [Error 401] "school/:id/officehour/time"
+		"""
+
+		total_time_group = models.TimeGroup.objects.filter(
+			intervalsList__school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_TIMEGROUP_LIST)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
 
 
 class  TimeGroupDetailAPITest(testcases.TimeGroupDetailUpdateDeleteTestCase):
