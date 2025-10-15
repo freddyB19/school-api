@@ -132,3 +132,9 @@ IntervalDescription = Annotated[str, AfterValidator(check_len_description)]
 class OfficeHourParam(BaseModel):
 	description: IntervalDescription
 	time_group: TimeGroupParam | TimeGroupByIdParam
+
+
+class CalendarParam(BaseModel):
+	title: str
+	description: str | None = None
+	date: datetime.date
