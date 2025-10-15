@@ -112,3 +112,19 @@ UPDATE_TIMEGROUP_WITH_WRONG_DATA = [
 		}
 	}
 ]
+
+
+CREATE_CALENDAR_WITH_WRONG_DATA = [
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MAX_LENGTH_CALENDAR_TITLE + 1
+		),
+		"date": faker.date_this_year()
+	},
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_CALENDAR_TITLE - 1
+		),
+		"date": faker.date_this_year()
+	},
+]
