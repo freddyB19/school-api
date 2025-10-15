@@ -47,7 +47,7 @@ def get_school_by_id(id: int) -> ResultCommand:
 	school = models.School.objects.filter(id = id).first()
 	
 	if not school:
-		ResultCommand(
+		return ResultCommand(
 			status = False,
 			errors = [{"message": SchoolErrorsMessages.DoesNotExist}],
 			error_code = status_code.HTTP_404_NOT_FOUND
