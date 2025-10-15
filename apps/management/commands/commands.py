@@ -1,3 +1,4 @@
+import datetime
 from typing import Optional
 
 from rest_framework import status as status_code
@@ -15,6 +16,7 @@ from .utils.props import (
 	NewsParam,
 	DjangoDict,
 	UploadedFile,
+	CalendarParam,
 	TimeGroupParam,
 	TimeGroupByIdParam,
 	OfficeHourParam,
@@ -214,3 +216,37 @@ def create_office_hour(school_id: int, office_hour: OfficeHourParam, errors:Opti
 	officehour.save()
 
 	return ResultCommand(**{"query": officehour, "status": True})
+
+@handler_validation_errors
+def create_calendar(school_id:int, calendar: CalendarParam, errors:list[BaseMessage] | None = None) -> ResultCommand:
+	if errors:
+		return ResultCommand(
+			status = False, 
+			errors = errors, 
+			error_code = status_code.HTTP_400_BAD_REQUEST
+		)
+
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	calendar = models.Calendar.objects.create(
+		school_id = school_id,
+		title = calendar.title,
+		description = calendar.description,
+		date = calendar.date
+	)
+
+	return ResultCommand(query = calendar, status = True)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def calendar_exist(school_id: int, title: str, date: datetime.date) -> ResultCommand:
+	
+	result = models.Calendar.objects.filter(
+		school_id = school_id,
+		title = title,
+		date = date
+	).exists()
+
+	return ResultCommand(query = result, status = True)
