@@ -506,6 +506,8 @@ class MSchoolCalendarListResponse(serializers.ModelSerializer):
 		fields = ["id", "title", "date"]
 
 
+CALENDAR_ALREADY_EXISTS = "Ya existe un registro con el mismo título y fecha"
+
 class MSchoolCalendarRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.Calendar
@@ -543,7 +545,7 @@ class MSchoolCalendarRequest(serializers.ModelSerializer):
 		
 		if calendar:
 			raise serializers.ValidationError(
-				"Ya existe un registro con el mismo título y fecha",
+				CALENDAR_ALREADY_EXISTS,
 				code="already_exists"
 			)
 			
