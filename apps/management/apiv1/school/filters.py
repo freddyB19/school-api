@@ -48,8 +48,8 @@ class OfficeHourFilter(django_filters.FilterSet):
 	)
 
 	class Meta:
-		mode = models.OfficeHour
-		fields = ["time_group, interval_description"]
+		model = models.OfficeHour
+		fields = ["interval_description"]
 
 
 class TimeGroupFilter(django_filters.FilterSet):
@@ -66,5 +66,5 @@ class TimeGroupFilter(django_filters.FilterSet):
 	)
 
 	class Meta:
-		mode = models.OfficeHour
+		model = models.TimeGroup
 		fields = ["type", "days", "is_active"]
