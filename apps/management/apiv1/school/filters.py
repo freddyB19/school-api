@@ -68,3 +68,17 @@ class TimeGroupFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.TimeGroup
 		fields = ["type", "days", "is_active"]
+
+
+
+class CalendarFilter(django_filters.FilterSet):
+	title = django_filters.CharFilter(
+		field_name = "title", lookup_expr = "icontains"
+	)
+	month = django_filters.NumberFilter(
+		field_name='date', lookup_expr='month'
+	)
+
+	class Meta:
+		model = models.Calendar
+		fields = ["month", "title"]
