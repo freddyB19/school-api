@@ -33,4 +33,9 @@ urlpatterns = [
 		views.TimeGroupDetailDeleteUpdateAPIView.as_view(),
 		name = "timegroup-detail" 
 	),
+	path(
+		"<int:pk>/calendar",
+		views.CalendarListCreateAPIView.as_view(),
+		name = "calendar-list-create" 
+	),
 ]
