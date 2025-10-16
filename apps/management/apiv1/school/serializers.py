@@ -498,3 +498,77 @@ class MSchoolOfficeHourListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.OfficeHour
 		fields = ["id", "interval_description", "time_group"]
+
+
+class MSchoolCalendarListResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Calendar
+		fields = ["id", "title", "date"]
+
+
+class MSchoolCalendarRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.Calendar
+		fields = ["title", "description", "date"]
+		extra_kwargs = {
+			"title": {
+				"min_length": models.MIN_LENGTH_CALENDAR_TITLE,
+				"max_length": models.MAX_LENGTH_CALENDAR_TITLE,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_CALENDAR_TITLE
+					),
+					"max_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_CALENDAR_TITLE
+					),
+				}
+			}
+		}
+
+	def validate(self, data):
+		title = data.get("title")
+		date = data.get("date")
+ 
+		calendar = commands.calendar_exist(
+			school_id = self.context.get("pk"), 
+			title = title, 
+			date = date
+		).query
+		
+		if calendar:
+			raise serializers.ValidationError(
+				"Ya existe un registro con el mismo título y fecha",
+				code="already_exists"
+			)
+			
+		return data
+
+
+	def create(self, validated_data):
+
+		command  = commands.create_calendar(
+			school_id = self.context.get("pk"),
+			calendar = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
+
+
+class MSchoolCalendarResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Calendar
+		exclude = ["school"]
