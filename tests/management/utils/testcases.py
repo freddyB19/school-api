@@ -282,3 +282,45 @@ class TimeGroupDetailUpdateDeleteTestCase(TimeGroupTestCase):
 			self.user_with_delete_perm,
 			self.user_with_change_perm
 		))
+
+
+class CalendarTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_with_all_perm = create_user(role = 0)
+
+
+		permissions = get_permissions(codenames = [
+			'add_timegroup', 
+			'change_timegroup', 
+			'delete_timegroup', 
+			'view_timegroup'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		self.admin = get_administrator(school_id = self.school.id)
+		self.admin.users.add(self.user_with_all_perm)
+
+
+class CalendarCreateTestCase(CalendarTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_add_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ["add_calendar"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_calendar"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_add_perm,
+			self.user_with_change_perm
+		))
