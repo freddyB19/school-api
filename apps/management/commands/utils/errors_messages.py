@@ -17,9 +17,7 @@ class TimeGroupErrorsMessages:
 	INVALID_DAYSWEEK = f"El día de la semana elegido es invalido, debe ser un valor entre: {models.DaysNumber.values}"
 	WRONG_TIME = models.OPENING_CLOSING_TIME
 
+
 class OfficeHourErrorsMessages:
 	MAX_LEN = models.ERROR_MESSAGE_MIN_LEN_INTERVAL_D
 	MIN_LEN = models.ERROR_MESSAGE_MAX_LEN_INTERVAL_D
-
-	
-	
