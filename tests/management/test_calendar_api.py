@@ -1,3 +1,7 @@
+import datetime
+
+from django.utils import timezone
+
 from django.urls import reverse
 
 from apps.school import models
@@ -12,12 +16,20 @@ from tests.user.utils import create_user
 
 from .utils import testcases, testcases_data
 
+def get_create_list_calendar_url(school_id, **extra):
+	return reverse(
+		"management:calendar-list-create",
+		kwargs = {"pk": school_id},
+		**extra
+	)
+
+
 
 class CalendarCreateAPITest(testcases.CalendarCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.URL_CALENDAR_CREATE = self.get_create_calendar_url(
+		self.URL_CALENDAR_CREATE = get_create_list_calendar_url(
 			school_id = self.school.id
 		)
 		self.add_calendar = {
@@ -25,12 +37,6 @@ class CalendarCreateAPITest(testcases.CalendarCreateTestCase):
 			"description": faker.paragraph(),
 			"date": faker.date_this_year()
 		}
-
-	def get_create_calendar_url(self, school_id):
-		return reverse(
-			"management:calendar-list-create",
-			kwargs = {"pk": school_id}
-		)
 
 
 	def test_create_calendar(self):
@@ -106,7 +112,7 @@ class CalendarCreateAPITest(testcases.CalendarCreateTestCase):
 		other_school = create_school()
 
 		response = self.client.post(
-			self.get_create_calendar_url(school_id = other_school.id),
+			get_create_list_calendar_url(school_id = other_school.id),
 			self.add_calendar
 		)
 
@@ -160,6 +166,150 @@ class CalendarCreateAPITest(testcases.CalendarCreateTestCase):
 		)
 
 		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CalendarListAPITest(testcases.CalendarTestCase):
+	def setUp(self):
+		super().setUp()
+		
+		self.URL_CALENDAR_LIST = get_create_list_calendar_url(
+			school_id = self.school.id
+		)
+
+		bulk_create_calendar(
+			size = 20, 
+			school = self.school
+		)
+		bulk_create_calendar(
+			size = 7, 
+			school = self.school, 
+			date = self.create_date()
+		)
+
+	def create_date(self, input_month:int = None):
+		local_time = timezone.localtime()
+		month = local_time.month if not input_month else input_month
+		year = local_time.year
+		
+		current_date = datetime.date(
+			year, month, faker.random_int(min = 1, max = 25)
+		)
+
+		return current_date
+
+
+	def test_get_calendar(self):
+		"""
+			Validar "GET /calendar"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			date__year= timezone.localtime().year
+		).count()
+
+		response = self.client.get(self.URL_CALENDAR_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_calendar)
+
+
+	def test_get_calendar_filter_by_month(self):
+		"""
+			Validar "GET /calendar?month=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		month = faker.random_int(min = 1, max = 12)
+
+		date = self.create_date(input_month = month)
+
+		bulk_create_calendar(size = 3, school = self.school, date = date)
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			date__month = month
+		).count()
+
+		response = self.client.get(
+			get_create_list_calendar_url(
+				school_id = self.school.id,
+				query = {"month": month}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_calendar)
+
+	def test_get_calendar_filter_by_title(self):
+		"""
+			Validar "GET /calendar?title=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		title = faker.text(max_nb_chars = models.MAX_LENGTH_CALENDAR_TITLE)
+
+		bulk_create_calendar(
+			size = 2, 
+			school = self.school,
+			 title = title
+		)
+
+		len_title = len(title)
+		title__icontains = title[: int(len_title / 2) ]
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			title__icontains = title__icontains
+		).count()
+
+		response = self.client.get(
+			get_create_list_calendar_url(
+				school_id = self.school.id,
+				query = {"title": title__icontains}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_calendar)
+
+	def test_get_calendar_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /calendar" de escuela que no tiene permiso de acceder
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_school = create_school()
+
+		response = self.client.get(
+			get_create_list_calendar_url(
+				school_id = other_school.id,
+			)
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_get_calendar_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /calendar" sin autenticación
+		"""
+		response = self.client.get(self.URL_CALENDAR_LIST)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
