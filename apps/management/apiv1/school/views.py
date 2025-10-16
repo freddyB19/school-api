@@ -1,3 +1,5 @@
+from django.utils import timezone
+
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, response, status
 
@@ -212,4 +214,53 @@ class TimeGroupDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 		return response.Response(
 			data = self.serializer_class(time_group).data,
 			status = status.HTTP_200_OK
+		)
+
+
+class CalendarListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Calendar.objects.all()
+	serializer_class = serializers.MSchoolCalendarResponse
+	pagination_class = paginations.CalendarPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.CalendarFilter
+
+	def get_queryset(self):
+		current_year = timezone.localtime().year
+
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk"),
+			date__year = current_year
+		).order_by("date")
+
+	def get_serializer_class(self):
+		
+		if self.request.method == "POST":
+			return serializers.MSchoolCalendarRequest
+		elif self.request.method == "GET":
+			return serializers.MSchoolCalendarListResponse
+		
+		return self.serializer_class
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		calendar = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(calendar).data,
+			status = status.HTTP_201_CREATED
 		)
