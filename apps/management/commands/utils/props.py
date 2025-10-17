@@ -54,24 +54,6 @@ class NewsParam(BaseModel):
 			raise ValueError(NewsParamErrorsMessages.INVALID_STATUS)
 		return value
 
-
-
-"""
-	Los días de la semana son calificados desde 1 hasta el 5
-	[L = 1, M = 2, Mi = 3, J = 4, V = 5]
-
-	Permitiendo así una validación más facil.
-"""
-
-MIN_VALUE_DAY = 1
-MAX_VALUE_DAY = 5
-
-INVALID_CHOICES_DAY = lambda daysweek: list(
-	filter(
-		lambda num: num < MIN_VALUE_DAY or num > MAX_VALUE_DAY, 
-		daysweek
-	)
-)
 class TimeGroupByIdParam(BaseModel):
 	id: int
 
