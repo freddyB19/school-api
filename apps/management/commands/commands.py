@@ -185,16 +185,9 @@ def get_or_create_time_group(time_group: TimeGroupParam | TimeGroupByIdParam) ->
 	return models.TimeGroup.objects.filter(id = time_group.id).first()
 
 
-@handler_validation_errors
-def create_office_hour(school_id: int, office_hour: OfficeHourParam, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_office_hour(school_id: int, office_hour: OfficeHourParam) -> ResultCommand:
 	
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors, 
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
-
 	command = get_school_by_id(id = school_id)
 
 	if not command.status:
