@@ -2,78 +2,24 @@
 	Funciones (commands) que forman parte de la creación 
 	de un objeto 'News'
 """
-import unittest
+import unittest, base64
+
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+
+from rest_framework import exceptions
+
+from PIL import Image
 
 from tests import faker
-from pydantic import ValidationError
 
 from apps.school import models
 from apps.management.commands import commands
+from apps.management.apiv1.school import serializers
+
 from .utils import testcases
 
 from .utils import create_list_images, list_upload_images
-
-
-class CommandAddNewsTest(testcases.CommandNewsTestCase):
-
-	def test_add_news(self):
-		"""
-			Validar crear una noticia
-		"""
-		data_news = {
-			"title": faker.text(max_nb_chars=20),
-			"description": faker.paragraph()
-		}
-
-		news = commands.add_news(
-			news = data_news, 
-			school_id = self.school.id
-		)
-
-		self.assertTrue(news)
-		self.assertEqual(news.title, data_news["title"])
-		self.assertEqual(news.description, data_news["description"])
-		self.assertEqual(news.school_id, self.school.id)
-		self.assertEqual(news.status, models.News.TypeStatus.published)
-
-
-	def test_add_news_with_wrong_data(self):
-		"""
-			Generar error por enviar datos invalidos
-		"""
-
-		test_cases = [
-			{
-				"title": "Text"
-			},
-			{
-				"title": faker.text(max_nb_chars=200)
-			},
-			{
-				"title": faker.text(max_nb_chars=20),
-				"status": "pausado"
-			},
-		]
-
-		for case in test_cases:
-			with self.subTest(case = case):
-				with self.assertRaises(ValidationError):
-					commands.add_news(news = case, school_id = self.school.id)
-
-
-	def test_add_news_without_school_id(self):
-		"""
-			Generar un error al no enviar el ID de una escuela
-		"""
-		data_news = {
-			"title": faker.text(max_nb_chars=20),
-			"description": faker.paragraph()
-		}
-
-		with self.assertRaises(ValidationError):
-			news = commands.add_news(
-				news = data_news, 
-			)
 
 
 class CommandAddNewsMediaTest(testcases.CommandNewsTestCase):
@@ -112,11 +58,10 @@ class CommandCreateNewsTest(testcases.CommandNewsTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.images = list_upload_images(size = 5)
-
 		self.data_news = {
 			"title": faker.text(max_nb_chars=20),
-			"description": faker.paragraph()
+			"description": faker.paragraph(),
+			"media": list_upload_images(size = 2)
 		}
 
 
@@ -124,23 +69,23 @@ class CommandCreateNewsTest(testcases.CommandNewsTestCase):
 		"""
 			Validar crear una noticia
 		"""
-		command = commands.create_news(
-			school_id = self.school.id, 
-			news = self.data_news, 
-			images = self.images
+
+		serializer = serializers.MSchoolNewsRequest(
+			data = self.data_news,
+			context = {"pk": self.school.id}
 		)
 
-		self.assertTrue(command.status)
+		serializer.is_valid(raise_exception = True)
+
+		news = serializer.save()
 		
-		news_created = command.query
+		self.assertTrue(news)
+		self.assertEqual(news.school_id, self.school.id)
+		self.assertEqual(news.title, self.data_news["title"])
+		self.assertEqual(news.description, self.data_news["description"])
+		self.assertEqual(news.status, models.News.TypeStatus.published)
 
-		self.assertTrue(news_created)
-		self.assertEqual(news_created.school_id, self.school.id)
-		self.assertEqual(news_created.title, self.data_news["title"])
-		self.assertEqual(news_created.description, self.data_news["description"])
-		self.assertEqual(news_created.status, models.News.TypeStatus.published)
-
-		self.assertEqual(news_created.media.count(), len(self.images))
+		self.assertEqual(news.media.count(), len(self.data_news["media"]))
 
 
 	def test_create_news_without_images(self):
@@ -148,22 +93,26 @@ class CommandCreateNewsTest(testcases.CommandNewsTestCase):
 			Validar crear una noticia sin enviar imagenes
 		"""
 
-		command = commands.create_news(
-			school_id = self.school.id, 
-			news = self.data_news,
+		self.data_news.pop("media")
+
+		serializer = serializers.MSchoolNewsRequest(
+			data = self.data_news,
+			context = {"pk": self.school.id}
 		)
 
-		self.assertTrue(command.status)
+		serializer.is_valid(raise_exception = True)
+
+		news = serializer.save()
+
+		self.assertTrue(news)
+		self.assertEqual(news.school_id, self.school.id)
+		self.assertEqual(news.title, self.data_news["title"])
+		self.assertEqual(news.description, self.data_news["description"])
+		self.assertEqual(news.status, models.News.TypeStatus.published)
+
+		total_images = 0
 		
-		news_created = command.query
-
-		self.assertTrue(news_created)
-		self.assertEqual(news_created.school_id, self.school.id)
-		self.assertEqual(news_created.title, self.data_news["title"])
-		self.assertEqual(news_created.description, self.data_news["description"])
-		self.assertEqual(news_created.status, models.News.TypeStatus.published)
-
-		self.assertEqual(news_created.media.count(), 0)
+		self.assertEqual(news.media.count(), total_images)
 
 
 	def test_create_news_with_wrong_data(self):
@@ -172,66 +121,45 @@ class CommandCreateNewsTest(testcases.CommandNewsTestCase):
 		"""
 		test_cases = [
 			{
-				"title": "Text"
+				"title": faker.pystr(
+					max_chars = models.MIN_LENGTH_NEWS_TITLE - 1
+				)
 			},
 			{
-				"title": faker.text(max_nb_chars=200)
+				"title": faker.pystr(
+					max_chars = models.MAX_LENGTH_NEWS_TITLE + 1
+				)
 			},
 			{
 				"title": faker.text(max_nb_chars=20),
-				"status": "pausado"
+				"status": faker.text(max_nb_chars = 20)
 			},
 		]
 
 		for case in test_cases:
 			with self.subTest(case = case):
-				command = commands.create_news(
-					images = self.images,
-					school_id = self.school.id,
-					news = case
+				serializer = serializers.MSchoolNewsRequest(
+					data = case,
+					context = {"pk": self.school.id}
 				)
 
-				self.assertFalse(command.status)
-				self.assertFalse(command.query)
-				self.assertGreaterEqual(len(command.errors), 1)
+				with self.assertRaises(exceptions.ValidationError):
+					serializer.is_valid(raise_exception = True)
 
 
 	def test_create_news_with_non_existent_school(self):
 		"""
 			Enviar un ID de escuela que no existe
 		"""
-		wrong_school_id = 12
+		wrong_school_id = self.school.id + 1
 
-		command = commands.create_news(
-			images = self.images,
-			school_id = wrong_school_id,
-			news = self.data_news
+		serializer = serializers.MSchoolNewsRequest(
+			data = self.data_news,
+			context = {"pk": wrong_school_id}
 		)
 
-		self.assertFalse(command.status)
-		self.assertFalse(command.query)
-		self.assertGreaterEqual(len(command.errors), 1)
+		serializer.is_valid(raise_exception = True)
 
+		with self.assertRaises(exceptions.ValidationError):
 
-	@unittest.expectedFailure
-	def test_create_news_without_school_id(self):
-		"""
-			No enviar el ID de una escuela
-		"""
-		commands.create_news(
-			images = self.images,
-			news = self.data_news
-		)
-			
-
-
-	@unittest.expectedFailure
-	def test_create_news_without_data_news(self):
-		"""
-			No enviar la información para la nueva noticia
-		"""
-		commands.create_news(
-			images = self.images,
-			school_id = self.school.id,
-		)
-			
+			news = serializer.save()
