@@ -1,5 +1,4 @@
 import datetime
-from typing import Optional
 
 from rest_framework import status as status_code
 from pydantic import validate_call, ConfigDict
@@ -7,8 +6,7 @@ from pydantic import validate_call, ConfigDict
 from faker import Faker
 
 from apps.school import models
-from apps.utils.result_commands import ResultCommand, BaseMessage
-from apps.utils.decorators import handler_validation_errors
+from apps.utils.result_commands import ResultCommand
 
 from .utils.functions import set_name_image
 from .utils.errors_messages import SchoolErrorsMessages, TimeGroupErrorsMessages
@@ -96,14 +94,8 @@ def add_news(news:NewsParam, school_id:int) -> models.News:
 	)
 
 
-@handler_validation_errors
-def create_news(school_id: int, news:NewsParam, images:ListUploadedFile | None = None, errors:Optional[list[BaseMessage]] = None) -> ResultCommand:
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors, 
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def create_news(school_id: int, news:NewsParam, images:ListUploadedFile | None = None) -> ResultCommand:
 	
 	context = {
 		"status": False,
