@@ -209,14 +209,8 @@ def create_office_hour(school_id: int, office_hour: OfficeHourParam) -> ResultCo
 
 	return ResultCommand(**{"query": officehour, "status": True})
 
-@handler_validation_errors
-def create_calendar(school_id:int, calendar: CalendarParam, errors:list[BaseMessage] | None = None) -> ResultCommand:
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors, 
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_calendar(school_id:int, calendar: CalendarParam) -> ResultCommand:
 
 	command = get_school_by_id(id = school_id)
 
