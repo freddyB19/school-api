@@ -20,8 +20,7 @@ from .utils.props import (
 	TimeGroupParam,
 	TimeGroupByIdParam,
 	OfficeHourParam,
-	ListUploadedFile,
-	IntervalDescription
+	ListUploadedFile
 )
 
 
@@ -172,7 +171,7 @@ def add_time_group(time_group: TimeGroupParam) -> models.TimeGroup:
 	return time_group
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def add_office_hour(school_id: int, description: IntervalDescription) -> models.OfficeHour:
+def add_office_hour(school_id: int, description: str) -> models.OfficeHour:
 	return models.OfficeHour.objects.create(
 		school_id = school_id,
 		interval_description = description
