@@ -83,54 +83,9 @@ class TimeGroupParam(BaseModel):
 	active: bool | None = models.TYPEGROUP_ACTIVE_DEFAULT
 	overview: str | None = None
 
-	@field_validator("type", mode= "after")
-	@classmethod
-	def length_type(cls, value):
-		if VALIDATE_MAX_LEN(value = len(value), max_len = models.MAX_LENGTH_TYPEGROUP_TYPE):
-			raise ValueError(TimeGroupErrorsMessages.MAX_LEN)
-
-		elif VALIDATE_MIN_LEN(value = len(value), min_len = models.MIN_LENGTH_TYPEGROUP_TYPE):
-			raise ValueError(TimeGroupErrorsMessages.MIN_LEN)
-
-		return value
-
-	def _delete_duplicate(value) -> list[int]:
-		return list(set(value))
-
-	@field_validator("daysweek", mode= "after")
-	@classmethod
-	def choices_daysweek(cls, value):
-		is_invalid = INVALID_CHOICES_DAY(daysweek = cls._delete_duplicate(value))
-		
-		if is_invalid:
-			raise ValueError(TimeGroupErrorsMessages.INVALID_DAYSWEEK)
-
-		return value
-
-
-	@model_validator(mode = "after")
-	def check_time(self):
-		
-		if self.closing_time <= self.opening_time:
-			raise ValueError(TimeGroupErrorsMessages.WRONG_TIME)
-
-		return self
-
-
-def check_len_description(value: str) -> str:
-
-	if VALIDATE_MAX_LEN(value = len(value), max_len = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D):
-		raise ValueError(OfficeHourErrorsMessages.MAX_LEN)
-	elif VALIDATE_MIN_LEN(value = len(value), min_len = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D):
-		raise ValueError(OfficeHourErrorsMessages.MIN_LEN)
-	
-	return value
-
-IntervalDescription = Annotated[str, AfterValidator(check_len_description)]
-
 
 class OfficeHourParam(BaseModel):
-	description: IntervalDescription
+	description: str
 	time_group: TimeGroupParam | TimeGroupByIdParam
 
 
