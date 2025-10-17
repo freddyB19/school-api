@@ -1,4 +1,4 @@
-import datetime
+import datetime, base64
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
@@ -28,16 +28,24 @@ def create_list_images(size:int = 1) -> list:
 	return images
 
 def list_upload_images(size: int = 1) -> list:
+	content = base64.b64decode(
+		b"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+	)
 
-	images = [
-		SimpleUploadedFile(
-			faker.file_name(category = 'image'), 
-			content=b"content_image", 
-			content_type="image/jpeg"
+	images = []
+	
+	for num in range(size):
+		image = faker.file_name(category = 'image')
+
+		_, ext = image.split(".")
+		content_type = f"image/{ext}"
+		images.append(
+			SimpleUploadedFile(
+				image, 
+				content=content, 
+				content_type=content_type
+			)
 		)
-
-		for num in range(size)
-	]
 
 	return images
 
