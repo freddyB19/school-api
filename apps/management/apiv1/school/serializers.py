@@ -263,16 +263,18 @@ class MSchoolNewsUpdateImagesRequest(serializers.Serializer):
 
 DAYWEEK_INVALID_CHOICE = f"El día de la semana elegido es invalido, debe ser entre: {models.DaysNumber.values}"
 
+MIN_VALUE_DAY = 1
+MAX_VALUE_DAY = 5
+
+INVALID_CHOICES_DAY = lambda daysweek: list(
+	filter(
+		lambda num: num < MIN_VALUE_DAY or num > MAX_VALUE_DAY, 
+		daysweek
+	)
+)
 class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 	daysweek = serializers.ListField(
-		child = serializers.IntegerField(
-			min_value = 1,
-			max_value = 5,
-			error_messages = {
-				"min_value": DAYWEEK_INVALID_CHOICE,
-				"max_value": DAYWEEK_INVALID_CHOICE,
-			}
-		),
+		child = serializers.IntegerField(),
 		required = False
 	)
 
@@ -301,6 +303,17 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 			}
 		}
 
+	def validate_daysweek(self, value):
+		is_invalid = INVALID_CHOICES_DAY(daysweek = value)
+
+		if is_invalid:
+			raise serializers.ValidationError(
+				DAYWEEK_INVALID_CHOICE,
+				code="invalid"
+			)
+
+		return value
+
 	def validate(self, data):
 
 		opening_time = data.get("opening_time")
@@ -311,10 +324,9 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 
 		time = [opening_time, closing_time]
 		INVALID_TIME_SENT = None 
-		TOTAL_INVALID_DATA_SENT_TIME = 1
 		ERROR_MESSAGE = "Debe enviar ámbos valores [opening_time, closing_time]"
 
-		if time.count(INVALID_TIME_SENT) == TOTAL_INVALID_DATA_SENT_TIME:
+		if INVALID_TIME_SENT in time:
 			# Validamos si solo se ha enviado un solo valor
 			# en relación con [opening_time, closing_time]
 			
@@ -347,13 +359,13 @@ class MSchoolOfficeHourRequest(serializers.ModelSerializer):
 		error_messages = {
 			"max_length":ERROR_FIELD(
 				field = "descripción del intervalo", 
-				type = "largo",
+				type = "larga",
 				symbol = "menor o igual",
 				value = models.MAX_LENGTH_OFFICEHOUR_INTERVAL_D
 			),
 			"min_length": ERROR_FIELD(
 				field = "descripción del intervalo", 
-				type = "corto",
+				type = "corta",
 				symbol = "mayor o igual",
 				value = models.MIN_LENGTH_OFFICEHOUR_INTERVAL_D
 			)
