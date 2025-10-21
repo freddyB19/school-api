@@ -1,31 +1,16 @@
 import random
-from typing import Optional
 
-from pydantic import validate_call
+from pydantic import validate_call, ConfigDict
 from rest_framework import status as status_code
 
 from apps.user import models
 from apps.utils.result_commands import ResultCommand
-from apps.utils.decorators import handler_validation_errors
 
-from .utils.props import (
-	CreateUserParam,
-	UpdateUserParam,
-	UpdatePasswordParam,
-	PropPassword
-)
-
-SIZE_PASSWORD_GENERATE = 12
+from .utils.props import CreateUserParam
 
 
-@handler_validation_errors
-def create_user(user: CreateUserParam, errors: Optional[list] = None):
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors, 
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_user(user: CreateUserParam):
 
 	return ResultCommand(
 		query = models.User.objects.create_user(
@@ -35,7 +20,7 @@ def create_user(user: CreateUserParam, errors: Optional[list] = None):
 		)
 	)
 
-@validate_call
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
 def get_user(pk: int) -> ResultCommand:
 	user =  models.User.objects.filter(pk = pk).first()
 
@@ -51,54 +36,44 @@ def get_user(pk: int) -> ResultCommand:
 		query = user
 	)
 
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def change_password(new_password: str, pk: int) -> ResultCommand:
 
-@handler_validation_errors
-def change_password(new_password: PropPassword, pk: int = None, errors: Optional[list] = None) -> ResultCommand:
-	if not pk:
-		raise ValueError("Se necesita un valor tipo (int) para el parametro 'pk'")
+	user_exist = get_user(pk = pk)
 
-	if errors:
-		return ResultCommand(
-			status = False, 
-			errors = errors, 
-			error_code = status_code.HTTP_400_BAD_REQUEST
-		)
-
-	has_user = get_user(pk = pk)
-
-	if not has_user.status:
-		return has_user
+	if not user_exist.status:
+		return user_exist
 	
-	user = has_user.query
+	user = user_exist.query
 	user.set_password(new_password)
 	user.save()
 	return ResultCommand(status = True)
 
 
-@validate_call
-def get_user_by_email(email: str = None) -> ResultCommand:
-	if not email:
-		raise ValueError("Se necesita un valor tipo (str) para el parametro 'email'")
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def get_user_by_email(email: str) -> ResultCommand:
 
-	has_user = models.User.objects.filter(email = email)
+	user_exist = models.User.objects.filter(email = email)
 
-	if not has_user.exists():
+	if not user_exist.exists():
 		return ResultCommand(
 			status = False,
 			errors = [{"message": f"No existe un usuario con ese email: {email}"}],
 			error_code = status_code.HTTP_404_NOT_FOUND
 		)
 
-	return ResultCommand(status = True, query = has_user.first())
+	return ResultCommand(status = True, query = user_exist.first())
 
+SIZE_PASSWORD_GENERATE = 12
 
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
 def generate_password(size:int = SIZE_PASSWORD_GENERATE) -> ResultCommand:
 
 	chars = "abcdefghijklmnñopqrstuvwxyz"
-	simbols = "·|?¿¡,.:[]{}$#@!()/=;&%<>-_+*"
+	symbols = "·|?¿¡,.:[]{}$#@!()/=;&%<>-_+*"
 	numbers = "0123456789"
 	
-	string = chars + chars.upper() + numbers + simbols
+	string = chars + chars.upper() + numbers + symbols
 	password = "".join(random.sample(string, size))
 
 	return ResultCommand(status = True, query = password)
