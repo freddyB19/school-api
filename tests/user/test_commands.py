@@ -1,7 +1,11 @@
 import unittest
 
+from rest_framework import exceptions
+
 from apps.user import models
 from apps.user.commands import commands
+from apps.user.apiv1 import serializers
+
 
 from tests import faker
 
@@ -14,57 +18,70 @@ from .utils.testcases import (
 from .utils.utils import create_user
 
 class CommandCreateUserTest(CommandCreateUserTestCase):
+	def setUp(self):
+		super().setUp()
+
+		password = faker.password()
+
+		self.new_user = {
+			"name": faker.name(),
+			"email": faker.email(),
+			"password": password,
+			"password_confirm": password
+		}
+
 	def test_command_create(self):
 		"""
 			Validar función para crear un usuario
 		"""
-		
-		create_user = {
-			"name": faker.name(),
-			"email": faker.email(),
-			"password": faker.password()
-		}
+		serializer = serializers.UserRegisterSerializer(
+			data = self.new_user
+		)
 
-		user_role_staff = 1
+		serializer.is_valid(raise_exception = True)
 
-		command = commands.create_user(user = create_user)
+		user = serializer.save()
 
-		status = command.status
-		user = command.query
+		user_role_staff = models.TypeRole.staff
 
-		self.assertTrue(status)
-		self.assertIsNotNone(user.id)
-		self.assertEqual(user.name, create_user["name"])
-		self.assertEqual(user.email, create_user["email"])
+		self.assertTrue(user.id)
+		self.assertEqual(user.name, self.new_user["name"])
+		self.assertEqual(user.email, self.new_user["email"])
 		self.assertEqual(user.role, user_role_staff)
 
 
 	def test_command_create_with_wrong_name(self):
 		"""
-			Generar un error al enviar valores incorrectos o no enviar valores a 'user.name'
+			Generar un error al enviar valores incorrectos a 'user.name'
 		"""
+
+		password = faker.password()
 
 		test_cases = [
 			{
 				"name": faker.pystr(max_chars = models.MIN_LENGTH_NAME - 1),
 				"email": faker.email(),
-				"password": faker.password(),
+				"password": password,
+				"password_confirm": password,
+
 			},
 			{
 				"name": faker.pystr(max_chars = models.MAX_LENGTH_NAME + 1),
 				"email": faker.email(),
-				"password": faker.password(),
+				"password": password,
+				"password_confirm": password,
+
 			}
 		]
 
-		expected_status = False
-
 		for case in test_cases:
 			with self.subTest(case = case):
-				command = commands.create_user(user = case)
+				serializer = serializers.UserRegisterSerializer(
+					data = case
+				)
 
-				self.assertEqual(command.status, expected_status)
-				self.assertTrue(command.errors)
+				with self.assertRaises(exceptions.ValidationError):
+					serializer.is_valid(raise_exception = True)
 
 
 	def test_command_create_with_existent_email(self):
@@ -75,17 +92,14 @@ class CommandCreateUserTest(CommandCreateUserTestCase):
 
 		create_user(email = EMAIL)
 
-		user = {
-			"name": faker.name(),
-			"email": EMAIL,
-			"password": faker.password(),
-		}
+		self.new_user.update({"email": EMAIL})
 
-		command = commands.create_user(user = user)
+		serializer = serializers.UserRegisterSerializer(
+			data = self.new_user
+		)
 
-		self.assertFalse(command.status)
-		self.assertTrue(command.errors)
-		self.assertIsNone(command.query)
+		with self.assertRaises(exceptions.ValidationError):
+			serializer.is_valid(raise_exception = True)
 
 
 class CommandGetUserTest(CommandGetUserTestCase):
