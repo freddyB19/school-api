@@ -15,91 +15,92 @@ from .utils.testcases import(
 from .utils.utils import create_user
 
 
+def get_detail_user_url(id):
+	return reverse("user:user", kwargs = {"pk": id})
+
 class UserCreateAPITest(UserTestCase):
 	def setUp(self):
 		super().setUp()
 
 		self.URL_REGISTER = reverse("user:register")
 
-	def test_create_user(self):
-		"""
-			Validar "POST /user"
-		"""
-		password = faker.password()
-		new_user = {
+		password = faker.password(length = models.MIN_LENGTH_PASSWORD + 1)
+		self.new_user = {
 			"name": faker.name(),
 			"email": faker.email(),
 			"password": password,
 			"password_confirm": password,
 		}
-		new_user_role = 1
+
+
+	def test_create_user(self):
+		"""
+			Validar "POST /user"
+		"""
+
+		user_role = models.TypeRole.staff
 
 		response = self.client.post(
 			self.URL_REGISTER,
-			new_user	
+			self.new_user	
 		)
 
 		responseJson = response.data
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 201)
-		self.assertEqual(responseJson['name'], new_user["name"])
-		self.assertEqual(responseJson['email'], new_user["email"])
-		self.assertEqual(responseJson['role'], new_user_role)
+		self.assertEqual(responseJson['name'], self.new_user["name"])
+		self.assertEqual(responseJson['email'], self.new_user["email"])
+		self.assertEqual(responseJson['role'], user_role)
 
 
-	def test_create_user_with_short_name(self):
+	def test_create_user_with_wrong_name(self):
 		"""
 			Generar [Error] "POST /user" por usuario con nombre muy corto
 		"""
-		password = faker.password()
-		new_user = {
-			"name": faker.pystr(max_chars = models.MIN_LENGTH_NAME - 1 ),
-			"email": faker.email(),
-			"password": password,
-			"password_confirm": password,
-		}
 
-		error_messages = [serializers.MIN_LEN_NAME]
+		password = faker.password(length = models.MIN_LENGTH_PASSWORD + 1)
 
-		response = self.client.post(
-			self.URL_REGISTER,
-			new_user
-		)
+		test_case = [
+			{
+				"user": {
+					"name": faker.pystr(max_chars = models.MIN_LENGTH_NAME - 1 ),
+					"email": faker.email(),
+					"password": password,
+					"password_confirm": password,
+				},
+				"expected": {
+					"name": [serializers.MIN_LEN_NAME]
+				}
+			},
+			{
+				"user": {
+					"name": f"{faker.pystr(max_chars = models.MAX_LENGTH_NAME + 1)}",
+					"email": faker.email(),
+					"password": password,
+					"password_confirm": password,
+				},
+				"expected": {
+					"name": [serializers.MAX_LEN_NAME]
+				}
+			}
+		]
 
-		responseJson = response.data
-		responseStatus = response.status_code
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.post(
+					self.URL_REGISTER,
+					case["user"]
+				)
 
-		self.assertEqual(responseStatus, 400)
-		self.assertEqual(responseJson['name'], error_messages)
+				error_messages = case["expected"]["name"]
 
+				responseJson = response.data
+				responseStatus = response.status_code
 
-	def test_create_user_with_long_name(self):
-		"""
-			Generar [Error 400] "POST /user" por usuario con nombre muy largo
-		"""
-		password = faker.password()
+				self.assertEqual(responseStatus, 400)
+				self.assertEqual(responseJson['name'], error_messages)
 
-		new_user = {
-			"name": f"{faker.pystr(max_chars = models.MAX_LENGTH_NAME + 1)}",
-			"email": faker.email(),
-			"password": password,
-			"password_confirm": password,
-		}
-
-		error_messages = [serializers.MAX_LEN_NAME]
-
-		response = self.client.post(
-			self.URL_REGISTER,
-			new_user 	
-		)
-
-		responseJson = response.data
-		responseStatus = response.status_code
-
-		self.assertEqual(responseStatus, 400)
-		self.assertEqual(responseJson['name'], error_messages)
-	
 
 	def test_create_user_with_existent_email(self):
 		"""
@@ -108,20 +109,13 @@ class UserCreateAPITest(UserTestCase):
 		email_already_exist = faker.email()
 		create_user(email = email_already_exist)
 
-		password =  faker.password()
-
-		new_user = {
-			"name": faker.name(),
-			"email": email_already_exist,
-			"password": password,
-			"password_confirm": password,
-		}
+		self.new_user.update({"email": email_already_exist})
 
 		error_messages = [serializers.EMAIL_ALREADY_REGISTERED]
 
 		response = self.client.post(
 			self.URL_REGISTER,
-			new_user
+			self.new_user
 		)
 
 		responseJson = response.data
@@ -135,18 +129,16 @@ class UserCreateAPITest(UserTestCase):
 		"""
 			Generar [Error 400] "POST /user" por enviar contraseñas diferentes
 		"""
-		new_user = {
-			"email": faker.email(),
-			"name": faker.name(),
+		self.new_user.update({
 			"password": faker.password(),
 			"password_confirm": faker.password()
-		}
+		})
 
 		error_messages = [serializers.PASSWORDS_NOT_MATCH]
 
 		response = self.client.post(
 			self.URL_REGISTER,
-			new_user 	
+			self.new_user 	
 		)
 
 		responseJson = response.data
@@ -156,29 +148,13 @@ class UserCreateAPITest(UserTestCase):
 		self.assertEqual(responseJson['non_field_errors'], error_messages)
 
 
-class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
+class UserDetailAPITest(UserDetailUpdateTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.URL_USER_DETAIL = self.get_detail_user_url(
+		self.URL_USER_DETAIL = get_detail_user_url(
 			id = self.user.id
 		)
-		self.URL_UPDATE_PASSWORD = self.get_update_password_url(
-			id = self.user.id
-		)
-		self.URL_RESET_PASSWORD = self.get_reset_password_url(
-			email = self.user.email
-		)
-
-	def get_detail_user_url(self, id):
-		return reverse("user:user", kwargs = {"pk": id})
-
-	def get_update_password_url(self, id):
-		return reverse("user:update-password", kwargs = {"pk": id})
-
-	def get_reset_password_url(self, email):
-		return reverse("user:reset-password", query={"email": email})
-
 	
 	def test_user_detail(self):
 		"""
@@ -207,7 +183,7 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 		self.client.force_authenticate(user = self.user)
 	
 		response = self.client.get(
-			self.get_detail_user_url(id = other_user.id)
+			get_detail_user_url(id = other_user.id)
 		)
 
 		responseJson = response.data
@@ -225,7 +201,7 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 		other_user_id = 12
 
 		response = self.client.get(
-			self.get_detail_user_url(id = other_user_id)
+			get_detail_user_url(id = other_user_id)
 		)
 
 		responseJson = response.data
@@ -245,6 +221,14 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 
 		self.assertEqual(responseStatus, 401)
 
+
+class UserUpdateAPITest(UserDetailUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_USER_DETAIL = get_detail_user_url(
+			id = self.user.id
+		)
 
 	def test_update_user(self):
 		"""
@@ -291,7 +275,7 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 		}
 
 		response = self.client.patch(
-			self.get_detail_user_url(id = other_user.id),
+			get_detail_user_url(id = other_user.id),
 			update_user
 		)
 
@@ -359,13 +343,24 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 		self.assertNotEqual(self.user.name, update_user['name'])
 
 
+class UserUpdatePasswordAPITest(UserDetailUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_UPDATE_PASSWORD = self.get_update_password_url(
+			id = self.user.id
+		)
+
+	def get_update_password_url(self, id):
+		return reverse("user:update-password", kwargs = {"pk": id})
+
 	def test_update_password(self):
 		"""
 			Validar "PATCH /user/:id/password"
 		"""
 		self.client.force_authenticate(user = self.user)
 
-		password = faker.pystr(max_chars = models.MIN_LENGTH_PASSWORD + 1)
+		password = faker.password(length = models.MIN_LENGTH_PASSWORD + 1)
 
 		update_user = {
 			"password": password,
@@ -415,7 +410,7 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 		"""
 			Generar [Error 401] "PATCH /user/:id/password" sin autenticación
 		"""
-		password = faker.password()
+		password = faker.password(length = models.MIN_LENGTH_PASSWORD + 1)
 
 		update_user = {
 			"password": password,
@@ -437,6 +432,17 @@ class UserDetailUpdateAPITest(UserDetailUpdateTestCase):
 
 		self.assertFalse(self.user.check_password(password))
 
+
+class UserUpdateResetPasswordAPITest(UserDetailUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_RESET_PASSWORD = self.get_reset_password_url(
+			email = self.user.email
+		)
+
+	def get_reset_password_url(self, email):
+		return reverse("user:reset-password", query={"email": email})
 
 	@unittest.skip("Funcionamiento incompleto")
 	def test_reset_password(self):
