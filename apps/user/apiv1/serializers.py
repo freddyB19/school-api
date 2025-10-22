@@ -3,9 +3,11 @@ from django.contrib.auth.models import Permission
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
+from apps.utils.result_commands import ResponseError
+
 from apps.user import models
 
-from apps.user.commands.commands import create_user
+from apps.user.commands.commands import create_user, change_password
 
 
 REQUIRED_PASSWORD_CONFIRM = "Debe enviar un password de confirmación"
@@ -131,6 +133,22 @@ class UserChangePassword(serializers.Serializer):
             raise serializers.ValidationError(PASSWORDS_NOT_MATCH)
 
         return data
+
+    def update(self, instance, validated_data) -> models.User:
+        command = change_password(
+            pk = self.context.get("pk"),
+            new_password = validated_data.get('password')
+        )
+
+        if not command.status:
+            raise serializers.ValidationError(
+                ResponseError(
+                    errors = command.errors
+                ).model_dump(exclude_defaults = True),
+                code="does-not-exist"
+            )
+
+        return instance
 
 
 class LoginSerializer(serializers.Serializer):
