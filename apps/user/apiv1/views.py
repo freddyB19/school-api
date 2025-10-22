@@ -130,39 +130,36 @@ class UserAPIView(generics.RetrieveUpdateDestroyAPIView):
         return [permission() for permission in self.permission_classes]
 
 
-class UserUpdatePasswordAPIView(views.APIView):
+MESSAGE_UPDATE_PASSWORD = "La contraseña se actualizado correctamente"
+
+class UserUpdatePasswordAPIView(generics.UpdateAPIView):
+    queryset = models.User.objects.all()
+    serializer_class = serializers.UserChangePassword
     permission_classes = [IsAuthenticated, IsUserOrReadOnly]
 
     @extend_schema(
         request=serializers.UserChangePassword,
-        responses={200: ResponseSuccess, 400: MessageError},
-        methods=["PATCH"]
+        responses={200: ResponseSuccess, 400: MessageError}
     )
-    def patch(self, request, pk):
-
-        validate_password = serializers.UserChangePassword(data = request.data)
-
-        if not validate_password.is_valid():
-            return response.Response(
-                validate_password.errors, 
-                status = status.HTTP_400_BAD_REQUEST
-            )
-
-        command = change_password(
-            pk = pk,
-            new_password = validate_password.data['password']
+    def update(self, request, pk, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        
+        instance = self.get_object()
+        
+        serializer = self.get_serializer(
+            instance, 
+            data=request.data, 
+            partial=partial,
+            context={"pk": pk}
         )
+        
+        serializer.is_valid(raise_exception=True)
 
-        if not command.status:
-            return response.Response(
-                data = command.errors, 
-                status = status.HTTP_400_BAD_REQUEST
-            )
+        serializer.save()
 
         return response.Response(
-
             data = ResponseSuccess(
-                success = [{"message": "La contraseña se actualizado correctamente"}]
+                success = [{"message": MESSAGE_UPDATE_PASSWORD}]
             ).model_dump(),
             status = status.HTTP_200_OK
         )
