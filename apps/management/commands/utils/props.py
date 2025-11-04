@@ -1,12 +1,11 @@
 import datetime
-from typing import TypeVar, TypeAlias
+from typing import TypeVar
 from typing_extensions import Annotated
-
 
 from django.utils.datastructures import MultiValueDict
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from pydantic import BaseModel, AnyHttpUrl, PlainSerializer
+from pydantic import BaseModel, AnyHttpUrl
 
 from apps.school import models
 
