@@ -46,6 +46,11 @@ class CommandCalendarTestCase(TransactionTestCase):
 	def setUp(self):
 		self.school = create_school()
 
+class CommandSocialMediaTestCase(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+
+
 
 class AdministratorTestCase(APITestCase):
 	def setUp(self):
