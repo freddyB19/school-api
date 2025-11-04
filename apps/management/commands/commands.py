@@ -18,9 +18,12 @@ from .utils.props import (
 	TimeGroupParam,
 	TimeGroupByIdParam,
 	OfficeHourParam,
-	ListUploadedFile
+	ListUploadedFile,
+	ProfileURL,
+	IsProfileURL,
+	ListProfileURL,
+	Profile,
 )
-
 
 faker = Faker(locale="es")
 
@@ -228,3 +231,61 @@ def calendar_exist(school_id: int, title: str, date: datetime.date) -> ResultCom
 	).exists()
 
 	return ResultCommand(query = result, status = True)
+
+formatValueURL = lambda url: [url] if isinstance(url, IsProfileURL) else url
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def social_media_exist(school_id, social_network: Profile) -> ResultCommand:
+
+	search_social_network = formatValueURL(url = social_network)
+
+	result = models.SocialMedia.objects.filter(
+		school_id = school_id,
+		profile__in = search_social_network
+	).exists()
+
+	return ResultCommand(query = result, status = True)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def bulk_add_social_media(school_id, profiles: ListProfileURL) -> list[models.SocialMedia]:
+	
+	social_media = [
+		models.SocialMedia(
+			school_id = school_id,
+			profile = profile
+		) 
+		for profile in profiles
+	]
+
+	return models.SocialMedia.objects.bulk_create(social_media)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def add_social_media(school_id: int, profile: ProfileURL):
+	return models.SocialMedia.objects.create(
+		school_id = school_id, 
+		profile = profile
+	)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def save_social_media(school_id: int, social_network: Profile) -> list[models.SocialMedia] | models.SocialMedia:
+	if isinstance(social_network, IsProfileURL):
+		return add_social_media(school_id = school_id, profile = social_network)
+	return bulk_add_social_media(school_id = school_id, profiles = social_network)
+	
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_social_media(school_id: int, social_network: Profile) -> ResultCommand:
+
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	social_media = save_social_media(
+		school_id = school_id, 
+		social_network = social_network
+	)
+
+	return ResultCommand(query = social_media, status = True)
+
