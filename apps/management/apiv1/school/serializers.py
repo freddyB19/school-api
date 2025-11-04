@@ -593,3 +593,68 @@ class MSchoolCalendarResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Calendar
 		exclude = ["school"]
+
+
+SOCIALMEDIA_ALREADY_EXISTS = "Ya posee una registrada esta red social"
+INVALID_SOCIALMEDIA = "Debes enviar un enlace de tu red social"
+INVALID_REQUEST_SOCIALMEDIA = "Debes solo enviar solo una opción [profile | profiles], pero no ambos."
+
+class MSchoolSocialMediaResquest(serializers.Serializer):
+	profile = serializers.URLField(required = False)
+	profiles = serializers.ListField(
+		child = serializers.URLField(),
+		required = False
+	)
+
+	def validate(self, data):
+
+		profile = data.get("profile")
+		profiles = data.get("profiles")
+
+		if profile and profiles:
+			raise serializers.ValidationError(
+				INVALID_REQUEST_SOCIALMEDIA,
+				code = "invalid"
+			)
+
+		if not profile and not profiles:
+			raise serializers.ValidationError(
+				INVALID_SOCIALMEDIA,
+				code = "invalid"
+			)
+
+		social_network = profile or profiles
+		
+		social_network_exist = commands.social_media_exist(
+			school_id = self.context.get("pk"),
+			social_network = social_network
+		).query
+
+		if social_network_exist:
+			raise serializers.ValidationError(
+				SOCIALMEDIA_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+		
+		return data
+
+	def create(self, validated_data):
+		profile = validated_data.get("profile")
+		profiles = validated_data.get("profiles")
+
+		social_network = profile or profiles
+
+		command = commands.create_social_media(
+			school_id = self.context.get("pk"),
+			social_network = social_network
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
