@@ -1,10 +1,12 @@
 import datetime
-from typing import TypeVar
+from typing import TypeVar, TypeAlias
+from typing_extensions import Annotated
+
 
 from django.utils.datastructures import MultiValueDict
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from pydantic import BaseModel
+from pydantic import BaseModel, AnyHttpUrl, PlainSerializer
 
 from apps.school import models
 
@@ -14,6 +16,11 @@ ListUploadedFile = TypeVar("ListUploadedFile", bound = list[UploadedFile])
 DjangoDict = TypeVar("DjangoDict", bound=MultiValueDict)
 TimeGroupModel = TypeVar("TimeGroupModel", bound=models.TimeGroup)
 
+IsProfileURL = str
+ProfileURL = Annotated[str, AnyHttpUrl]
+ListProfileURL = Annotated[list[str], list[AnyHttpUrl]]
+
+Profile = ProfileURL | ListProfileURL
 
 class NewsParam(BaseModel):
 	title: str 
