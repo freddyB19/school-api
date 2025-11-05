@@ -1,10 +1,13 @@
 from django.urls import reverse
 
+from apps.school import models
+
 from tests import faker
 from .utils import testcases
 from tests.school.utils import (
 	create_school, 
-	create_social_media 
+	create_social_media,
+	bulk_create_social_media
 )
 from tests.user.utils import create_user, get_permissions
 
@@ -167,6 +170,67 @@ class SocialMediaCreateAPITest(testcases.SocialMediaCreateTestCase):
 			self.URL_SOCIALMEDIA_CREATE,
 			self.add_profiles
 		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+
+class SocialMediaListAPITest(testcases.SocialMediaTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_SOCIALMEDIA_LIST = get_create_list_socialmedia_url(
+			school_id = self.school.id
+		)
+
+		bulk_create_social_media(size = 5, school = self.school)
+
+	def test_get_socialmedia(self):
+		"""
+			Validar "GET /socialmedia"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		total_socialmedia = models.SocialMedia.objects.filter(
+			school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_SOCIALMEDIA_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_socialmedia)
+
+
+	def test_get_socialmedia_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /socialmedia" de escuela que no tiene permiso de acceder
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_school = create_school()
+
+		response = self.client.get(
+			get_create_list_socialmedia_url(
+				school_id = other_school.id
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_get_socialmedia_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /socialmedia" usuario sin autenticar 
+		"""
+		response = self.client.get(self.URL_SOCIALMEDIA_LIST)
 
 		responseJson = response.data
 		responseStatus = response.status_code
