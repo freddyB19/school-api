@@ -264,3 +264,53 @@ class CalendarListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(calendar).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class SocialMediaListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.SocialMedia.objects.all()
+	serializer_class = serializers.MSchoolSocialMediaReponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk"),
+		).order_by("id")
+
+	def get_serializer_class(self):
+		
+		if self.request.method == "POST":
+			return serializers.MSchoolSocialMediaResquest
+		
+		return self.serializer_class
+
+	def is_bulk_create(self, initial_data: dict) -> bool:
+		return True if initial_data.get("profiles") else False
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		social_media = serializer.save()
+
+		many = self.is_bulk_create(initial_data = serializer.initial_data)
+		
+		return response.Response(
+			data = self.serializer_class(social_media, many = many).data,
+			status = status.HTTP_201_CREATED
+		)
+
+
+
