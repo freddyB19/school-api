@@ -595,7 +595,7 @@ class MSchoolCalendarResponse(serializers.ModelSerializer):
 		exclude = ["school"]
 
 
-SOCIALMEDIA_ALREADY_EXISTS = "Ya posee una registrada esta red social"
+SOCIALMEDIA_ALREADY_EXISTS = "Esta enviado una red social que ya se encuentra registrada"
 INVALID_SOCIALMEDIA = "Debes enviar un enlace de tu red social"
 INVALID_REQUEST_SOCIALMEDIA = "Debes solo enviar solo una opción [profile | profiles], pero no ambos."
 
@@ -658,3 +658,10 @@ class MSchoolSocialMediaResquest(serializers.Serializer):
 			)
 
 		return command.query
+
+
+class MSchoolSocialMediaReponse(serializers.ModelSerializer):
+
+	class Meta:
+		model = models.SocialMedia
+		fields = ["id", "profile"]
