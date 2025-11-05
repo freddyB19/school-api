@@ -38,4 +38,9 @@ urlpatterns = [
 		views.CalendarListCreateAPIView.as_view(),
 		name = "calendar-list-create" 
 	),
+	path(
+		"<int:pk>/socialmedia",
+		views.SocialMediaListCreateAPIView.as_view(),
+		name = "socialmedia-list-create" 
+	),
 ]
