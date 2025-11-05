@@ -17,14 +17,14 @@ from tests.school.utils import (
 
 from .utils import get_long_string, get_administrator
 
-class AdministratorModelTestCase(TransactionTestCase):
-	# serialized_rollback = True
-
+class BasicCommandTestCase(TransactionTestCase):
 	def setUp(self):
 		self.school = create_school()
 
 
-class CommandNewsTestCase(TransactionTestCase):
+class AdministratorModelTestCase(TransactionTestCase):
+	# serialized_rollback = True
+
 	def setUp(self):
 		self.school = create_school()
 
@@ -36,20 +36,6 @@ class CommandTimeGroupTestCase(TransactionTestCase):
 class CommandGetOrCreateTimeGroupTestCase(TransactionTestCase):
 	def setUp(self):
 		self.time_group = create_time_group()
-		
-
-class CommandOfficeHourTestCase(TransactionTestCase):
-	def setUp(self):
-		self.school = create_school()
-
-class CommandCalendarTestCase(TransactionTestCase):
-	def setUp(self):
-		self.school = create_school()
-
-class CommandSocialMediaTestCase(TransactionTestCase):
-	def setUp(self):
-		self.school = create_school()
-
 
 
 class AdministratorTestCase(APITestCase):
