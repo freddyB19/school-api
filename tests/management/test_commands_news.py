@@ -9,6 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 
 from rest_framework import exceptions
 
+from pydantic import ValidationError
+
 from PIL import Image
 
 from tests import faker
@@ -22,7 +24,7 @@ from .utils import testcases
 from .utils import create_list_images, list_upload_images
 
 
-class CommandAddNewsMediaTest(testcases.CommandNewsTestCase):
+class CommandAddNewsMediaTest(testcases.BasicCommandTestCase):
 
 	def test_add_newsmedia(self):
 		"""
@@ -54,7 +56,7 @@ class CommandAddNewsMediaTest(testcases.CommandNewsTestCase):
 			commands.add_newsmedia()
 
 
-class CommandCreateNewsTest(testcases.CommandNewsTestCase):
+class CommandCreateNewsTest(testcases.BasicCommandTestCase):
 	def setUp(self):
 		super().setUp()
 
