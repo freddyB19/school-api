@@ -329,3 +329,44 @@ class CalendarCreateTestCase(CalendarTestCase):
 			self.user_with_add_perm,
 			self.user_with_change_perm
 		))
+
+class SocialMediaTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_with_all_perm = create_user(role = 0)
+
+
+		permissions = get_permissions(codenames = [
+			'add_socialmedia', 
+			'change_socialmedia', 
+			'delete_socialmedia', 
+			'view_socialmedia'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		self.admin = get_administrator(school_id = self.school.id)
+		self.admin.users.add(self.user_with_all_perm)
+
+
+class SocialMediaCreateTestCase(SocialMediaTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_add_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ["add_socialmedia"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_socialmedia"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_add_perm,
+			self.user_with_change_perm
+		))
