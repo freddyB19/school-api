@@ -21,7 +21,7 @@ from tests.school.utils.utils import (
 )
 
 
-class CommandCreateOfficeHourTest(testcases.CommandOfficeHourTestCase):
+class CommandCreateOfficeHourTest(testcases.BasicCommandTestCase):
 	def setUp(self):
 		super().setUp()
 

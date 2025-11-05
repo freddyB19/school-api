@@ -12,7 +12,7 @@ from .utils import testcases, testcases_data
 
 
 
-class CommandCreateCalendarTest(testcases.CommandCalendarTestCase):
+class CommandCreateCalendarTest(testcases.BasicCommandTestCase):
 	def setUp(self):
 		super().setUp()
 

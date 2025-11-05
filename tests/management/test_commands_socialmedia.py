@@ -8,7 +8,7 @@ from  .utils import testcases
 from apps.management.apiv1.school import serializers
 
 
-class CommandCreateSocialMedia(testcases.CommandSocialMediaTestCase):
+class CommandCreateSocialMedia(testcases.BasicCommandTestCase):
 
 	def setUp(self):
 		super().setUp()
