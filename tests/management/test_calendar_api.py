@@ -12,7 +12,7 @@ from tests.school.utils import (
 	create_calendar,
 	bulk_create_calendar
 )
-from tests.user.utils import create_user
+from tests.user.utils import create_user, get_permissions
 
 from .utils import testcases, testcases_data
 
@@ -353,7 +353,7 @@ class CalendarDetailAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
-		other_calendar = create_calendar(school = create_school())
+		other_calendar = create_calendar()
 
 		response = self.client.get(
 			get_detail_calendar_url( id = other_calendar.id)
@@ -389,6 +389,82 @@ class CalendarDetailAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
 		response = self.client.get(self.URL_CALENDAR_DETAIL)
 
 		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CalendarDeleteAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.calendar = create_calendar(school = self.school)
+
+		self.URL_CALENDAR_DELETE = get_detail_calendar_url(id = self.calendar.id)
+
+	def test_delete_calendar(self):
+		"""
+			Validar "DELETE /calendar/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_CALENDAR_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_calendar_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /calendar/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		other_calendar = create_calendar()
+
+		response = self.client.delete(
+			get_detail_calendar_url(id = other_calendar.id)
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_calendar_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /calendar/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_CALENDAR_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_calendar_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /calendar/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_socialmedia"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_CALENDAR_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_calendar_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /calendar/:id" sin autenticación
+		"""
+		response = self.client.delete(self.URL_CALENDAR_DELETE)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
