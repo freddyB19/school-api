@@ -448,7 +448,7 @@ class CalendarDeleteAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
 		"""
 		user = create_user()
 		user.user_permissions.set(
-			get_permissions(codenames = ["delete_socialmedia"])
+			get_permissions(codenames = ["delete_calendar"])
 		)
 
 		self.client.force_authenticate(user = user)
