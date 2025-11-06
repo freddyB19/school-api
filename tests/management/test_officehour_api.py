@@ -26,6 +26,13 @@ from .utils.testcases_data import (
 	UPDATE_OFFICEHOUR_WITH_WRONG_DATA
 )
 
+def get_school_officehour_url(school_id, **query):
+	return reverse(
+		"management:officehour-list-create",
+		kwargs={"pk": school_id},
+		**query
+	)
+
 def get_detail_officehour_url(id):
 	return reverse(
 		"management:officehour-detail",
@@ -37,7 +44,7 @@ class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.URL_OFFICEHOUR = self.get_school_officehour_url(
+		self.URL_OFFICEHOUR = get_school_officehour_url(
 			school_id = self.school.id
 		)
 
@@ -55,13 +62,6 @@ class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 				"overview": faker.paragraph()
 			}
 		}
-
-
-	def get_school_officehour_url(self, school_id):
-		return reverse(
-			"management:officehour-list-create",
-			kwargs={"pk": school_id}
-		)
 
 
 	def test_create_officehour(self):
@@ -439,7 +439,7 @@ class OfficeHourCreateAPITest(testcases.OfficeHourCreateTestCase):
 		other_school = create_school()
 
 		response = self.client.post(
-			self.get_school_officehour_url(school_id = other_school.id),
+			get_school_officehour_url(school_id = other_school.id),
 			self.create_officehour
 		)
 
@@ -486,15 +486,8 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 
 		self.officehours_list = bulk_create_officehour(size = 8, school = self.school)
 
-		self.URL_OFFICEHOUR_LIST = self.get_officehour_url(
+		self.URL_OFFICEHOUR_LIST = get_school_officehour_url(
 			school_id = self.school.id
-		)
-
-	def get_officehour_url(self, school_id, **extra):
-		return reverse(
-			"management:officehour-list-create",
-			kwargs = {"pk": school_id},
-			**extra
 		)
 
 	def test_get_officehour(self):
@@ -530,7 +523,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		)
 
 		response = self.client.get(
-			self.get_officehour_url(
+			get_school_officehour_url(
 				school_id = self.school.id,
 				query = {"is_active": yes_active}
 			)
@@ -551,7 +544,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 
 
 		response = self.client.get(
-			self.get_officehour_url(
+			get_school_officehour_url(
 				school_id = self.school.id,
 				query = {"is_active": no_active}
 			)
@@ -590,7 +583,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		).distinct("id")
 
 		response = self.client.get(
-			self.get_officehour_url(
+			get_school_officehour_url(
 				school_id = self.school.id,
 				query = {"days": set_format_dasyweek_query(
 					selected = selected_daysweek
@@ -629,7 +622,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		)
 
 		response = self.client.get(
-			self.get_officehour_url(
+			get_school_officehour_url(
 				school_id = self.school.id,
 				query = {"undays": isnull}
 			)
@@ -661,7 +654,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		# description[:-2] = omitimos los '3' útimos caracteres
 
 		response = self.client.get(
-			self.get_officehour_url(
+			get_school_officehour_url(
 				school_id = self.school.id,
 				query = {"description": search_description}
 				
@@ -693,7 +686,7 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 		other_school = create_school()
 
 		response = self.client.get(
-			self.get_officehour_url(school_id = other_school.id)
+			get_school_officehour_url(school_id = other_school.id)
 		)
 
 		responseJson = response.data
@@ -719,11 +712,6 @@ class OfficeHourListAPITest(testcases.OfficeHourListTestCase):
 
 		self.assertEqual(responseStatus, 403)
 
-
-
-
-
-
 	def test_get_officehour_without_authentication(self):
 		"""
 			Validar "GET /officehour" sin autenticación
@@ -747,14 +735,6 @@ class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		self.URL_OFFICEHOUR_DETAIL = get_detail_officehour_url(
 			id = self.officehour.id
 		)
-
-
-	def get_detail_officehour_url(self, id):
-		return reverse(
-			"management:officehour-detail",
-			kwargs={"pk": id}
-		)
-
 
 	def test_detail_officehour(self):
 		"""
