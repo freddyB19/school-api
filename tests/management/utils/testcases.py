@@ -356,3 +356,22 @@ class SocialMediaCreateTestCase(SocialMediaTestCase):
 			self.user_with_add_perm,
 			self.user_with_change_perm
 		))
+
+
+class SocialMediaDetailDeleteUpdateTestCase(SocialMediaTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_socialmedia"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_socialmedia"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
