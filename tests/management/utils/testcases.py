@@ -316,6 +316,26 @@ class CalendarCreateTestCase(CalendarTestCase):
 			self.user_with_change_perm
 		))
 
+
+class CalendarDetailDeleteUpdateTestCase(CalendarTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_calendar"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_calendar"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
+		
+
 class SocialMediaTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
