@@ -128,3 +128,10 @@ CREATE_CALENDAR_WITH_WRONG_DATA = [
 		"date": faker.date_this_year()
 	},
 ]
+
+
+UPDATE_SOCIALMEDIA_WITH_WRONG_DATA = [
+	{
+		"profile": faker.url()[:4]
+	}
+]
