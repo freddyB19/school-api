@@ -665,3 +665,10 @@ class MSchoolSocialMediaReponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.SocialMedia
 		fields = ["id", "profile"]
+
+class MSchoolSocialMediaUpdateRequest(serializers.ModelSerializer):
+
+	class Meta:
+		model = models.SocialMedia
+		fields = ["id", "profile"]
+		read_only_fields = ["id"]
