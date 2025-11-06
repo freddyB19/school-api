@@ -3,7 +3,7 @@ from django.urls import reverse
 from apps.school import models
 
 from tests import faker
-from .utils import testcases
+from .utils import testcases, testcases_data
 from tests.school.utils import (
 	create_school, 
 	create_social_media,
@@ -397,3 +397,126 @@ class SocialMediaDeleteAPITest(testcases.SocialMediaDetailDeleteUpdateTestCase):
 		self.assertEqual(responseStatus, 401)
 
 
+class SocialMediaUpdateAPITest(testcases.SocialMediaDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.social_media = create_social_media(school = self.school)
+
+		self.URL_SOCIALMEDIA_UPDATE = get_detail_socialmedia_url(
+			id = self.social_media.id
+		)
+		
+		self.update_profile = {
+			"profile": faker.url()
+		}
+
+
+	def test_update_socialmedia(self):
+		"""
+			Validar "PUT/PATCH /socialmedia/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+		
+		response = self.client.patch(
+			self.URL_SOCIALMEDIA_UPDATE,
+			self.update_profile
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.social_media.id)
+		self.assertNotEqual(responseJson["profile"], self.social_media.profile)
+		self.assertEqual(responseJson["profile"], self.update_profile["profile"])
+
+
+	def test_update_socialmedia_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /socialmedia/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_case = testcases_data.UPDATE_SOCIALMEDIA_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_SOCIALMEDIA_UPDATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+				
+				self.assertEqual(responseStatus, 400)
+
+	def test_update_socialmedia_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /socialmedia/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_social_media = create_social_media(school = create_school())
+
+		response = self.client.patch(
+			get_detail_socialmedia_url(id = other_social_media.id),
+			self.update_profile
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_socialmedia_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /socialmedia/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+		
+		response = self.client.patch(
+			self.URL_SOCIALMEDIA_UPDATE,
+			self.update_profile
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_socialmedia_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /socialmedia/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_socialmedia"])
+		)
+
+		self.client.force_authenticate(user = user)
+		
+		response = self.client.patch(
+			self.URL_SOCIALMEDIA_UPDATE,
+			self.update_profile
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_socialmedia_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /socialmedia/:id" sin autenticación
+		"""
+		response = self.client.patch(
+			self.URL_SOCIALMEDIA_UPDATE,
+			self.update_profile
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
