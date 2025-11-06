@@ -43,4 +43,9 @@ urlpatterns = [
 		views.SocialMediaListCreateAPIView.as_view(),
 		name = "socialmedia-list-create" 
 	),
+	path(
+		"socialmedia/<int:pk>",
+		views.SocialMediaDetailDeleteUpdateAPIView.as_view(),
+		name = "socialmedia-detail" 
+	),
 ]
