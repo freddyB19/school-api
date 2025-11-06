@@ -315,3 +315,85 @@ class SocialMediaDetailAPITest(testcases.SocialMediaDetailDeleteUpdateTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+class SocialMediaDeleteAPITest(testcases.SocialMediaDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.social_media = create_social_media(school = self.school)
+
+		self.URL_SOCIALMEDIA_DELETE = get_detail_socialmedia_url(
+			id = self.social_media.id
+		)
+
+
+	def test_delete_socialmedia(self):
+		"""
+			Validar "DELETE /socialmedia/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_SOCIALMEDIA_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_socialmedia_without_school_permission(self):
+		"""	
+			Generar [Error 403] "DELETE /socialmedia/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		other_social_media = create_social_media(school = create_school())
+
+		response = self.client.delete(
+			get_detail_socialmedia_url(id = other_social_media.id)
+		)
+
+		responseStatus = response.status_code
+		
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_delete_socialmedia_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /socialmedia/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_SOCIALMEDIA_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_socialmedia_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /socialmedia/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_socialmedia"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_SOCIALMEDIA_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_socialmedia_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /socialmedia/:id" sin autenticación
+		"""
+		response = self.client.delete(self.URL_SOCIALMEDIA_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
