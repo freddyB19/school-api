@@ -18,6 +18,13 @@ def get_create_list_socialmedia_url(school_id):
 		kwargs = {"pk": school_id}
 	)
 
+
+def get_detail_socialmedia_url(id):
+	return reverse(
+		"management:socialmedia-detail",
+		kwargs = {"pk": id}
+	)
+
 class SocialMediaCreateAPITest(testcases.SocialMediaCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -231,6 +238,78 @@ class SocialMediaListAPITest(testcases.SocialMediaTestCase):
 			Generar [Error 401] "GET /socialmedia" usuario sin autenticar 
 		"""
 		response = self.client.get(self.URL_SOCIALMEDIA_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+
+class SocialMediaDetailAPITest(testcases.SocialMediaDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.social_media = create_social_media(school = self.school)
+
+		self.URL_SOCIALMEDIA_DETAIL = get_detail_socialmedia_url(
+			id = self.social_media.id
+		)
+
+	def test_detail_socialmedia(self):
+		"""
+			Validar "GET /socialmedia/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_SOCIALMEDIA_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.social_media.id)
+		self.assertEqual(responseJson["profile"], self.social_media.profile)
+
+	def test_get_socialmedia_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /socialmedia/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_social_media = create_social_media(school = create_school())
+
+		response = self.client.get(
+			get_detail_socialmedia_url(id = other_social_media.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_get_socialmedia_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /socialmedia/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_SOCIALMEDIA_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_get_socialmedia_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /socialmedia/:id" sin autenticación
+		"""
+		response = self.client.get(self.URL_SOCIALMEDIA_DETAIL)
 
 		responseJson = response.data
 		responseStatus = response.status_code
