@@ -468,3 +468,158 @@ class CalendarDeleteAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+class CalendarUpdateAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.calendar = create_calendar(school = self.school)
+
+		self.URL_CALENDAR_UPDATE = get_detail_calendar_url(id = self.calendar.id)
+
+		self.update_calendar = {
+			"title": faker.text(max_nb_chars = models.MAX_LENGTH_CALENDAR_TITLE),
+			"description": faker.paragraph(),
+			"date": faker.date_this_year()
+		}
+
+
+	def test_update_calendar(self):
+		"""
+			Validar "PUT/PATCH /calendar/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.put(
+			self.URL_CALENDAR_UPDATE,
+			self.update_calendar
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.calendar.id)
+		self.assertEqual(responseJson["title"], self.update_calendar["title"])
+		self.assertEqual(
+			responseJson["date"], 
+			self.update_calendar["date"].strftime("%Y-%m-%d")
+		)
+
+		self.assertEqual(
+			responseJson["description"], 
+			self.update_calendar["description"]
+		)
+		self.assertNotEqual(responseJson["title"], self.calendar.title)
+		self.assertNotEqual(responseJson["description"], self.calendar.description)
+		self.assertNotEqual(
+			responseJson["date"], 
+			self.calendar.date.strftime("%Y-%m-%d")
+		)
+
+
+		update_calendar_date = {"date": faker.date_this_year()}
+
+		response = self.client.patch(
+			self.URL_CALENDAR_UPDATE,
+			update_calendar_date
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.calendar.id)
+		self.assertNotEqual(responseJson["date"], self.calendar.date.strftime("%Y-%m-%d"))
+		self.assertEqual(
+			responseJson["date"], 
+			update_calendar_date["date"].strftime("%Y-%m-%d")
+		)
+
+	def test_update_calendar_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /calendar/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_cases = testcases_data.CREATE_CALENDAR_WITH_WRONG_DATA
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_CALENDAR_UPDATE,
+					case
+				)
+
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_update_calendar_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /calendar/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_calendar = create_calendar()
+
+		response = self.client.put(
+			get_detail_calendar_url(id = other_calendar.id),
+			self.update_calendar
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_calendar_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /calendar/:id" por usuario sin permiso
+		"""
+
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.put(
+			self.URL_CALENDAR_UPDATE,
+			self.update_calendar
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_calendar_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /calendar/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_calendar"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.put(
+			self.URL_CALENDAR_UPDATE,
+			self.update_calendar
+		)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_calendar_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /calendar/:id" sin autenticación
+		"""
+		response = self.client.patch(
+			self.URL_CALENDAR_UPDATE,
+			self.update_calendar
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
