@@ -16,6 +16,7 @@ from tests.user.utils import create_user
 
 from .utils import testcases, testcases_data
 
+
 def get_create_list_calendar_url(school_id, **extra):
 	return reverse(
 		"management:calendar-list-create",
@@ -23,6 +24,11 @@ def get_create_list_calendar_url(school_id, **extra):
 		**extra
 	)
 
+def get_detail_calendar_url(id):
+	return reverse(
+		"management:calendar-detail",
+		kwargs = {"pk": id}
+	)
 
 
 class CalendarCreateAPITest(testcases.CalendarCreateTestCase):
@@ -310,6 +316,79 @@ class CalendarListAPITest(testcases.CalendarTestCase):
 		"""
 		response = self.client.get(self.URL_CALENDAR_LIST)
 
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CalendarDetailAPITest(testcases.CalendarDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.calendar = create_calendar(school = self.school)
+
+		self.URL_CALENDAR_DETAIL = get_detail_calendar_url(id = self.calendar.id)
+
+	def test_detail_calendar(self):
+		"""
+			Validar "GET /calendar/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_CALENDAR_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.calendar.id)
+		self.assertEqual(responseJson["title"], self.calendar.title)
+		self.assertEqual(responseJson["description"], self.calendar.description)
+		self.assertEqual(responseJson["date"], self.calendar.date.strftime("%Y-%m-%d"))
+
+
+	def test_detail_calendar_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /calendar/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_calendar = create_calendar(school = create_school())
+
+		response = self.client.get(
+			get_detail_calendar_url( id = other_calendar.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_calendar_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /calendar/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_CALENDAR_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_detail_calendar_without_authentication(self):
+		"""
+			Generar [Error 403] "GET /calendar/:id" sin autenticación
+		"""
+
+		response = self.client.get(self.URL_CALENDAR_DETAIL)
+
+		responseJson = response.data
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
