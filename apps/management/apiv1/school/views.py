@@ -219,7 +219,7 @@ class TimeGroupDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 
 class CalendarListCreateAPIView(generics.ListCreateAPIView):
 	queryset = models.Calendar.objects.all()
-	serializer_class = serializers.MSchoolCalendarResponse
+	serializer_class = serializers.MSchoolCalendarRequest
 	pagination_class = paginations.CalendarPaginate
 	permission_classes = [
 		IsAuthenticated, 
@@ -238,10 +238,7 @@ class CalendarListCreateAPIView(generics.ListCreateAPIView):
 		).order_by("date")
 
 	def get_serializer_class(self):
-		
-		if self.request.method == "POST":
-			return serializers.MSchoolCalendarRequest
-		elif self.request.method == "GET":
+		if self.request.method == "GET":
 			return serializers.MSchoolCalendarListResponse
 		
 		return self.serializer_class
