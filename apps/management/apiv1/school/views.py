@@ -265,6 +265,21 @@ class CalendarListCreateAPIView(generics.ListCreateAPIView):
 			status = status.HTTP_201_CREATED
 		)
 
+class CalendarDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = models.Calendar.objects.all()
+	serializer_class = serializers.MSchoolCalendarResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
+	def get_serializer_class(self):
+		update = ["PATCH", "PUT"]
+		if self.request.method in update:
+			return serializers.MSchoolCalendarUpdateRequest
+		return self.serializer_class
+
 
 class SocialMediaListCreateAPIView(generics.ListCreateAPIView):
 	queryset = models.SocialMedia.objects.all()
