@@ -595,6 +595,34 @@ class MSchoolCalendarResponse(serializers.ModelSerializer):
 		exclude = ["school"]
 
 
+class MSchoolCalendarUpdateRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.Calendar
+		fields = ["id", "title", "description", "date"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"title": {
+				"min_length": models.MIN_LENGTH_CALENDAR_TITLE,
+				"max_length": models.MAX_LENGTH_CALENDAR_TITLE,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_CALENDAR_TITLE
+					),
+					"max_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_CALENDAR_TITLE
+					),
+				}
+			}
+		}
+
+
 SOCIALMEDIA_ALREADY_EXISTS = "Esta enviado una red social que ya se encuentra registrada"
 INVALID_SOCIALMEDIA = "Debes enviar un enlace de tu red social"
 INVALID_REQUEST_SOCIALMEDIA = "Debes solo enviar solo una opción [profile | profiles], pero no ambos."
