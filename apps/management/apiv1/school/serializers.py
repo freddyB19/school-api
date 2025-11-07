@@ -530,7 +530,8 @@ CALENDAR_ALREADY_EXISTS = "Ya existe un registro con el mismo título y fecha"
 class MSchoolCalendarRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.Calendar
-		fields = ["title", "description", "date"]
+		fields = ["id", "title", "description", "date"]
+		read_only_fields = ["id"]
 		extra_kwargs = {
 			"title": {
 				"min_length": models.MIN_LENGTH_CALENDAR_TITLE,
