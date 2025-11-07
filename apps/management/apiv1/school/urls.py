@@ -39,6 +39,11 @@ urlpatterns = [
 		name = "calendar-list-create" 
 	),
 	path(
+		"calendar/<int:pk>",
+		views.CalendarDetailDeleteUpdateAPIView.as_view(),
+		name = "calendar-detail" 
+	),
+	path(
 		"<int:pk>/socialmedia",
 		views.SocialMediaListCreateAPIView.as_view(),
 		name = "socialmedia-list-create" 
