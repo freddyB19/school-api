@@ -1,0 +1,163 @@
+from django.urls import reverse
+
+from apps.school import models
+
+from tests import faker
+from tests.school.utils import create_school, create_coordinate
+from tests.user.utils import create_user, get_permissions
+from .utils import testcases, testcases_data
+
+
+def get_create_list_coordinate_url(school_id):
+	return reverse(
+		"management:coordinate-list-create",
+		kwargs = {"pk": school_id}
+	)
+
+
+class CoordinateCreateAPITest(testcases.CoordianteCreateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_COORDIANTE_CREATE = get_create_list_coordinate_url(
+			school_id = self.school.id
+		)
+
+		coordinate = faker.local_latlng(country_code = 'VE')
+
+		self.add_coordinate = {
+			"title": faker.text(max_nb_chars = models.MAX_LENGTH_COORDINATE_TITLE),
+			"latitude": coordinate[0],
+			"longitude": coordinate[1]
+		}
+
+
+	def test_create_coordiante(self):
+		"""
+			Validar "POST /coordiante"
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		response = self.client.post(
+			self.URL_COORDIANTE_CREATE,
+			self.add_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 201)
+		self.assertEqual(responseJson["title"], self.add_coordinate["title"])
+		self.assertEqual(responseJson["latitude"], self.add_coordinate["latitude"])
+		self.assertEqual(responseJson["longitude"], self.add_coordinate["longitude"])
+
+
+	def test_create_coordiante_with_wrong_data(self):
+		"""
+			Generar [Error 400] "POST /coordiante" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		test_case = testcases_data.CREATE_COORDINATE_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.post(
+					self.URL_COORDIANTE_CREATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+	def test_create_coordiante_with_data_already_exist(self):
+		"""
+			Generar [Error 400] "POST /coordiante" por enviar datos ya registrados
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		coordinate = create_coordinate(school = self.school)
+
+		self.add_coordinate.update({
+			"title": coordinate.title,
+			"latitude": coordinate.latitude,
+			"longitude": coordinate.longitude
+		})
+
+		response = self.client.post(
+			self.URL_COORDIANTE_CREATE,
+			self.add_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 400)
+
+	def test_create_coordiante_without_school_permission(self):
+		"""
+			Generar [Error 403] "POST /coordiante" de escuela que no tiene permiso de acceder
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		other_school = create_school()
+
+		response = self.client.post(
+			get_create_list_coordinate_url(school_id = other_school.id),
+			self.add_coordinate
+		)
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_create_coordiante_without_user_permission(self):
+		"""
+			Generar [Error 403] "POST /coordiante" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.post(
+			self.URL_COORDIANTE_CREATE,
+			self.add_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_create_coordiante_with_wrong_user(self):
+		"""
+			Generar [Error 403] "POST /coordiante" por usuario que no pertenece a la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(get_permissions(codenames = "add_coordinate"))
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.post(
+			self.URL_COORDIANTE_CREATE,
+			self.add_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_create_coordiante_without_authentication(self):
+		"""
+			Generar [Error 401] "POST /coordiante" sin autenticación
+		"""
+		response = self.client.post(
+			self.URL_COORDIANTE_CREATE,
+			self.add_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
