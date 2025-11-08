@@ -135,3 +135,37 @@ UPDATE_SOCIALMEDIA_WITH_WRONG_DATA = [
 		"profile": faker.url()[:4]
 	}
 ]
+
+
+coordinate = faker.local_latlng(country_code = 'VE')
+
+CREATE_COORDINATE_WITH_WRONG_DATA = [
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MAX_LENGTH_COORDINATE_TITLE + 1
+		),
+		"latitude": coordinate[0],
+		"longitude": coordinate[1]
+	},
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_COORDINATE_TITLE - 1
+		),
+		"latitude": coordinate[0],
+		"longitude": coordinate[1]
+	},
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_COORDINATE_TITLE - 1
+		),
+		"latitude": faker.random_int(min = 1, max = 10),
+		"longitude": coordinate[1]
+	},
+	{
+		"title": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_COORDINATE_TITLE - 1
+		),
+		"latitude": coordinate[0],
+		"longitude": faker.random_int(min = 1, max = 10)
+	},
+]
