@@ -701,3 +701,64 @@ class MSchoolSocialMediaUpdateRequest(serializers.ModelSerializer):
 		model = models.SocialMedia
 		fields = ["id", "profile"]
 		read_only_fields = ["id"]
+
+
+COORDIANTE_ALREADY_EXISTS = "Ya existe un registro de esta coordenada"
+
+class MSchoolCoordinateRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.Coordinate
+		fields = ["title", "latitude", "longitude"]
+		extra_kwargs = {
+			"title": {
+				"min_length": models.MIN_LENGTH_COORDINATE_TITLE,
+				"max_length": models.MAX_LENGTH_COORDINATE_TITLE,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_COORDINATE_TITLE
+					),
+					"max_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_COORDINATE_TITLE
+					),
+				}
+			}
+		}
+
+
+	def validate(self, data):
+		exist = commands.coordinate_exist(
+			school_id = self.context.get("pk"),
+			coordinate = data
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				COORDIANTE_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return data
+
+
+	def create(self, validated_data):
+		command = commands.create_coordinate(
+			school_id = self.context.get("pk"),
+			coordinate = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+
+		return command.query
