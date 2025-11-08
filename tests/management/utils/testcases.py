@@ -395,3 +395,45 @@ class SocialMediaDetailDeleteUpdateTestCase(SocialMediaTestCase):
 			self.user_with_delete_perm,
 			self.user_with_change_perm
 		))
+
+
+class CoordinateTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+		self.user_with_all_perm = create_user(role = 0)
+
+		permissions = get_permissions(codenames = [
+			'add_coordinate', 
+			'change_coordiante', 
+			'delete_coordiante', 
+			'view_coordiante'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		self.admin = get_administrator(school_id = self.school.id)
+		self.admin.users.add(self.user_with_all_perm)
+
+
+class CoordianteCreateTestCase(CoordinateTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_add_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ["add_coordinate"])
+		)
+
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_coordiante"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_add_perm,
+			self.user_with_change_perm
+		))
+
