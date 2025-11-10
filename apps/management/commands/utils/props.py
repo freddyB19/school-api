@@ -47,3 +47,9 @@ class CalendarParam(BaseModel):
 	title: str
 	description: str | None = None
 	date: datetime.date
+
+
+class CoordinateParam(BaseModel):
+	title: str
+	latitude: float
+	longitude: float
