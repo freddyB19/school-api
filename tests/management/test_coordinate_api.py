@@ -322,3 +322,83 @@ class CoordinateDetailAPITest(testcases.CoordianteDetailDeleteUpdateTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+class CoordinateDeleteAPITest(testcases.CoordianteDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.coordinate = create_coordinate(school = self.school)
+
+		self.URL_COORDIANTE_DELETE = get_detail_coordinate_url(
+			id = self.coordinate.id
+		)
+
+	def test_delete_coordinate(self):
+		"""
+			Validar "DELETE /coordinate/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_COORDIANTE_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_coordinate_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /coordinate/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		coordinate = create_coordinate()
+
+		response = self.client.delete(
+			get_detail_coordinate_url(id = coordinate.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_coordinate_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /coordinate/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_COORDIANTE_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_coordinate_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /coordinate/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_coordinate"])
+		)
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_COORDIANTE_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_coordinate_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /coordinate/:id" sin autenticación
+		"""
+		response = self.client.get(self.URL_COORDIANTE_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
