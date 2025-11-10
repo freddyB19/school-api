@@ -18,6 +18,7 @@ from .utils.props import (
 	TimeGroupParam,
 	TimeGroupByIdParam,
 	OfficeHourParam,
+	CoordinateParam,
 	ListUploadedFile,
 	ProfileURL,
 	IsProfileURL,
@@ -289,3 +290,30 @@ def create_social_media(school_id: int, social_network: Profile) -> ResultComman
 
 	return ResultCommand(query = social_media, status = True)
 
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def coordinate_exist(school_id: int, coordinate: CoordinateParam) -> ResultCommand:
+
+	exist = models.Coordinate.objects.filter(
+		school_id = school_id,
+		title = coordinate.title,
+		latitude = coordinate.latitude,
+		longitude = coordinate.longitude,
+	).exists()
+
+	return ResultCommand(query = exist, status = True)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_coordinate(school_id: int, coordinate: CoordinateParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+	
+	coordinate = models.Coordinate.objects.create(
+		school_id = school_id,
+		title = coordinate.title,
+		latitude = coordinate.latitude,
+		longitude = coordinate.longitude,
+	)
+
+	return ResultCommand(query = coordinate, status = True)
