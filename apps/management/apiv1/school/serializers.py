@@ -708,7 +708,9 @@ COORDIANTE_ALREADY_EXISTS = "Ya existe un registro de esta coordenada"
 class MSchoolCoordinateRequest(serializers.ModelSerializer):
 	class Meta:
 		model = models.Coordinate
-		fields = ["title", "latitude", "longitude"]
+		fields = ["id", "title", "latitude", "longitude"]
+		read_only_fields = ["id"]
+
 		extra_kwargs = {
 			"title": {
 				"min_length": models.MIN_LENGTH_COORDINATE_TITLE,
@@ -745,7 +747,6 @@ class MSchoolCoordinateRequest(serializers.ModelSerializer):
 
 		return data
 
-
 	def create(self, validated_data):
 		command = commands.create_coordinate(
 			school_id = self.context.get("pk"),
@@ -760,5 +761,10 @@ class MSchoolCoordinateRequest(serializers.ModelSerializer):
 				code = "invalid"
 			)
 
-
 		return command.query
+
+
+class MSchoolCoordinateResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Coordinate
+		exclude = ["school"]
