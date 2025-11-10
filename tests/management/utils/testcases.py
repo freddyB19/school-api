@@ -437,3 +437,21 @@ class CoordianteCreateTestCase(CoordinateTestCase):
 			self.user_with_change_perm
 		))
 
+
+class CoordianteDetailDeleteUpdateTestCase(CoordinateTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_coordinate"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_coordinate"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
