@@ -53,4 +53,9 @@ urlpatterns = [
 		views.SocialMediaDetailDeleteUpdateAPIView.as_view(),
 		name = "socialmedia-detail" 
 	),
+	path(
+		"<int:pk>/coordinate",
+		views.CoordinateListCreateAPIView.as_view(),
+		name = "coordinate-list-create" 
+	),
 ]
