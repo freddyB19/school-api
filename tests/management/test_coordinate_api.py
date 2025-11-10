@@ -19,6 +19,13 @@ def get_create_list_coordinate_url(school_id):
 	)
 
 
+def get_detail_coordinate_url(id):
+	return reverse(
+		"management:coordinate-detail",
+		kwargs = {"pk": id}
+	)
+
+
 class CoordinateCreateAPITest(testcases.CoordianteCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -237,6 +244,79 @@ class CoordinateListAPITest(testcases.CoordinateTestCase):
 			Generar [Error 401] "GET /coordiante" sin autenticación
 		"""
 		response = self.client.get(self.URL_COORDIANTE_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CoordinateDetailAPITest(testcases.CoordianteDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.coordinate = create_coordinate(school = self.school)
+
+		self.URL_COORDIANTE_DETAIL = get_detail_coordinate_url(
+			id = self.coordinate.id
+		)
+
+
+	def test_detail_coordinate(self):
+		"""
+			Validar "GET /coordinate/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_COORDIANTE_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.coordinate.id)
+		self.assertEqual(responseJson["title"], self.coordinate.title)
+		self.assertEqual(responseJson["latitude"], self.coordinate.latitude)
+		self.assertEqual(responseJson["longitude"], self.coordinate.longitude)
+
+
+	def test_detail_coordinate_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /coordinate/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_coordinate = create_coordinate()
+
+		response = self.client.get(
+			get_detail_coordinate_url(id = other_coordinate.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_coordinate_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /coordinate/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_COORDIANTE_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_coordinate_without_authetication(self):
+		"""
+			Generar [Error 401] "GET /coordinate/:id" sin autenticación
+		"""
+		response = self.client.get(self.URL_COORDIANTE_DETAIL)
 
 		responseJson = response.data
 		responseStatus = response.status_code
