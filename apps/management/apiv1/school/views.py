@@ -359,3 +359,44 @@ class SocialMediaDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView
 			data = self.serializer_class(social_media).data,
 			status = status.HTTP_200_OK
 		)
+
+
+class CoordinateListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Coordinate.objects.all()
+	serializer_class = serializers.MSchoolCoordinateRequest 
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk"),
+		).order_by("id")
+
+	def get_serializer_class(self):
+		if self.request.method == "GET":
+			return serializers.MSchoolCoordinateResponse 
+		
+		return self.serializer_class
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		coordinate = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(coordinate).data,
+			status = status.HTTP_201_CREATED
+		)
