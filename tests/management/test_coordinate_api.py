@@ -3,7 +3,11 @@ from django.urls import reverse
 from apps.school import models
 
 from tests import faker
-from tests.school.utils import create_school, create_coordinate
+from tests.school.utils import (
+	create_school, 
+	create_coordinate, 
+	bulk_create_coordinate
+)
 from tests.user.utils import create_user, get_permissions
 from .utils import testcases, testcases_data
 
@@ -156,6 +160,83 @@ class CoordinateCreateAPITest(testcases.CoordianteCreateTestCase):
 			self.URL_COORDIANTE_CREATE,
 			self.add_coordinate
 		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CoordinateListAPITest(testcases.CoordinateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.URL_COORDIANTE_LIST = get_create_list_coordinate_url(
+			school_id = self.school.id
+		)
+
+		bulk_create_coordinate(school = self.school, size = 10)
+
+
+	def test_get_coordiante(self):
+		"""
+			Validar "GET /coordiante"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		total_coordinate = models.Coordinate.objects.filter(
+			school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_COORDIANTE_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_coordinate)
+
+
+	def test_get_coordiante_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /coordiante" de escuela que no tiene permiso de acceder
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_school = create_school()
+
+		response = self.client.get(
+			get_create_list_coordinate_url(
+				school_id = other_school.id
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_get_coordiante_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /coordiante" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_COORDIANTE_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+
+	def test_get_coordiante_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /coordiante" sin autenticación
+		"""
+		response = self.client.get(self.URL_COORDIANTE_LIST)
 
 		responseJson = response.data
 		responseStatus = response.status_code
