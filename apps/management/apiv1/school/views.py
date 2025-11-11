@@ -400,3 +400,20 @@ class CoordinateListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(coordinate).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class CoordinateDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = models.Coordinate.objects.all()
+	serializer_class = serializers.MSchoolCoordinateResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.CoordinatePermissionDetail
+	]
+
+	def get_serializer_class(self):
+		update = ["PATCH", "PUT"]
+
+		if self.request.method in update:
+			return serializers.MSchoolCoordinateUpdateRequest
+		return self.serializer_class
