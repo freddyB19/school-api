@@ -310,6 +310,21 @@ class CalendarListAPITest(testcases.CalendarTestCase):
 
 		self.assertEqual(responseStatus, 403)
 
+	def test_get_calendar_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /calendar" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_CALENDAR_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
 	def test_get_calendar_without_authentication(self):
 		"""
 			Generar [Error 401] "GET /calendar" sin autenticación
