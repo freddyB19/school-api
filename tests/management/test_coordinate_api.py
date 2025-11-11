@@ -402,3 +402,156 @@ class CoordinateDeleteAPITest(testcases.CoordianteDetailDeleteUpdateTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+class CoordinateUpdateAPITest(testcases.CoordianteDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.coordinate = create_coordinate(school = self.school)
+
+		self.URL_COORDIANTE_UPDATE = get_detail_coordinate_url(
+			id = self.coordinate.id
+		)
+
+		local_coordinate = faker.local_latlng(country_code = 'VE')
+
+		self.update_coordinate = {
+			"title": faker.text(max_nb_chars = models.MAX_LENGTH_COORDINATE_TITLE),
+			"latitude": local_coordinate[0],
+			"longitude": local_coordinate[1]
+		}
+
+		self.update_partial_coordinate = {
+			"title": faker.text(max_nb_chars = models.MAX_LENGTH_COORDINATE_TITLE)
+		}
+
+	def test_update_coordinate(self):
+		"""
+			Validar "PUT/PATCH /coordinate/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.patch(
+			self.URL_COORDIANTE_UPDATE,
+			self.update_partial_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.coordinate.id)
+		
+		self.assertNotEqual(responseJson["title"], self.coordinate.title)
+		
+		self.assertEqual(responseJson["title"], self.update_partial_coordinate["title"])
+
+		response = self.client.put(
+			self.URL_COORDIANTE_UPDATE,
+			self.update_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.coordinate.id)
+		
+		self.assertNotEqual(responseJson["title"], self.coordinate.title)
+		self.assertNotEqual(responseJson["latitude"], self.coordinate.latitude)
+		self.assertNotEqual(responseJson["longitude"], self.coordinate.longitude)
+
+		self.assertEqual(responseJson["title"], self.update_coordinate["title"])
+		self.assertEqual(responseJson["latitude"], self.update_coordinate["latitude"])
+		self.assertEqual(responseJson["longitude"], self.update_coordinate["longitude"])
+
+
+	def test_update_coordinate_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /coordinate/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_case = testcases_data.CREATE_COORDINATE_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_COORDIANTE_UPDATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_update_coordinate_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /coordinate/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_coordinate = create_coordinate()
+
+		response = self.client.patch(
+			get_detail_coordinate_url(id = other_coordinate.id),
+			self.update_partial_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+	def test_update_coordinate_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /coordinate/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.patch(
+			self.URL_COORDIANTE_UPDATE,
+			self.update_partial_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_coordinate_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /coordinate/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_coordinate"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.patch(
+			self.URL_COORDIANTE_UPDATE,
+			self.update_partial_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_coordinate_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /coordinate/:id" sin autenticación
+		"""
+		response = self.client.patch(
+			self.URL_COORDIANTE_UPDATE,
+			self.update_partial_coordinate
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
