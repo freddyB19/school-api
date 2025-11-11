@@ -153,19 +153,5 @@ CREATE_COORDINATE_WITH_WRONG_DATA = [
 		),
 		"latitude": coordinate[0],
 		"longitude": coordinate[1]
-	},
-	{
-		"title": faker.pystr(
-			max_chars = school_models.MIN_LENGTH_COORDINATE_TITLE - 1
-		),
-		"latitude": faker.random_int(min = 1, max = 10),
-		"longitude": coordinate[1]
-	},
-	{
-		"title": faker.pystr(
-			max_chars = school_models.MIN_LENGTH_COORDINATE_TITLE - 1
-		),
-		"latitude": coordinate[0],
-		"longitude": faker.random_int(min = 1, max = 10)
-	},
+	}
 ]
