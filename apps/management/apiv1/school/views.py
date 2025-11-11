@@ -132,7 +132,7 @@ class OfficeHourDetaiUpdateDeletelAPIView(generics.RetrieveUpdateDestroyAPIView)
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
+		permissions.OfficeHourPermissionDetail
 	]
 
 	def get_serializer_class(self):
