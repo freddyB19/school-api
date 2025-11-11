@@ -768,3 +768,31 @@ class MSchoolCoordinateResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Coordinate
 		exclude = ["school"]
+
+
+class MSchoolCoordinateUpdateRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.Coordinate
+		fields = ["id", "title", "latitude", "longitude"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"title": {
+				"min_length": models.MIN_LENGTH_COORDINATE_TITLE,
+				"max_length": models.MAX_LENGTH_COORDINATE_TITLE,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_COORDINATE_TITLE
+					),
+					"max_length": ERROR_FIELD(
+						field = "titulo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_COORDINATE_TITLE
+					),
+				}
+			}
+		}
