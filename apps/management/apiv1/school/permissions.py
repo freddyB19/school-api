@@ -58,3 +58,12 @@ class BasePermissionDetailObject(permissions.BasePermission):
 		user_id = request.user.id
 
 		return self.has_perm_detail(data_id = data_id, user_id = user_id)
+
+
+class CoordinatePermissionDetail(BasePermissionDetailObject):
+	"""
+		Este permiso sirve para limitar que solo se pueda acceder/eliminar/modificar
+		la información del colegio al que formamos parte como administradores.
+	"""
+	message = "No tienes permisos para (acceder, modificar o eliminar) información que no te pertenece"
+	model = school_models.Coordinate
