@@ -738,7 +738,7 @@ class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 
 	def test_detail_officehour(self):
 		"""
-			Validar "GET /officehour/:id>"
+			Validar "GET /officehour/:id"
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
@@ -757,16 +757,13 @@ class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		)
 		self.assertEqual(responseJson["school"], self.officehour.school.id)
 
-
 	def test_detail_officehour_without_school_permission(self):
 		"""
 			Generar [Error 403] "GET /officehour/:id" por información que pertenece a otra escuela
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
-		other_officehour = create_officehour(
-			school = create_school()
-		)
+		other_officehour = create_officehour()
 
 		response = self.client.get(
 			get_detail_officehour_url(
@@ -778,7 +775,6 @@ class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 403)
-
 
 	def test_detail_officehour_with_wrong_user(self):
 		"""
@@ -796,7 +792,6 @@ class OfficeHourDetailAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 403)
-
 
 	def test_detail_officehour_without_authentication(self):
 		"""
@@ -822,19 +817,19 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 			id = self.officehour.id
 		)
 
+		self.update_officehour = {
+			"description": faker.text(max_nb_chars = 30),
+		}
+
 	def test_update_officehour(self):
 		"""
 			Validar "PUT/PATCH /officehour/:id"
 		"""
 		self.client.force_authenticate(user = self.user_with_change_perm)
 
-		update_officehour = {
-			"description": faker.text(max_nb_chars = 30),
-		}
-
 		response = self.client.patch(
 			self.URL_OFFICEHOUR_DETAIL,
-			update_officehour
+			self.update_officehour
 		)
 
 		responseJson = response.data
@@ -844,7 +839,7 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		self.assertEqual(responseJson["id"], self.officehour.id)
 		self.assertEqual(
 			responseJson["interval_description"], 
-			update_officehour["description"]
+			self.update_officehour["description"]
 		)
 
 
@@ -878,15 +873,11 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 			school = create_school()
 		)
 
-		update_officehour = {
-			"description": faker.text(max_nb_chars = 30)
-		}
-
 		response = self.client.patch(
 			get_detail_officehour_url(
 				id = other_officehour.id
 			),
-			update_officehour
+			self.update_officehour
 		)
 
 		responseStatus = response.status_code
@@ -904,10 +895,6 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 			{"user": self.user_with_add_perm},
 		]
 
-		update_officehour = {
-			"description": faker.text(max_nb_chars = 30)
-		}
-
 		for case in test_cases:
 			with self.subTest(case = case):
 				
@@ -915,7 +902,7 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 				
 				response = self.client.patch(
 					self.URL_OFFICEHOUR_DETAIL,
-					update_officehour
+					self.update_officehour
 				)
 
 				responseStatus = response.status_code
@@ -931,13 +918,9 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 
 		self.client.force_authenticate(user = user)
 
-		update_officehour = {
-			"description": faker.text(max_nb_chars = 30)
-		}
-
 		response = self.client.patch(
 			self.URL_OFFICEHOUR_DETAIL,
-			update_officehour
+			self.update_officehour
 		)
 
 		responseStatus = response.status_code
@@ -949,13 +932,10 @@ class OfficeHourUpdateAPITest(testcases.OfficeHourDetailUpdateDeleteTestCase):
 		"""
 			Generar [Error 401] "PUT/PATCH /officehour/:id" por usuario sin autenticación
 		"""
-		update_officehour = {
-			"description": faker.text(max_nb_chars = 30)
-		}
 
 		response = self.client.patch(
 			self.URL_OFFICEHOUR_DETAIL,
-			update_officehour
+			self.update_officehour
 		)
 
 		responseStatus = response.status_code
