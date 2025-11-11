@@ -331,7 +331,7 @@ class SocialMediaDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
+		permissions.SocialMediaPermissionDetail
 	]
 
 	def get_serializer_class(self):
