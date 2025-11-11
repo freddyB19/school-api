@@ -268,7 +268,7 @@ class CalendarDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
+		permissions.CalendarPermissionDetail
 	]
 
 	def get_serializer_class(self):
