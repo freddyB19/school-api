@@ -58,4 +58,9 @@ urlpatterns = [
 		views.CoordinateListCreateAPIView.as_view(),
 		name = "coordinate-list-create" 
 	),
+	path(
+		"coordinate/<int:pk>",
+		views.CoordinateDetailDeleteUpdateAPIView.as_view(),
+		name = "coordinate-detail" 
+	),
 ]
