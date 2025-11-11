@@ -340,26 +340,6 @@ class SocialMediaDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView
 			return serializers.MSchoolSocialMediaUpdateRequest
 		return self.serializer_class
 
-	def update(self, request, pk, *args, **kwargs):
-		partial = kwargs.pop('partial', False)
-		
-		instance = self.get_object()
-		
-		serializer = self.get_serializer(
-			instance, 
-			data=request.data, 
-			partial=partial
-		)
-		
-		serializer.is_valid(raise_exception=True)
-		
-		social_media = serializer.save()
-
-		return response.Response(
-			data = self.serializer_class(social_media).data,
-			status = status.HTTP_200_OK
-		)
-
 
 class CoordinateListCreateAPIView(generics.ListCreateAPIView):
 	queryset = models.Coordinate.objects.all()
