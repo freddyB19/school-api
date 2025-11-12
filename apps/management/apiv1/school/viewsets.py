@@ -10,13 +10,8 @@ from apps.utils.result_commands import ResponseError
 
 from . import serializers, permissions
 
-class BaseVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
-	permission_classes = [
-		IsAuthenticated, 
-		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
-	]
-
+class DetailModelVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
+	pass
 
 class BaseSchoolVS(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 	permission_classes = [IsAuthenticated, permissions.IsUserPermission]
@@ -95,9 +90,15 @@ class SchoolUpdateVS(BaseSchoolVS):
 		)
 
 
-class NewsDetailUpdateDeleteVS(BaseVS):
+class NewsDetailUpdateDeleteVS(DetailModelVS):
 	queryset = school_models.News.objects.all()
 	serializer_class = serializers.MSchoolNewsResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+
 
 	def get_serializer_class(self):
 
