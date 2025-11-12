@@ -844,7 +844,7 @@ class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.client.force_authenticate(user = self.user_with_delete_perm)
 
 		response = self.client.delete(
-			self.URL_NEWS_DELETE_IMAGES
+			self.URL_NEWS_DELETE_ALL_IMAGES
 		)
 
 		responseJson = response.data
