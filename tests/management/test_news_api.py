@@ -489,7 +489,7 @@ class NewsDetailAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		)
 
 		responseStatus = response.status_code
-		
+
 		self.assertEqual(responseStatus, 403)
 
 
@@ -526,9 +526,14 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.news = create_news(school = self.school)
 
-		self.URL_NEWS_DETAIL = get_detail_news_url(
+		self.URL_NEWS_UPDATE = get_detail_news_url(
 			id = self.news.id
 		)
+
+		self.update_news = {
+			"title": faker.text(max_nb_chars = 20),
+			"description": faker.paragraph(),
+		}
 
 	def test_update_news(self):
 		"""
@@ -536,14 +541,9 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		"""
 		self.client.force_authenticate(user = self.user_with_update_perm)
 
-		update_news = {
-			"title": faker.text(max_nb_chars = 20),
-			"description": faker.paragraph(),
-		}
-
 		response = self.client.patch(
-			self.URL_NEWS_DETAIL,
-			update_news
+			self.URL_NEWS_UPDATE,
+			self.update_news
 		)
 
 		responseJson = response.data
@@ -551,16 +551,16 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["id"], self.news.id)
-		self.assertEqual(responseJson["title"], update_news["title"])
-		self.assertEqual(responseJson["description"], update_news["description"])
+		self.assertEqual(responseJson["title"], self.update_news["title"])
+		self.assertEqual(responseJson["description"], self.update_news["description"])
 
-		update_news = {
+		self.update_news.update({
 			"status": school_models.News.TypeStatus.pending
-		}
+		})
 
 		response = self.client.patch(
-			self.URL_NEWS_DETAIL,
-			update_news
+			self.URL_NEWS_UPDATE,
+			self.update_news
 		)
 
 		responseJson = response.data
@@ -568,7 +568,7 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["id"], self.news.id)
-		self.assertEqual(responseJson["status"], update_news["status"])
+		self.assertEqual(responseJson["status"], self.update_news["status"])
 
 
 	def test_update_news_with_wrong_data(self):
@@ -593,7 +593,7 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		for case in test_cases:
 			with self.subTest(case = case):
 				response = self.client.patch(
-					self.URL_NEWS_DETAIL,
+					self.URL_NEWS_UPDATE,
 					case
 				)
 
@@ -610,16 +610,11 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.client.force_authenticate(user = self.user_with_update_perm)
 
-		other_school = create_school()
-		news = create_news(school = other_school)
-
-		update_news = {
-			"title": faker.text(max_nb_chars = 20)
-		}
+		news = create_news()
 
 		response = self.client.patch(
 			get_detail_news_url(id = news.id),
-			update_news
+			self.update_news
 		)
 
 		responseJson = response.data
@@ -638,17 +633,13 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			{"user": self.user_with_delete_perm},
 		]
 
-		update_news = {
-			"title": faker.text(max_nb_chars = 20)
-		}
-
 		for case in test_cases:
 			with self.subTest(case = case):
 				self.client.force_authenticate(user = case["user"])
 
 				response = self.client.patch(
-					self.URL_NEWS_DETAIL,
-					update_news
+					self.URL_NEWS_UPDATE,
+					self.update_news
 				)
 
 				responseStatus = response.status_code
@@ -664,13 +655,9 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.client.force_authenticate(user = user)
 
-		update_news = {
-			"title": faker.text(max_nb_chars = 20)
-		}
-
 		response = self.client.patch(
-			self.URL_NEWS_DETAIL,
-			update_news
+			self.URL_NEWS_UPDATE,
+			self.update_news
 		)
 
 		responseJson = response.data
@@ -683,13 +670,10 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		"""
 			Generar [Error 401] "PUT/PATCH /news/:id" por usuario sin autenticación
 		"""
-		update_news = {
-			"title": faker.text(max_nb_chars = 20)
-		}
 
 		response = self.client.patch(
-			self.URL_NEWS_DETAIL,
-			update_news
+			self.URL_NEWS_UPDATE,
+			self.update_news
 		)
 
 		responseJson = response.data
@@ -704,7 +688,7 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.news = create_news(school = self.school)
 
-		self.URL_NEWS_DETAIL = get_detail_news_url(
+		self.URL_NEWS_DELETE = get_detail_news_url(
 			id = self.news.id
 		)
 
@@ -714,7 +698,7 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		"""
 		self.client.force_authenticate(user = self.user_with_delete_perm)
 
-		response = self.client.delete(self.URL_NEWS_DETAIL)
+		response = self.client.delete(self.URL_NEWS_DELETE)
 
 		responseStatus = response.status_code
 
@@ -725,10 +709,9 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		"""
 			Generar [Error 403] "DELETE /news/:id" por una noticia que pertenece a otra escuela
 		"""
-		other_school = create_school()
-		news = create_news(school = other_school)
-
 		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		news = create_news()
 
 		response = self.client.delete(
 			get_detail_news_url(id = news.id)
@@ -752,7 +735,7 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			with self.subTest(case = case):
 				self.client.force_authenticate(user = case["user"])
 				
-				response = self.client.delete(self.URL_NEWS_DETAIL)
+				response = self.client.delete(self.URL_NEWS_DELETE)
 
 				responseStatus = response.status_code
 
@@ -767,7 +750,7 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 
 		self.client.force_authenticate(user = user)
 
-		response = self.client.delete(self.URL_NEWS_DETAIL)
+		response = self.client.delete(self.URL_NEWS_DELETE)
 
 		responseStatus = response.status_code
 
@@ -779,7 +762,7 @@ class NewsDeleteAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			Generar [Error 401] "DELETE /news/:id" por usuario sin autenticación
 		"""
 
-		response = self.client.delete(self.URL_NEWS_DETAIL)
+		response = self.client.delete(self.URL_NEWS_DELETE)
 
 		responseStatus = response.status_code
 
