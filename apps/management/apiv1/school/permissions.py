@@ -94,3 +94,12 @@ class OfficeHourPermissionDetail(BasePermissionDetailObject):
 	"""
 	message = "No tienes permisos para (acceder, modificar o eliminar) información que no te pertenece"
 	model = school_models.OfficeHour
+
+
+class NewsPermissionDetail(BasePermissionDetailObject):
+	"""
+		Este permiso sirve para limitar que solo se pueda acceder/eliminar/modificar
+		la información del colegio al que formamos parte como administradores.
+	"""
+	message = "No tienes permisos para (acceder, modificar o eliminar) información que no te pertenece"
+	model = school_models.News
