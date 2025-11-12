@@ -96,15 +96,19 @@ class NewsDetailUpdateDeleteVS(DetailModelVS):
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission,
-		permissions.BelongToOurAdministrator
+		permissions.NewsPermissionDetail
 	]
 
-
 	def get_serializer_class(self):
+		UploadImages = "upload_images"
+		IsUpdate = [
+			"update",
+			"partial_update"
+		]
 
-		if self.action == "update" or self.action == "partial_update":
+		if self.action in IsUpdate:
 			return serializers.MSchoolNewsUpdateRequest
-		elif self.action == "upload_images":
+		elif self.action == UploadImages:
 			return serializers.MSchoolNewsUpdateImagesRequest
 
 		return self.serializer_class
