@@ -155,3 +155,20 @@ CREATE_COORDINATE_WITH_WRONG_DATA = [
 		"longitude": coordinate[1]
 	}
 ]
+
+CREATE_STAFF_WITH_WRONG_DATA = [
+	{
+		"name": faker.pystr(
+			max_chars = school_models.MAX_LENGTH_SCHOOSTAFF_NAME + 1
+		)
+	},
+	{
+		"name": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_SCHOOSTAFF_NAME - 1
+		)
+	},
+	{
+		"name": faker.first_name(),
+		"occupation": faker.job()
+	}
+]
