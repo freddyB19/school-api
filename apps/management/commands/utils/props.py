@@ -53,3 +53,8 @@ class CoordinateParam(BaseModel):
 	title: str
 	latitude: float
 	longitude: float
+
+
+class StaffParam(BaseModel):
+	name: str
+	occupation: str | None = None
