@@ -103,6 +103,25 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 class SchoolUpdateLogoRequest(serializers.Serializer):
 	logo = serializers.ImageField(max_length = 20)
 
+	def update(self, instance, validated_data) -> models.School:
+		validated = school_dto.SchoolUpdateImages(
+			image = validated_data.get("logo")
+		)
+		
+		command = commands.update_school_logo(image = validated.image)
+
+		if not command.status:
+			raise ValidationError( 
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+		
+		instance.logo = command.query
+
+		return instance
+
 
 MAX_LENGTH_IMAGE_NAME = 20
 
