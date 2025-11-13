@@ -1,4 +1,7 @@
+import datetime
 from typing import TypeVar
+
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from rest_framework import serializers
 
@@ -12,7 +15,7 @@ from apps.utils.result_commands import ResponseError
 from apps.management.commands import commands
 from apps.management.dtos import school as school_dto
 
-ERROR_FIELD = lambda field, type, symbol, value: f"El campo '{field}' es muy {type}, debe ser {symbol} a {value}" 
+ERROR_FIELD:str = lambda field, type, symbol, value: f"El campo '{field}' es muy {type}, debe ser {symbol} a {value}" 
 
 MIN_LENGTH_FIELDS = 10
 
@@ -95,11 +98,12 @@ class SchoolUpdateRequest(serializers.ModelSerializer):
 			},
 		}
 
+School = TypeVar("School", bound = models.School)
 
 class SchoolUpdateLogoRequest(serializers.Serializer):
 	logo = serializers.ImageField(max_length = 20)
 
-	def update(self, instance, validated_data) -> models.School:
+	def update(self, instance: School, validated_data: dict[str, str]) -> School:
 		validated = school_dto.SchoolUpdateImages(
 			image = validated_data.get("logo")
 		)
@@ -122,6 +126,10 @@ class SchoolUpdateLogoRequest(serializers.Serializer):
 MAX_LENGTH_IMAGE_NAME = 20
 
 STATUS_INVALID_CHOICE = "La opción elegida es invalida"
+
+
+News = TypeVar("News", bound = models.News)
+ListUploadedFile = TypeVar("ListUploadedFile", bound = list[InMemoryUploadedFile])
 
 class MSchoolNewsRequest(serializers.ModelSerializer):
 	media = serializers.ListField(
@@ -165,7 +173,7 @@ class MSchoolNewsRequest(serializers.ModelSerializer):
 			}
 		}
 
-	def create(self, validated_data) -> models.News:
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> News:
 
 		school_id = self.context.get("pk")
 		
@@ -251,13 +259,12 @@ class MSchoolNewsUpdateRequest(serializers.ModelSerializer):
 			}
 		}
 
-
 class MSchoolNewsUpdateImagesRequest(serializers.Serializer):
 	media = serializers.ListField(
 		child = serializers.ImageField(max_length = MAX_LENGTH_IMAGE_NAME)
 	)
 
-	def update(self, instance, validated_data) -> models.News:
+	def update(self, instance: News, validated_data: dict[str, ListUploadedFile]) -> News:
 		validated = school_dto.NewsUpdateImages(
 			images = validated_data.get("media")
 		)
@@ -288,7 +295,7 @@ MAX_VALUE_DAY = 5
 	Permitiendo así una validación más facil.
 """
 
-INVALID_CHOICES_DAY = lambda daysweek: list(
+INVALID_CHOICES_DAY:list[int] = lambda daysweek: list(
 	filter(
 		lambda num: num < MIN_VALUE_DAY or num > MAX_VALUE_DAY, 
 		daysweek
@@ -325,7 +332,7 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 			}
 		}
 
-	def validate_daysweek(self, value):
+	def validate_daysweek(self, value: list[int]) -> list[int]:
 		is_invalid = INVALID_CHOICES_DAY(daysweek = value)
 
 		if is_invalid:
@@ -336,7 +343,7 @@ class MSchoolTimeGroupRequest(serializers.ModelSerializer):
 
 		return value
 
-	def validate(self, data):
+	def validate(self, data: dict[str, str | int | datetime.time]) -> dict[str, str | int |  datetime.time]:
 
 		opening_time = data.get("opening_time")
 		closing_time = data.get("closing_time")
@@ -418,7 +425,7 @@ class MSchoolOfficeHourRequest(serializers.ModelSerializer):
 		return value
 
 
-	def validate(self, data):
+	def validate(self, data: dict[str, str | int]) -> dict[str, str | int]:
 		time_group = data.get("time_group")
 		time_group_id = data.get("time_group_id")
 
@@ -437,7 +444,7 @@ class MSchoolOfficeHourRequest(serializers.ModelSerializer):
 		return data
 
 
-	def create(self, validated_data):
+	def create(self, validated_data:dict[str, str | int]) -> models.OfficeHour:
 
 		new_time_group = validated_data.get("time_group")
 		time_group_id = validated_data.get("time_group_id")
@@ -568,7 +575,7 @@ class MSchoolCalendarRequest(serializers.ModelSerializer):
 			}
 		}
 
-	def validate(self, data):
+	def validate(self, data: dict[str, str | datetime.date]) -> dict[str, str | datetime.date]:
 		title = data.get("title")
 		date = data.get("date")
  
@@ -587,7 +594,7 @@ class MSchoolCalendarRequest(serializers.ModelSerializer):
 		return data
 
 
-	def create(self, validated_data):
+	def create(self, validated_data: dict[str, str | datetime.date]) -> models.Calendar:
 
 		command  = commands.create_calendar(
 			school_id = self.context.get("pk"),
@@ -650,7 +657,7 @@ class MSchoolSocialMediaResquest(serializers.Serializer):
 		required = False
 	)
 
-	def validate(self, data):
+	def validate(self, data: dict[str, str]) -> dict[str, str]:
 
 		profile = data.get("profile")
 		profiles = data.get("profiles")
@@ -682,7 +689,7 @@ class MSchoolSocialMediaResquest(serializers.Serializer):
 		
 		return data
 
-	def create(self, validated_data):
+	def create(self, validated_data: dict[str, str]) -> models.SocialMedia:
 		profile = validated_data.get("profile")
 		profiles = validated_data.get("profiles")
 
@@ -748,7 +755,7 @@ class MSchoolCoordinateRequest(serializers.ModelSerializer):
 		}
 
 
-	def validate(self, data):
+	def validate(self, data: dict[str, str | float]) -> dict[str, str | float]:
 		exist = commands.coordinate_exist(
 			school_id = self.context.get("pk"),
 			coordinate = data
@@ -762,7 +769,7 @@ class MSchoolCoordinateRequest(serializers.ModelSerializer):
 
 		return data
 
-	def create(self, validated_data):
+	def create(self, validated_data: dict[str, str | float]) -> models.Coordinate:
 		command = commands.create_coordinate(
 			school_id = self.context.get("pk"),
 			coordinate = validated_data
@@ -841,7 +848,7 @@ class MSchoolStaffRequest(serializers.ModelSerializer):
 		}
 
 
-	def create(self, validated_data) -> models.SchoolStaff:
+	def create(self, validated_data: dict[str, str]) -> models.SchoolStaff:
 		command = commands.create_staff(
 			school_id = self.context.get("pk"),
 			staff = validated_data
