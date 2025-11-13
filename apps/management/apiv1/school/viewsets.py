@@ -63,7 +63,9 @@ class SchoolUpdateVS(BaseSchoolVS):
 	def upload_image(self, request, pk = None):
 		school = self.get_object()
 		serializer = self.get_serializer(
+			school,
 			data=request.data,
+			partial = True
 		)
 
 		if not serializer.is_valid():
@@ -72,17 +74,7 @@ class SchoolUpdateVS(BaseSchoolVS):
 				status = status.HTTP_400_BAD_REQUEST,
 			)
 
-		command = commands.update_school_logo(image = request.data["logo"])
-
-		if not command.status:
-			return response.Response(
-				data = ResponseError(
-					errors = command.errors
-				).model_dump()
-			)
-		
-		school.logo = command.query
-		school.save()
+		school = serializer.save()
 
 		return response.Response(
 			data = self.serializer_class(school).data,
