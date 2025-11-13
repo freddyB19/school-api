@@ -204,6 +204,7 @@ class SchoolStaffFactory(factory.django.DjangoModelFactory):
 		model = models.SchoolStaff
 
 	name = factory.LazyAttribute(lambda x: faker.name())
+	occupation = factory.fuzzy.FuzzyChoice(models.OccupationStaff)
 	school = factory.SubFactory(SchoolFactory)
 
 
