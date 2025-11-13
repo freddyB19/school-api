@@ -261,6 +261,17 @@ class  TimeGroupDetailAPITest(testcases.TimeGroupDetailUpdateDeleteTestCase):
 
 		self.assertEqual(responseStatus, 404)
 
+	def test_detail_timegroup_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /officehour/time/:id" sin autenticación
+		"""
+
+		response = self.client.get(self.URL_TIMEGROUP_DETAIL)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
 
 
 class TimeGroupUpdateAPITest(testcases.TimeGroupDetailUpdateDeleteTestCase):
