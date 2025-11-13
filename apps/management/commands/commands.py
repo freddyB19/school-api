@@ -24,6 +24,7 @@ from .utils.props import (
 	IsProfileURL,
 	ListProfileURL,
 	Profile,
+	StaffParam,
 )
 
 faker = Faker(locale="es")
@@ -317,3 +318,18 @@ def create_coordinate(school_id: int, coordinate: CoordinateParam) -> ResultComm
 	)
 
 	return ResultCommand(query = coordinate, status = True)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_staff(school_id: int, staff: StaffParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	staff = models.SchoolStaff.objects.create(
+		school_id = school_id,
+		name = staff.name,
+		occupation = staff.occupation or models.OccupationStaff.administrative
+	)
+
+	return ResultCommand(query = staff, status = True)
