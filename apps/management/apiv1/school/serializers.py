@@ -1,17 +1,13 @@
 from typing import TypeVar
-from datetime import datetime
 
 from rest_framework import serializers
 
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema_field
 
-
 from apps.school import models
 
 from apps.utils.result_commands import ResponseError
-
-from apps.school.apiv1 import serializers as school_serializer
 
 from apps.management.commands import commands
 from apps.management.dtos import school as school_dto
