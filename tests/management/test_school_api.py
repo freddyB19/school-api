@@ -4,6 +4,9 @@ from django.urls import reverse
 
 from PIL import Image
 
+from apps.school import models
+
+from tests import faker
 from tests.school.utils import create_school
 
 from .utils import testcases
@@ -18,27 +21,28 @@ class SchoolUpdateAPITest(testcases.SchoolUpdateTestCase):
 
 		self.URL_SCHOOL_UPDATE = self.get_detail_url(id = self.school.id)
 
+		self.update_school = {
+			"name": faker.text(max_nb_chars=models.MAX_LENGTH_SCHOOL_NAME),
+			"history": faker.paragraph()
+		}
+
+
 	def get_detail_url(self, id):
 		return reverse(
 			"management:school-detail",
 			kwargs={"pk": id}
 		)
 
-
+		
 	def test_update_school(self):
 		"""
 			Validar "PUT/PATCH /school/:id"
 		"""
 		self.client.force_authenticate(user = self.user_with_perm)
 
-		update_school = {
-			"name": "School test 1",
-			"history": "Información sobre la historia de la escuela"
-		}
-
 		response = self.client.patch(
 			self.URL_SCHOOL_UPDATE,
-			update_school
+			self.update_school
 		)
 
 		responseJson = response.data
@@ -57,16 +61,11 @@ class SchoolUpdateAPITest(testcases.SchoolUpdateTestCase):
 
 		self.client.force_authenticate(user = self.user_with_perm)
 
-		update_school = {
-			"name": "School test 1",
-			"history": "Información sobre la historia de la escuela"
-		}
-
 		other_school = create_school()
 
 		response = self.client.patch(
 			self.get_detail_url(id = other_school.id),
-			update_school
+			self.update_school
 		)
 
 		responseJson = response.data
@@ -82,14 +81,9 @@ class SchoolUpdateAPITest(testcases.SchoolUpdateTestCase):
 
 		self.client.force_authenticate(user = self.user_without_perm)
 
-		update_school = {
-			"name": "School test 1",
-			"history": "Información sobre la historia de la escuela"
-		}
-		
 		response = self.client.patch(
 			self.URL_SCHOOL_UPDATE,
-			update_school
+			self.update_school
 		)
 
 		responseStatus = response.status_code
@@ -122,15 +116,10 @@ class SchoolUpdateAPITest(testcases.SchoolUpdateTestCase):
 		"""
 			Generar [Error 401] "PUT/PATCH /school/:id" por usuario sin autenticación
 		"""
-
-		update_school = {
-			"name": "School test 1",
-			"history": "Información sobre la historia de la escuela"
-		}
 		
 		response = self.client.patch(
 			self.URL_SCHOOL_UPDATE,
-			update_school
+			self.update_school
 		)
 
 		responseStatus = response.status_code
