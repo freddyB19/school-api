@@ -15,6 +15,9 @@ class BaseDTO(BaseModel):
 	def data(self) -> dict:
 		return self.model_dump(exclude_defaults = True)
 
+class SchoolUpdateImages(BaseDTO):
+	image: UploadedFile
+
 class NewsCreateDTO(BaseDTO):
 	title: str
 	status: str | None = None
