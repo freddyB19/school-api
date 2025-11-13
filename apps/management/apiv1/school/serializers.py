@@ -815,3 +815,48 @@ class MSchoolCoordinateUpdateRequest(serializers.ModelSerializer):
 				}
 			}
 		}
+
+
+class MSchoolStaffRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.SchoolStaff
+		fields = ["id", "name", 'occupation']
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"name": {
+				"min_length": models.MIN_LENGTH_SCHOOSTAFF_NAME,
+				"max_length": models.MAX_LENGTH_SCHOOSTAFF_NAME,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_SCHOOSTAFF_NAME
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_SCHOOSTAFF_NAME
+					),
+				}
+			}
+		}
+
+
+	def create(self, validated_data) -> models.SchoolStaff:
+		command = commands.create_staff(
+			school_id = self.context.get("pk"),
+			staff = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
