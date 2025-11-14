@@ -63,4 +63,9 @@ urlpatterns = [
 		views.CoordinateDetailDeleteUpdateAPIView.as_view(),
 		name = "coordinate-detail" 
 	),
+	path(
+		"<int:pk>/staff",
+		views.StaffListCreateAPIView.as_view(),
+		name = "staff-list-create" 
+	),
 ]
