@@ -397,3 +397,41 @@ class CoordinateDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView)
 		if self.request.method in update:
 			return serializers.MSchoolCoordinateUpdateRequest
 		return self.serializer_class
+
+
+class StaffListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.SchoolStaff.objects.all()
+	serializer_class = serializers.MSchoolStaffRequest
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.StaffFilter
+
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk"),
+		).order_by("id")
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		staff = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(staff).data,
+			status = status.HTTP_201_CREATED
+		)
