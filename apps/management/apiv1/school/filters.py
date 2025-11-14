@@ -82,3 +82,12 @@ class CalendarFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.Calendar
 		fields = ["month", "title"]
+
+class StaffFilter(django_filters.FilterSet):
+	name = django_filters.CharFilter(
+		field_name = "name", lookup_expr = "icontains"
+	)
+	
+	class Meta:
+		model = models.SchoolStaff
+		fields = ["name", "occupation"]
