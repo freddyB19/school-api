@@ -66,25 +66,20 @@ class BasePermissionDetailObject(permissions.BasePermission):
 
 
 class CoordinatePermissionDetail(BasePermissionDetailObject):
-	
 	model = school_models.Coordinate
 
 
 class SocialMediaPermissionDetail(BasePermissionDetailObject):
-
 	model = school_models.SocialMedia
 
 
 class CalendarPermissionDetail(BasePermissionDetailObject):
-
 	model = school_models.Calendar
 
 
 class OfficeHourPermissionDetail(BasePermissionDetailObject):
-
 	model = school_models.OfficeHour
 
 
 class NewsPermissionDetail(BasePermissionDetailObject):
-
 	model = school_models.News
