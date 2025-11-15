@@ -68,4 +68,9 @@ urlpatterns = [
 		views.StaffListCreateAPIView.as_view(),
 		name = "staff-list-create" 
 	),
+	path(
+		"staff/<int:pk>",
+		views.StaffDetailDeleteUpdateAPIView.as_view(),
+		name = "staff-detail" 
+	),
 ]
