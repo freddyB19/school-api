@@ -435,3 +435,13 @@ class StaffListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(staff).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class StaffDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = models.SchoolStaff.objects.all()
+	serializer_class = serializers.MSchoolStaffRequest
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.StaffPermissionDetail
+	]
