@@ -314,7 +314,7 @@ class StaffDetailAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 
 	def test_detail_staff(self):
 		"""
-			Validar "GET /staff/:id" por
+			Validar "GET /staff/:id"
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
@@ -368,6 +368,85 @@ class StaffDetailAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 		response = self.client.get(self.URL_STAFF_DETAIL)
 
 		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class StaffDeleteAPITest(testcases.StaffDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.staff = create_school_staff(school = self.school)
+
+		self.URL_STAFF_DELETE = get_detail_staff(id = self.staff.id)
+
+	def test_delete_staff(self):
+		"""
+			Validar "DELETE /staff/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_STAFF_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_staff_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /staff/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		other_schoolstaff = create_school_staff()
+
+		response = self.client.delete(
+			get_detail_staff(id = other_schoolstaff.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_staff_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /staff/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_STAFF_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_staff_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /staff/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_schoolstaff"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_STAFF_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_staff_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /staff/:id" sin autenticación
+		"""
+		response = self.client.delete(self.URL_STAFF_DELETE)
+
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
