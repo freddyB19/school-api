@@ -477,7 +477,7 @@ class StaffTestCase(APITestCase):
 		self.admin.users.add(self.user_with_all_perm)
 
 
-class StaffCreateTestCase(CoordinateTestCase):
+class StaffCreateTestCase(StaffTestCase):
 	def setUp(self):
 		super().setUp()
 		self.user_with_add_perm = create_user(role = 0)
@@ -494,5 +494,24 @@ class StaffCreateTestCase(CoordinateTestCase):
 
 		self.admin.users.add(*(
 			self.user_with_add_perm,
+			self.user_with_change_perm
+		))
+
+
+class StaffDetailDeleteUpdateTestCase(StaffTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_schoolstaff"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_schoolstaff"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
 			self.user_with_change_perm
 		))
