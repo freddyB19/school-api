@@ -5,6 +5,7 @@ from apps.school import models
 from tests import faker
 from tests.school.utils import (
 	create_school,
+	create_school_staff,
 	bulk_create_school_staff
 )
 from tests.user.utils import create_user, get_permissions
@@ -19,6 +20,11 @@ def get_list_create_staff(school_id, **query):
 		**query
 	)
 
+def get_detail_staff(id):
+	return reverse(
+		"management:staff-detail",
+		kwargs={"pk": id}
+	)
 
 class StaffCreaetAPITest(testcases.StaffCreateTestCase):
 	def setUp(self):
@@ -291,6 +297,75 @@ class StaffListAPITest(testcases.StaffTestCase):
 		"""
 
 		response = self.client.get(self.URL_STAFF_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class StaffDetailAPITest(testcases.StaffDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.staff = create_school_staff(school = self.school)
+
+		self.URL_STAFF_DETAIL = get_detail_staff(id = self.staff.id)
+
+	def test_detail_staff(self):
+		"""
+			Validar "GET /staff/:id" por
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_STAFF_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.staff.id)
+		self.assertEqual(responseJson["name"], self.staff.name)
+		self.assertEqual(responseJson["occupation"], self.staff.occupation)
+
+	def test_detail_staff_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /staff/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_schoolstaff = create_school_staff()
+
+		response = self.client.get(
+			get_detail_staff(id = other_schoolstaff.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_staff_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /staff/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_STAFF_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_staff_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /staff/:id" sin autenticación
+		"""
+
+		response = self.client.get(self.URL_STAFF_DETAIL)
 
 		responseJson = response.data
 		responseStatus = response.status_code
