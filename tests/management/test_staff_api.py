@@ -450,3 +450,128 @@ class StaffDeleteAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 401)
+
+
+class StaffUpdateAPITest(testcases.StaffDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.staff = create_school_staff(school = self.school)
+
+		self.URL_STAFF_UPDATE = get_detail_staff(id = self.staff.id)
+
+		self.update_staff = {
+			"name": faker.text(max_nb_chars = models.MAX_LENGTH_SCHOOSTAFF_NAME),
+			"occupation": faker.random_element(
+				elements = models.OccupationStaff.values
+			)
+		}
+
+		self.update_partial_staff = {
+			"name": faker.text(max_nb_chars = models.MAX_LENGTH_SCHOOSTAFF_NAME)
+		}
+
+	def test_update_staff(self):
+		"""
+			Validar "PUT/PATCH /staff/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.put(self.URL_STAFF_UPDATE, self.update_staff)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.staff.id)
+		self.assertNotEqual(responseJson["name"], self.staff.name)
+		self.assertEqual(responseJson["name"], self.update_staff["name"])
+		self.assertEqual(responseJson["occupation"], self.update_staff["occupation"])
+
+		response = self.client.patch(self.URL_STAFF_UPDATE, self.update_partial_staff)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.staff.id)
+		self.assertNotEqual(responseJson["name"], self.staff.name)
+		self.assertEqual(responseJson["name"], self.update_partial_staff["name"])
+
+	def test_update_staff_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /staff/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_case = testcases_data.CREATE_STAFF_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(self.URL_STAFF_UPDATE, case)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+
+	def test_update_staff_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /staff/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_schoolstaff = create_school_staff()
+
+		response = self.client.patch(
+			get_detail_staff(id = other_schoolstaff.id), 
+			self.update_partial_staff
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_staff_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /staff/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.patch(self.URL_STAFF_UPDATE, self.update_partial_staff)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_staff_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /staff/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_schoolstaff"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.patch(self.URL_STAFF_UPDATE, self.update_partial_staff)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_staff_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /staff/:id" sin autenticación
+		"""
+		response = self.client.patch(self.URL_STAFF_UPDATE, self.update_partial_staff)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
