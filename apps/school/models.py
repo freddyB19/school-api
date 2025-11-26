@@ -2,8 +2,12 @@ from django.db import models
 from django.urls import reverse
 
 from django.core.exceptions import ValidationError
-from django.core.validators import MinLengthValidator
-from django.core.validators import MaxLengthValidator
+from django.core.validators import (
+	MinLengthValidator, 
+	MaxLengthValidator,
+	MaxValueValidator,
+	MinValueValidator,
+)
 
 
 
@@ -198,11 +202,11 @@ class Grade(models.Model):
 	level = models.PositiveSmallIntegerField(
 		default = MIN_LENGTH_GRADE_LEVEL,
 		validators = [
-			MaxLengthValidator(
+			MaxValueValidator(
 				limit_value = MAX_LENGTH_GRADE_LEVEL,
 				message = "El nivel elegido es muy alto"
 			),
-			MinLengthValidator(
+			MinValueValidator(
 				limit_value = MIN_LENGTH_GRADE_LEVEL, 
 				message = "El nivel elegido es muy bajo"
 			)
@@ -212,13 +216,7 @@ class Grade(models.Model):
 	section = models.CharField(
 		max_length = MAX_LENGTH_GRADE_SECTION, 
 		blank = True, 
-		null = True,
-		validators = [
-			MinLengthValidator(
-				limit_value = MIN_LENGTH_GRADE_SECTION, 
-				message = "El nombre es muy corto"
-			)
-		]
+		null = True
 	)
 	
 	school = models.ForeignKey(
