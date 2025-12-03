@@ -221,6 +221,9 @@ class EducationalStageFactory(factory.django.DjangoModelFactory):
 
 	type = factory.fuzzy.FuzzyChoice(models.TypeEducationalStage)
 
+def create_educational_stage(**kwargs) -> models.EducationalStage:
+	return EducationalStageFactory.create(**kwargs)
+
 
 class GradeFactory(factory.django.DjangoModelFactory):
 	class Meta:
