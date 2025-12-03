@@ -25,6 +25,8 @@ from .utils.props import (
 	ListProfileURL,
 	Profile,
 	StaffParam,
+	GradeValidateParam,
+	GradeParam,
 )
 
 faker = Faker(locale="es")
@@ -333,3 +335,33 @@ def create_staff(school_id: int, staff: StaffParam) -> ResultCommand:
 	)
 
 	return ResultCommand(query = staff, status = True)
+
+@validate_call(config=ConfigDict(hide_input_in_errors=True))
+def grade_exist(school_id: int, grade: GradeValidateParam) -> ResultCommand:
+
+	exist = models.Grade.objects.filter(
+		school_id = school_id,
+		section = grade.section,
+		level = grade.level,
+		stage_id = grade.stage_id,
+	).exists()
+
+	return ResultCommand(query = exist, status = True)
+
+@validate_call(config=ConfigDict(hide_input_in_errors=True))
+def create_grade(school_id: int, grade: GradeParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	grade = models.Grade.objects.create(
+		name = grade.name,
+		level = grade.level,
+		section = grade.section,
+		description = grade.description,
+		school_id = school_id,
+		stage_id = grade.stage_id,
+	)
+
+	return ResultCommand(query = grade, status = True)
