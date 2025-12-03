@@ -58,3 +58,17 @@ class CoordinateParam(BaseModel):
 class StaffParam(BaseModel):
 	name: str
 	occupation: str | None = None
+
+
+class GradeValidateParam(BaseModel):
+	level: int
+	section: str
+	stage_id: int
+	
+
+class GradeParam(BaseModel):
+	name: str
+	level: int
+	section: str | None = None
+	description: str | None = None 
+	stage_id: int
