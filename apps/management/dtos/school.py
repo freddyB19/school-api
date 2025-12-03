@@ -47,3 +47,16 @@ class OfficeHourUpdateDTO(BaseDTO):
 class OffiHourCreateDTO(BaseDTO):
 	time_group: TimeGroupDTO | TimeGroupByIdDTO
 	description: str
+
+
+class GradeValidateDTO(BaseDTO):
+	level: int
+	section: str
+	stage_id: int
+
+class GradeCreateDTO(BaseDTO):
+	name: str
+	level: int
+	section: str | None = None
+	description: str | None = None 
+	stage_id: int
