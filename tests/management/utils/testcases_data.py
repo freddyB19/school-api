@@ -172,3 +172,47 @@ CREATE_STAFF_WITH_WRONG_DATA = [
 		"occupation": faker.job()
 	}
 ]
+
+
+CREATE_GRADE_WITH_WRONG_DATA = [
+	{ # Validar nombre muy corto
+		"name": faker.pystr(
+			max_chars = school_models.MIN_LENGTH_GRADE_NAME - 1
+		),
+		"level": faker.random_int(
+			min = school_models.MIN_LENGTH_GRADE_LEVEL, 
+			max = school_models.MAX_LENGTH_GRADE_LEVEL
+		),
+		"section": faker.random_letter()
+	},
+	{ # Validar nombre muy largo
+		"name": faker.pystr(
+			max_chars = school_models.MAX_LENGTH_GRADE_NAME + 1
+		),
+		"level": faker.random_int(
+			min = school_models.MIN_LENGTH_GRADE_LEVEL, 
+			max = school_models.MAX_LENGTH_GRADE_LEVEL
+		),
+		"section": faker.random_letter()
+	},
+	{ # Validar nivel con valor muy bajo
+		"name": faker.text(max_nb_chars = school_models.MAX_LENGTH_GRADE_NAME),
+		"level": faker.random_int(max = school_models.MIN_LENGTH_GRADE_LEVEL - 1),
+		"section": faker.random_letter()
+	},
+	{ # Validar nivel con valor muy alto
+		"name": faker.text(max_nb_chars = school_models.MAX_LENGTH_GRADE_NAME),
+		"level": faker.random_int(min = school_models.MAX_LENGTH_GRADE_LEVEL + 1),
+		"section": faker.random_letter()
+	},
+	{ # Validar sección muy larga
+		"name": faker.text(max_nb_chars = school_models.MAX_LENGTH_GRADE_NAME),
+		"level": faker.random_int(
+			min = school_models.MIN_LENGTH_GRADE_LEVEL, 
+			max = school_models.MAX_LENGTH_GRADE_LEVEL
+		),
+		"section": faker.pystr(
+			max_chars = school_models.MAX_LENGTH_GRADE_SECTION + 1
+		)
+	}
+]
