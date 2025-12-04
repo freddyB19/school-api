@@ -8,7 +8,11 @@ from apps.management.apiv1.school import serializers
 from tests import faker
 
 from .utils import testcases, testcases_data
-from tests.school.utils import create_educational_stage, create_grade
+from tests.school.utils import (
+	create_educational_stage, 
+	create_grade,
+	bulk_create_school_staff
+)
 
 
 class CommandCreateGradeTest(testcases.BasicCommandTestCase):
@@ -30,7 +34,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 
 	def test_create_grade(self):
 		"""
-			Validar crear una grado de una escuela
+			Validar crear una grado de una escuela (# sin profesores)
 		"""
 		serializer = serializers.MSchoolGradeRequest(
 			data = self.add_grade,
@@ -40,6 +44,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		serializer.is_valid(raise_exception = True)
 
 		grade = serializer.save()
+		total_teachers = 0
 
 		self.assertTrue(grade)
 		self.assertEqual(grade.name, self.add_grade["name"])
@@ -47,6 +52,77 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		self.assertEqual(grade.section, self.add_grade["section"])
 		self.assertEqual(grade.description, self.add_grade["description"])
 		self.assertEqual(grade.stage.id, self.add_grade["stage_id"])
+		self.assertEqual(grade.teacher.count(), total_teachers)
+
+
+		# Validar crear una grado de una escuela (# con profesores)
+
+		total_teachers = 2
+		teachers = bulk_create_school_staff(
+			school = self.school,
+			occupation = models.OccupationStaff.teacher, 
+			size = total_teachers
+		)
+
+		teachers_id = [teacher.id for teacher in teachers]
+		
+		self.add_grade.update({
+			"section": faker.random_letter(),
+			"teachers_id": teachers_id
+		})
+		
+		serializer = serializers.MSchoolGradeRequest(
+			data = self.add_grade,
+			context = {"pk": self.school.id}
+		)
+
+		serializer.is_valid(raise_exception = True)
+
+		grade = serializer.save()
+		
+		self.assertTrue(grade)
+		self.assertEqual(grade.teacher.count(), total_teachers)
+
+
+	def test_create_grade_with_wrong_staff(self):
+		"""
+			Genear un error agregar datos invalidos para los profesores de un grado
+		"""
+		# El error se genera por enviar ID del personal docente y administrativo
+		# de la escuela al momento de intentar crear el grado.
+
+		total_teachers = 2
+		total_administrative = 1
+
+		teachers = bulk_create_school_staff(
+			school = self.school,
+			occupation = models.OccupationStaff.teacher, 
+			size = total_teachers
+		)
+		teachers_id = [teacher.id for teacher in teachers]
+
+		admins = bulk_create_school_staff(
+			school = self.school,
+			occupation = models.OccupationStaff.administrative, 
+			size = total_administrative
+		)
+		admins_id = [admin.id for admin in admins]
+
+		# unir ambas listas
+		staff = teachers_id + admins_id 
+
+		self.add_grade.update({
+			"section": faker.random_letter(),
+			"teachers_id": staff
+		})
+
+		serializer = serializers.MSchoolGradeRequest(
+			data = self.add_grade,
+			context = {"pk": self.school.id}
+		)
+
+		with self.assertRaises(exceptions.ValidationError):
+			serializer.is_valid(raise_exception = True)
 
 	def test_create_grade_without_section(self):
 		"""
