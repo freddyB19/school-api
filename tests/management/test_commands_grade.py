@@ -86,7 +86,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 
 	def test_create_grade_with_wrong_staff(self):
 		"""
-			Genear un error agregar datos invalidos para los profesores de un grado
+			Generar un error al agregar datos invalidos para los profesores de un grado
 		"""
 		# El error se genera por enviar ID del personal docente y administrativo
 		# de la escuela al momento de intentar crear el grado.
