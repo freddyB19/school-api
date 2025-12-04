@@ -866,10 +866,16 @@ class MSchoolStaffRequest(serializers.ModelSerializer):
 
 
 GRADE_ALREADY_EXISTS = "Esta enviado los datos de un grado que ya se encuentra registrado"
+ONLY_TEACHING_STAFF = "Solo debe agregar personal docente"
 
 class MSchoolGradeRequest(serializers.ModelSerializer):
 	stage_id = serializers.PrimaryKeyRelatedField(
 		queryset = models.EducationalStage.objects.all()
+	)
+
+	teachers_id = serializers.ListField(
+		required = False,
+		child = serializers.IntegerField(min_value = 1)
 	)
 
 	class Meta:
@@ -880,7 +886,8 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 			"level",
 			"section",
 			"description",
-			"stage_id"
+			"stage_id",
+			"teachers_id"
 		]
 		read_only_fields = ["id"]
 		
@@ -961,9 +968,26 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 
 		return data
 
+
+	def validate_teachers_id(self, value) -> list[int] | None:
+		# Validamos que no envie el ID de un personal administrativo de la escuela
+		admins = commands.get_administrative_staff(
+			school_id = self.context.get("pk"), 
+			admins = value
+		)
+
+		if admins:
+			raise serializers.ValidationError(
+				ONLY_TEACHING_STAFF,
+				code = "invalid-data"
+			)
+
+		return value
+
 	def create(self, validated_data: dict[str, str | int]) -> models.Grade:
 		grade = school_dto.GradeCreateDTO(
 			stage_id = validated_data.pop("stage_id").id,
+			teachers = validated_data.pop("teachers_id", None),
 			**validated_data
 		).data
 
