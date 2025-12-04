@@ -60,3 +60,4 @@ class GradeCreateDTO(BaseDTO):
 	section: str | None = None
 	description: str | None = None 
 	stage_id: int
+	teachers: list[int] | None = None
