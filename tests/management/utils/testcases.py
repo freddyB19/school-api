@@ -2,6 +2,8 @@ from django.test import TransactionTestCase
 
 from rest_framework.test import APIClient, APITestCase
 
+from apps.school import models as school_models
+
 from tests import faker
 
 from tests.user.utils import (
@@ -12,7 +14,8 @@ from tests.user.utils import (
 from tests.school.utils import (
 	create_school,
 	create_daysweek, 
-	create_time_group
+	create_time_group,
+	create_educational_stage
 )
 
 from .utils import get_long_string, get_administrator
@@ -513,5 +516,53 @@ class StaffDetailDeleteUpdateTestCase(StaffTestCase):
 
 		self.admin.users.add(*(
 			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
+
+
+class GradeTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.school = create_school()
+
+		stages = [
+			school_models.EducationalStage(type = type_stage.value)
+			for type_stage in school_models.TypeEducationalStage
+		]
+		
+		self.stages = school_models.EducationalStage.objects.bulk_create(stages)
+
+		self.user_with_all_perm = create_user(role = 0)
+
+		permissions = get_permissions(codenames = [
+			'add_grade', 
+			'change_grade', 
+			'delete_grade', 
+			'view_grade'
+		])
+
+		self.user_with_all_perm.user_permissions.set(permissions)
+
+		self.admin = get_administrator(school_id = self.school.id)
+		self.admin.users.add(self.user_with_all_perm)
+
+
+class GradeCreateTestCase(GradeTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_add_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_add_perm.user_permissions.set(
+			get_permissions(codenames = ["add_grade"])
+		)
+
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_grade"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_add_perm,
 			self.user_with_change_perm
 		))
