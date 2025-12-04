@@ -322,6 +322,14 @@ def create_coordinate(school_id: int, coordinate: CoordinateParam) -> ResultComm
 	return ResultCommand(query = coordinate, status = True)
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True))
+def get_administrative_staff(school_id: int, admins: list[int]) -> models.SchoolStaff:
+	return models.SchoolStaff.objects.filter(
+		id__in = admins,
+		school_id = school_id,
+		occupation = models.OccupationStaff.administrative
+	)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
 def create_staff(school_id: int, staff: StaffParam) -> ResultCommand:
 	command = get_school_by_id(id = school_id)
 
@@ -355,7 +363,7 @@ def create_grade(school_id: int, grade: GradeParam) -> ResultCommand:
 	if not command.status:
 		return command
 
-	grade = models.Grade.objects.create(
+	new_grade = models.Grade.objects.create(
 		name = grade.name,
 		level = grade.level,
 		section = grade.section,
@@ -364,4 +372,13 @@ def create_grade(school_id: int, grade: GradeParam) -> ResultCommand:
 		stage_id = grade.stage_id,
 	)
 
-	return ResultCommand(query = grade, status = True)
+	if grade.teachers:
+		new_grade.teacher.set(
+			models.SchoolStaff.objects.filter(
+				id__in = grade.teachers,
+				school_id = school_id,
+				occupation = models.OccupationStaff.teacher
+			)
+		)
+
+	return ResultCommand(query = new_grade, status = True)
