@@ -141,15 +141,18 @@ MAX_LENGTH_EDUCATIONAL_STAGE_TYPE = 11
 
 class EducationalStage(models.Model):
 	type = models.CharField(
+		editable = False,
 		choices = TypeEducationalStage, 
 		default = TypeEducationalStage.primary, 
-		max_length = MAX_LENGTH_EDUCATIONAL_STAGE_TYPE
+		max_length = MAX_LENGTH_EDUCATIONAL_STAGE_TYPE,
+		unique = True
 	)
 
 	type_number = models.PositiveSmallIntegerField(
-		editable = False,
 		choices = TypeEducationalStageByNumber,
-		default = TypeEducationalStageByNumber.primary
+		default = TypeEducationalStageByNumber.primary,
+		unique = True
+
 	)
 
 	class Meta:
@@ -159,10 +162,10 @@ class EducationalStage(models.Model):
 		ordering = ['type_number']
 
 	def save(self, **kwargs):
-		type_educational = {stage.value: str(stage.name) for stage in TypeEducationalStage}
-		which_educational_stage = type_educational[self.type]
+		type_educational = {stage.value: str(stage.name) for stage in TypeEducationalStageByNumber}
+		which_educational_stage = type_educational[self.type_number]
 
-		self.type_number = TypeEducationalStageByNumber[which_educational_stage].value
+		self.type = TypeEducationalStage[which_educational_stage]
 		
 		super().save(**kwargs)
 
