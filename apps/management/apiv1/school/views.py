@@ -445,3 +445,47 @@ class StaffDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 		permissions.IsUserPermission,
 		permissions.StaffPermissionDetail
 	]
+
+
+class GradeListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Grade.objects.all()
+	serializer_class = serializers.MSchoolGradeRequest
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.GradeFilter	
+
+	def get_serializer_class(self):
+		if self.request.method == "GET":
+			return serializers.MSchoolGradeListResponse
+		return self.serializer_class
+
+	def get_queryset(self):
+		return self.queryset.select_related(
+			"stage"
+		).filter(
+			school_id = self.kwargs.get("pk"),
+		).order_by('stage__type_number', 'level', 'section')
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		grade = serializer.save()
+
+		return response.Response(
+			data = serializers.MSchoolGradeResponse(grade).data,
+			status = status.HTTP_201_CREATED
+		)
