@@ -2,6 +2,7 @@ import django_filters
 
 from apps.school import models
 
+
 class NewsFilter(django_filters.FilterSet):
 	created_year = django_filters.NumberFilter(
 		field_name='created', lookup_expr='year'
@@ -70,7 +71,6 @@ class TimeGroupFilter(django_filters.FilterSet):
 		fields = ["type", "days", "is_active"]
 
 
-
 class CalendarFilter(django_filters.FilterSet):
 	title = django_filters.CharFilter(
 		field_name = "title", lookup_expr = "icontains"
@@ -83,6 +83,7 @@ class CalendarFilter(django_filters.FilterSet):
 		model = models.Calendar
 		fields = ["month", "title"]
 
+
 class StaffFilter(django_filters.FilterSet):
 	name = django_filters.CharFilter(
 		field_name = "name", lookup_expr = "icontains"
@@ -91,3 +92,17 @@ class StaffFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.SchoolStaff
 		fields = ["name", "occupation"]
+
+
+class GradeFilter(django_filters.FilterSet):
+	stage = django_filters.NumberFilter(
+		field_name = "stage", lookup_expr = "type_number"
+	)
+	
+	unsection = django_filters.BooleanFilter(
+		field_name = "section", lookup_expr = "isnull"
+	)
+	
+	class Meta:
+		model = models.Grade
+		fields = ["level", "section"]
