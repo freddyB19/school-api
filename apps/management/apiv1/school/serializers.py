@@ -1005,3 +1005,25 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 			)
 
 		return command.query
+
+
+class MSchoolGradeResponse(serializers.ModelSerializer):
+	stage = serializers.SlugRelatedField(
+		read_only=True,
+		slug_field='type'
+    )
+
+	class Meta:
+		model = models.Grade
+		exclude = ["school"]
+
+
+class MSchoolGradeListResponse(serializers.ModelSerializer):
+	stage = serializers.SlugRelatedField(
+		read_only=True,
+		slug_field='type'
+    )
+
+	class Meta:
+		model = models.Grade
+		exclude = ["school", "description", "teacher"]
