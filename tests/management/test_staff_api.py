@@ -13,24 +13,24 @@ from tests.user.utils import create_user, get_permissions
 from .utils import testcases, testcases_data
 
 
-def get_list_create_staff(school_id, **query):
+def get_list_create_staff_url(school_id, **query):
 	return reverse(
 		"management:staff-list-create",
 		kwargs={"pk": school_id},
 		**query
 	)
 
-def get_detail_staff(id):
+def get_detail_staff_url(id):
 	return reverse(
 		"management:staff-detail",
 		kwargs={"pk": id}
 	)
 
-class StaffCreaetAPITest(testcases.StaffCreateTestCase):
+class StaffCreateAPITest(testcases.StaffCreateTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.URL_STAFF_CREATE = get_list_create_staff(school_id = self.school.id)
+		self.URL_STAFF_CREATE = get_list_create_staff_url(school_id = self.school.id)
 
 		self.add_staff = {
 			"name": faker.text(max_nb_chars = models.MAX_LENGTH_SCHOOSTAFF_NAME),
@@ -87,7 +87,7 @@ class StaffCreaetAPITest(testcases.StaffCreateTestCase):
 		other_school = create_school()
 
 		response = self.client.post(
-			get_list_create_staff(school_id = other_school.id),
+			get_list_create_staff_url(school_id = other_school.id),
 			self.add_staff
 		)
 
@@ -151,7 +151,7 @@ class StaffListAPITest(testcases.StaffTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.URL_STAFF_LIST = get_list_create_staff(
+		self.URL_STAFF_LIST = get_list_create_staff_url(
 			school_id = self.school.id
 		)
 
@@ -199,7 +199,7 @@ class StaffListAPITest(testcases.StaffTestCase):
 		).count()
 
 		response = self.client.get(
-			get_list_create_staff(
+			get_list_create_staff_url(
 				school_id = self.school.id,
 				query = {"name": search_name}
 			)
@@ -230,7 +230,7 @@ class StaffListAPITest(testcases.StaffTestCase):
 		).count()
 
 		response = self.client.get(
-			get_list_create_staff(
+			get_list_create_staff_url(
 				school_id = self.school.id,
 				query = {"occupation": occupation_teacher}
 			)
@@ -246,7 +246,7 @@ class StaffListAPITest(testcases.StaffTestCase):
 		)
 
 		response = self.client.get(
-			get_list_create_staff(
+			get_list_create_staff_url(
 				school_id = self.school.id,
 				query = {"occupation": occupation_administrative}
 			)
@@ -269,7 +269,7 @@ class StaffListAPITest(testcases.StaffTestCase):
 		other_school = create_school()
 
 		response = self.client.get(
-			get_list_create_staff(school_id = other_school.id)
+			get_list_create_staff_url(school_id = other_school.id)
 		)
 
 		responseJson = response.data
@@ -310,7 +310,7 @@ class StaffDetailAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 
 		self.staff = create_school_staff(school = self.school)
 
-		self.URL_STAFF_DETAIL = get_detail_staff(id = self.staff.id)
+		self.URL_STAFF_DETAIL = get_detail_staff_url(id = self.staff.id)
 
 	def test_detail_staff(self):
 		"""
@@ -337,7 +337,7 @@ class StaffDetailAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 		other_schoolstaff = create_school_staff()
 
 		response = self.client.get(
-			get_detail_staff(id = other_schoolstaff.id)
+			get_detail_staff_url(id = other_schoolstaff.id)
 		)
 
 		responseJson = response.data
@@ -379,7 +379,7 @@ class StaffDeleteAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 
 		self.staff = create_school_staff(school = self.school)
 
-		self.URL_STAFF_DELETE = get_detail_staff(id = self.staff.id)
+		self.URL_STAFF_DELETE = get_detail_staff_url(id = self.staff.id)
 
 	def test_delete_staff(self):
 		"""
@@ -402,7 +402,7 @@ class StaffDeleteAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 		other_schoolstaff = create_school_staff()
 
 		response = self.client.delete(
-			get_detail_staff(id = other_schoolstaff.id)
+			get_detail_staff_url(id = other_schoolstaff.id)
 		)
 
 		responseJson = response.data
@@ -458,7 +458,7 @@ class StaffUpdateAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 
 		self.staff = create_school_staff(school = self.school)
 
-		self.URL_STAFF_UPDATE = get_detail_staff(id = self.staff.id)
+		self.URL_STAFF_UPDATE = get_detail_staff_url(id = self.staff.id)
 
 		self.update_staff = {
 			"name": faker.text(max_nb_chars = models.MAX_LENGTH_SCHOOSTAFF_NAME),
@@ -525,7 +525,7 @@ class StaffUpdateAPITest(testcases.StaffDetailDeleteUpdateTestCase):
 		other_schoolstaff = create_school_staff()
 
 		response = self.client.patch(
-			get_detail_staff(id = other_schoolstaff.id), 
+			get_detail_staff_url(id = other_schoolstaff.id), 
 			self.update_partial_staff
 		)
 
