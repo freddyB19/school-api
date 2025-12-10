@@ -3,16 +3,21 @@ from django.urls import reverse
 from apps.school import models
 
 from tests import faker
-from tests.school.utils import create_school, bulk_create_school_staff
+from tests.school.utils import (
+	create_school, 
+	bulk_create_grade,
+	bulk_create_school_staff
+)
 from tests.user.utils import create_user, get_permissions
 
 from .utils import testcases, testcases_data
 
 
-def get_list_create_grade_url(school_id):
+def get_list_create_grade_url(school_id, **extra):
 	return reverse(
 		"management:grade-list-create",
-		kwargs={"pk": school_id}
+		kwargs={"pk": school_id},
+		**extra
 	)
 
 
@@ -216,6 +221,249 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 			self.URL_GRADE_CREATE,
 			self.add_grade
 		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
+
+
+class GradeListAPITest(testcases.GradeTestCase):
+	def setUp(self):
+		super().setUp()
+		
+		#Preescolar
+		bulk_create_grade(size = 3, stage = self.dic_stages["preescolar"], school = self.school)
+
+		#Primaria
+		bulk_create_grade(size = 2, level = 1, stage = self.dic_stages["basica"], school = self.school)
+		bulk_create_grade(size = 2, level = 2, stage = self.dic_stages["basica"], school = self.school)
+		bulk_create_grade(size = 2, level = 3, stage = self.dic_stages["basica"], school = self.school)
+		bulk_create_grade(size = 2, level = 4, stage = self.dic_stages["basica"], school = self.school)
+		bulk_create_grade(size = 3, level = 5, stage = self.dic_stages["basica"], school = self.school)
+		bulk_create_grade(size = 3, level = 6, stage = self.dic_stages["basica"], school = self.school)
+		
+		#Bachillerato
+		bulk_create_grade(size = 2, level = 1, stage = self.dic_stages["secundaria"], school = self.school)
+		bulk_create_grade(size = 2, level = 2, stage = self.dic_stages["secundaria"], school = self.school)
+		bulk_create_grade(size = 2, level = 3, stage = self.dic_stages["secundaria"], school = self.school)
+		bulk_create_grade(size = 2, level = 4, stage = self.dic_stages["secundaria"], school = self.school)
+		bulk_create_grade(size = 3, level = 5, stage = self.dic_stages["secundaria"], school = self.school)
+		
+		self.URL_GRADE_LIST = get_list_create_grade_url(school_id = self.school.id)
+
+	def test_get_grade(self):
+		"""
+			Validar "GET /grade"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		total_grade = models.Grade.objects.filter(
+			school_id = self.school.id
+		).count()
+
+		response = self.client.get(self.URL_GRADE_LIST)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade, responseJson["count"])
+
+	def test_get_grade_by_filter_stage_type(self):
+		"""
+			Validar "GET /grade?stage=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		stage_preschool = models.TypeEducationalStageByNumber.preschool
+		stage_primary = models.TypeEducationalStageByNumber.primary
+		stage_high = models.TypeEducationalStageByNumber.high
+
+		total_grade_by_stage_preschool = models.Grade.objects.filter(
+			school_id = self.school.id,
+			stage__type_number = stage_preschool
+		).count()
+
+		total_grade_by_stage_primary = models.Grade.objects.filter(
+			school_id = self.school.id,
+			stage__type_number = stage_primary
+		).count()
+		
+		total_grade_by_stage_high = models.Grade.objects.filter(
+			school_id = self.school.id,
+			stage__type_number = stage_high
+		).count()
+
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"stage": stage_preschool}
+			)		
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_stage_preschool, responseJson["count"])
+
+		#
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"stage": stage_primary}
+			)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_stage_primary, responseJson["count"])
+
+		#
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"stage": stage_high}
+			)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_stage_high, responseJson["count"])
+
+	def test_get_grade_by_filter_level(self):
+		"""
+			Validar "GET /grade?level=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		search_stage = models.TypeEducationalStageByNumber.high
+
+		search_level = faker.random_int(min = models.MIN_LENGTH_GRADE_LEVEL, max = models.MAX_LENGTH_GRADE_LEVEL)
+
+		bulk_create_grade(size = 2, school = self.school, stage = self.dic_stages["secundaria"], level = search_level)
+
+		total_grade_by_level = models.Grade.objects.filter(
+			school_id = self.school.id,
+			level = search_level,
+			stage__type_number = search_stage,
+		).count()
+
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"level": search_level, "stage": search_stage}
+			)
+			
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_level, responseJson["count"])
+
+	def test_get_grade_by_filter_section(self):
+		"""
+			Validar "GET /grade?section=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		search_section = faker.random_letter()
+		search_stage = models.TypeEducationalStageByNumber.primary
+
+		bulk_create_grade(size = 1, level = 2, section = search_section, stage = self.dic_stages["basica"] ,school = self.school)
+		
+		total_grade_by_section = models.Grade.objects.filter(
+			school_id = self.school.id,
+			section = search_section,
+			stage__type_number = search_stage,
+		).count()
+
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"section": search_section, "stage": search_stage}
+			)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_section, responseJson["count"])
+
+		#
+		models.Grade.objects.create( # grado sin una 'sección'
+			school_id = self.school.id,
+			level = 1,
+			stage_id = self.dic_stages["preescolar"].id,
+			name = faker.text(max_nb_chars = models.MAX_LENGTH_GRADE_NAME)
+		)
+		search_stage = models.TypeEducationalStageByNumber.preschool
+		unsection = True
+		total_grade_by_section_null = models.Grade.objects.filter(
+			school_id = self.school.id,
+			stage__type_number = search_stage,
+			section__isnull = unsection
+		).count()
+
+		response = self.client.get(
+			get_list_create_grade_url(
+				school_id = self.school.id,
+				query = {"unsection": unsection, "stage": search_stage}
+			)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(total_grade_by_section_null, responseJson["count"])
+
+	def test_get_grade_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /grade" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_school = create_school()
+
+		response = self.client.get(
+			get_list_create_grade_url(school_id = other_school.id)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+
+	def test_get_grade_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /grade" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_GRADE_LIST)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_get_grade_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /grade" sin autenticación
+		"""
+		response = self.client.get(self.URL_GRADE_LIST)
 
 		responseJson = response.data
 		responseStatusCode = response.status_code
