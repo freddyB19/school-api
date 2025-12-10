@@ -73,4 +73,9 @@ urlpatterns = [
 		views.StaffDetailDeleteUpdateAPIView.as_view(),
 		name = "staff-detail" 
 	),
+	path(
+		"<int:pk>/grade",
+		views.GradeListCreateAPIView.as_view(),
+		name = "grade-list-create" 
+	),
 ]
