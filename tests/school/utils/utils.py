@@ -218,8 +218,9 @@ def bulk_create_school_staff(size:int = 1, **kwargs) -> list[models.SchoolStaff]
 class EducationalStageFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = models.EducationalStage
+		django_get_or_create = ("type_number", )
 
-	type = factory.fuzzy.FuzzyChoice(models.TypeEducationalStage)
+	type_number = factory.fuzzy.FuzzyChoice(models.TypeEducationalStageByNumber)
 
 def create_educational_stage(**kwargs) -> models.EducationalStage:
 	return EducationalStageFactory.create(**kwargs)
@@ -231,7 +232,7 @@ class GradeFactory(factory.django.DjangoModelFactory):
 	
 	name = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = 15))
 	level = factory.LazyAttribute(lambda x: faker.random_int(min = 1, max = 7))
-	section = factory.LazyAttribute(lambda x: "".join(faker.random_letters(length = 3)))
+	section = factory.LazyAttribute(lambda x: faker.random_lowercase_letter())
 	description = factory.LazyAttribute(lambda x: faker.paragraph())
 	school = factory.SubFactory(SchoolFactory)
 	stage = factory.SubFactory(EducationalStageFactory)
