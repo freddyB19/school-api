@@ -526,12 +526,13 @@ class GradeTestCase(APITestCase):
 
 		self.school = create_school()
 
-		stages = [
-			school_models.EducationalStage(type = type_stage.value)
-			for type_stage in school_models.TypeEducationalStage
-		]
+		self.dic_stages ={
+			"preescolar": create_educational_stage(type_number = 1),
+			"basica": create_educational_stage(type_number = 2),
+			"secundaria": create_educational_stage(type_number = 3),
+		}
 		
-		self.stages = school_models.EducationalStage.objects.bulk_create(stages)
+		self.stages = [stage for stage in self.dic_stages.values()]
 
 		self.user_with_all_perm = create_user(role = 0)
 
