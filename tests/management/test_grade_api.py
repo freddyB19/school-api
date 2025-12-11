@@ -477,7 +477,7 @@ class GradeListAPITest(testcases.GradeTestCase):
 		self.assertEqual(responseStatusCode, 401)
 
 
-class GradeDetailAPITest(testcases.GradeDetailDeleteUpdate):
+class GradeDetailAPITest(testcases.GradeDetailDeleteUpdateTestCase):
 	def setUp(self):
 		super().setUp()
 
@@ -544,6 +544,85 @@ class GradeDetailAPITest(testcases.GradeDetailDeleteUpdate):
 		response = self.client.get(self.URL_GRADE_DETAIL)
 
 		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
+
+
+class GradeDeleteAPITest(testcases.GradeDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.grade = create_grade(school = self.school)
+
+		self.URL_GRADE_DELETE = get_detail_grade_url(id = self.grade.id)
+
+	def test_delete_grade(self):
+		"""
+			Validar "DELETE /grade/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_GRADE_DELETE)
+		
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 204)
+
+	def test_delete_grade_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /grade/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		other_grade = create_grade()
+
+		response = self.client.delete(
+			get_detail_grade_url(id = other_grade.id)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_grade_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /grade/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+		
+		response = self.client.delete(self.URL_GRADE_DELETE)
+		
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_grade_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /grade/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_grade"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_GRADE_DELETE)
+		
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_grade_without_authentication(self):
+		"""
+			Generar [Error 400] "DELETE /grade/:id" sin autenticación
+		"""
+		response = self.client.delete(self.URL_GRADE_DELETE)
+		
 		responseStatusCode = response.status_code
 
 		self.assertEqual(responseStatusCode, 401)
