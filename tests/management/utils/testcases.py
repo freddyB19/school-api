@@ -567,3 +567,22 @@ class GradeCreateTestCase(GradeTestCase):
 			self.user_with_add_perm,
 			self.user_with_change_perm
 		))
+
+
+class GradeDetailDeleteUpdate(GradeTestCase):
+	def setUp(self):
+		super().setUp()
+		self.user_with_delete_perm = create_user(role = 0)
+		self.user_with_change_perm = create_user(role = 0)
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ["delete_grade"])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ["change_grade"])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
