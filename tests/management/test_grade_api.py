@@ -5,6 +5,7 @@ from apps.school import models
 from tests import faker
 from tests.school.utils import (
 	create_school, 
+	create_grade,
 	bulk_create_grade,
 	bulk_create_school_staff
 )
@@ -20,6 +21,11 @@ def get_list_create_grade_url(school_id, **extra):
 		**extra
 	)
 
+def get_detail_grade_url(id):
+	return reverse(
+		"management:grade-detail",
+		kwargs={"pk": id}
+	)
 
 class GradeCreateAPITest(testcases.GradeCreateTestCase):
 	def setUp(self):
@@ -464,6 +470,78 @@ class GradeListAPITest(testcases.GradeTestCase):
 			Generar [Error 401] "GET /grade" sin autenticación
 		"""
 		response = self.client.get(self.URL_GRADE_LIST)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
+
+
+class GradeDetailAPITest(testcases.GradeDetailDeleteUpdate):
+	def setUp(self):
+		super().setUp()
+
+		self.grade = create_grade(school = self.school)
+
+		self.URL_GRADE_DETAIL = get_detail_grade_url(id = self.grade.id)
+
+	def test_detail_grade(self):
+		"""
+			Validar "GET /grade/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_GRADE_DETAIL)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.grade.id)
+		self.assertEqual(responseJson["name"], self.grade.name)
+		self.assertEqual(responseJson["description"], self.grade.description)
+		self.assertEqual(responseJson["level"], self.grade.level)
+		self.assertEqual(responseJson["section"], self.grade.section)
+		self.assertEqual(responseJson["stage"], self.grade.stage.type)
+		self.assertEqual(len(responseJson["teacher"]), self.grade.teacher.count())
+
+	def test_detail_grade_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /grade/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_grade = create_grade()
+
+		response = self.client.get(
+			get_detail_grade_url(id = other_grade.id)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_detail_grade_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /grade/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_GRADE_DETAIL)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_detail_grade_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /grade/:id" sin autenticación
+		"""
+		response = self.client.get(self.URL_GRADE_DETAIL)
 
 		responseJson = response.data
 		responseStatusCode = response.status_code
