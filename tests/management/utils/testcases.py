@@ -569,7 +569,7 @@ class GradeCreateTestCase(GradeTestCase):
 		))
 
 
-class GradeDetailDeleteUpdate(GradeTestCase):
+class GradeDetailDeleteUpdateTestCase(GradeTestCase):
 	def setUp(self):
 		super().setUp()
 		self.user_with_delete_perm = create_user(role = 0)
