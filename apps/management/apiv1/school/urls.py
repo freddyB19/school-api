@@ -78,4 +78,9 @@ urlpatterns = [
 		views.GradeListCreateAPIView.as_view(),
 		name = "grade-list-create" 
 	),
+	path(
+		"grade/<int:pk>",
+		views.GradeDetailDeleteUpdateAPIView.as_view(),
+		name = "grade-detail" 
+	),
 ]
