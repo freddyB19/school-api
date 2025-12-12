@@ -869,11 +869,7 @@ GRADE_ALREADY_EXISTS = "Esta enviado los datos de un grado que ya se encuentra r
 ONLY_TEACHING_STAFF = "Solo debe agregar personal docente"
 
 class MSchoolGradeRequest(serializers.ModelSerializer):
-	stage_id = serializers.PrimaryKeyRelatedField(
-		queryset = models.EducationalStage.objects.all()
-	)
-
-	teachers_id = serializers.ListField(
+	teacher = serializers.ListField(
 		required = False,
 		child = serializers.IntegerField(min_value = 1)
 	)
@@ -886,8 +882,8 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 			"level",
 			"section",
 			"description",
-			"stage_id",
-			"teachers_id"
+			"stage",
+			"teacher"
 		]
 		read_only_fields = ["id"]
 		
@@ -941,7 +937,7 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 			},
 		}
 
-	# La razón del porque estoy usando *("stage_id").id
+	# La razón del porque estoy usando *("stage").id
 	# en 'validate' y 'create' se debe al uso del campo
 	# 'PrimaryKeyRelatedField' del serializador, ya que entrega una instancia.
 
@@ -950,7 +946,7 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 		if data.get('section'):
 		
 			validate_grade_exist = school_dto.GradeValidateDTO(
-				stage_id = data.get("stage_id").id,
+				stage_id = data.get("stage").id,
 				section = data.get("section"),
 				level = data.get("level"),
 			).data
@@ -969,7 +965,7 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 		return data
 
 
-	def validate_teachers_id(self, value) -> list[int] | None:
+	def validate_teacher(self, value) -> list[int] | None:
 		# Validamos que no envie el ID de un personal administrativo de la escuela
 		admins = commands.get_administrative_staff(
 			school_id = self.context.get("pk"), 
@@ -986,8 +982,8 @@ class MSchoolGradeRequest(serializers.ModelSerializer):
 
 	def create(self, validated_data: dict[str, str | int]) -> models.Grade:
 		grade = school_dto.GradeCreateDTO(
-			stage_id = validated_data.pop("stage_id").id,
-			teachers = validated_data.pop("teachers_id", None),
+			stage_id = validated_data.pop("stage").id,
+			teachers = validated_data.pop("teacher", None),
 			**validated_data
 		).data
 
