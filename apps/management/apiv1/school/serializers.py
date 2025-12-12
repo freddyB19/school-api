@@ -1011,7 +1011,8 @@ class MSchoolGradeResponse(serializers.ModelSerializer):
 	stage = serializers.SlugRelatedField(
 		read_only=True,
 		slug_field='type'
-    )
+	)
+	teacher = MSchoolStaffRequest(many = True, read_only = True)
 
 	class Meta:
 		model = models.Grade
@@ -1027,3 +1028,114 @@ class MSchoolGradeListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Grade
 		exclude = ["school", "description", "teacher"]
+
+
+Grade = TypeVar("Grade", bound = models.Grade)
+
+class MSchoolGradeUpdateRequest(serializers.ModelSerializer):
+	teacher = serializers.ListField(
+		required = False,
+		child = serializers.IntegerField(min_value = 1)
+	) 
+	class Meta:
+		model = models.Grade
+		fields = [
+			"id",
+			"name",
+			"level",
+			"section",
+			"description",
+			"stage",
+			"teacher"
+		]
+		read_only_fields = ["id"]
+		
+		extra_kwargs = {
+			"name": {
+				"min_length": models.MIN_LENGTH_GRADE_NAME,
+				"max_length": models.MAX_LENGTH_GRADE_NAME,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "identificación del grado", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_GRADE_NAME
+					),
+					"max_length": ERROR_FIELD(
+						field = "identificación del grado", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_GRADE_NAME
+					),
+				}
+			}, 
+			"level": {
+				"min_value": models.MIN_LENGTH_GRADE_LEVEL,
+				"max_value": models.MAX_LENGTH_GRADE_LEVEL,
+				"error_messages": {
+					"min_value": ERROR_FIELD(
+						field = "nivel", 
+						type = "bajo",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_GRADE_LEVEL
+					),
+					"max_value": ERROR_FIELD(
+						field = "nivel", 
+						type = "alto",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_GRADE_LEVEL
+					),
+				}
+			},
+			"section": {
+				"max_length": models.MAX_LENGTH_GRADE_SECTION,
+				"error_messages": {
+					"max_length": ERROR_FIELD(
+						field = "sección", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_GRADE_SECTION
+					),
+				}
+			},
+		}
+
+	def validate_teacher(self, value: list[int]) -> list[int] | None:
+		admins = commands.get_administrative_staff(
+			school_id = self.context.get("pk"), 
+			admins = value
+		)
+
+		if admins:
+			raise serializers.ValidationError(
+				ONLY_TEACHING_STAFF,
+				code = "invalid-data"
+			)
+
+		return value
+
+	def validate(self, data: dict[str, str | int]) -> dict[str, str | int]:
+		section = data.get('section')
+		level = data.get('level')
+		stage = data.get('stage')
+	
+		if section and level and stage:
+		
+			validate_grade_exist = school_dto.GradeValidateDTO(
+				stage_id = stage.id,
+				section = section,
+				level = level,
+			).data
+
+			exist = commands.grade_exist(
+				school_id = self.context.get("pk"),
+				grade = validate_grade_exist
+			).query
+
+			if exist:
+				raise serializers.ValidationError(
+					GRADE_ALREADY_EXISTS,
+					code = "already-exists"
+				)
+
+		return data
