@@ -489,3 +489,45 @@ class GradeListCreateAPIView(generics.ListCreateAPIView):
 			data = serializers.MSchoolGradeResponse(grade).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class GradeDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
+	queryset = models.Grade.objects.all()
+	serializer_class = serializers.MSchoolGradeResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.GradePermissionDetail
+	]
+
+	def get_serializer_class(self):
+		update = ["PUT", "PATCH"]
+
+		if self.request.method in update:
+			return serializers.MSchoolGradeUpdateRequest
+		return self.serializer_class
+
+	def update(self, request, pk, *args, **kwargs):
+		# Debido a la validación del campo 'teacher'
+		# se requiere del 'school_id', por este motivo
+		# se definió este método.
+
+		partial = kwargs.pop('partial', False)
+		
+		instance = self.get_object()
+		
+		serializer = self.get_serializer(
+			instance, 
+			data=request.data, 
+			partial=partial,
+			context = {"pk": instance.school_id}
+		)
+		
+		serializer.is_valid(raise_exception=True)
+		
+		grade = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(grade).data,
+			status = status.HTTP_200_OK
+		)
