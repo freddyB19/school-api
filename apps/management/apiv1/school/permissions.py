@@ -87,3 +87,7 @@ class NewsPermissionDetail(BasePermissionDetailObject):
 
 class StaffPermissionDetail(BasePermissionDetailObject):
 	model = school_models.SchoolStaff
+
+
+class GradePermissionDetail(BasePermissionDetailObject):
+	model = school_models.Grade
