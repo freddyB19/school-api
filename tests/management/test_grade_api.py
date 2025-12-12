@@ -43,7 +43,7 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 			),
 			"section": faker.random_letter(),
 			"description": faker.paragraph(),
-			"stage_id": stage.id
+			"stage": stage.id
 		}
 
 	def test_create_grade(self):
@@ -52,7 +52,7 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 		"""
 		self.client.force_authenticate(user = self.user_with_add_perm)
 
-		stage = models.EducationalStage.objects.filter(id = self.add_grade["stage_id"]).first()
+		stage = models.EducationalStage.objects.filter(id = self.add_grade["stage"]).first()
 		total_teachers = 0
 		
 		response = self.client.post(
@@ -85,7 +85,7 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 		teachers_id = [teacher.id for teacher in teachers]
 
 		self.add_grade.update({
-			"teachers_id": teachers_id,
+			"teacher": teachers_id,
 			"section": faker.random_letter()
 		})
 
@@ -129,7 +129,7 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 		staff = teachers_id + admins_id
 
 		self.add_grade.update({
-			"teachers_id": staff,
+			"teacher": staff,
 			"section": faker.random_letter()
 		})
 
@@ -150,11 +150,11 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 		self.client.force_authenticate(user = self.user_with_add_perm)
 
 		test_case = testcases_data.CREATE_GRADE_WITH_WRONG_DATA
-		stage_id = self.add_grade["stage_id"]
+		stage_id = self.add_grade["stage"]
 		
 		for case in test_case:
 			with self.subTest(case = case):
-				case.update({"stage_id": stage_id})
+				case.update({"stage": stage_id})
 				response = self.client.post(
 					self.URL_GRADE_CREATE,
 					case
