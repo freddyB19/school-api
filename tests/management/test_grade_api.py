@@ -626,3 +626,210 @@ class GradeDeleteAPITest(testcases.GradeDetailDeleteUpdateTestCase):
 		responseStatusCode = response.status_code
 
 		self.assertEqual(responseStatusCode, 401)
+
+
+class GradeUpdateAPITest(testcases.GradeDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.grade = create_grade(school = self.school)
+
+		self.URL_GRADE_UPDATE = get_detail_grade_url(id = self.grade.id)
+
+		self.partial_update = {
+			"name": faker.text(max_nb_chars = models.MAX_LENGTH_GRADE_NAME),
+			"section": faker.random_letter()
+		}
+		
+		stage = faker.random_element(elements = self.stages)
+		teachers = bulk_create_school_staff(
+			size = 1, 
+			school = self.school,
+			occupation = models.OccupationStaff.teacher
+		)
+
+		teacher_id = map(lambda teacher: teacher.id, teachers)
+
+		self.update = {
+			"name": faker.text(max_nb_chars = models.MAX_LENGTH_GRADE_NAME),
+			"level": faker.random_int(
+				min = models.MIN_LENGTH_GRADE_LEVEL, 
+				max = models.MAX_LENGTH_GRADE_LEVEL
+			),
+			"section": faker.random_letter(),
+			"description": faker.paragraph(),
+			"stage_id": stage.id,
+			"teacher": teacher_id
+		}
+
+	def test_update_grade(self):
+		"""
+			Validar "PUT/PATCH /grade/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			self.partial_update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.grade.id)
+		self.assertNotEqual(responseJson["name"], self.grade.name)
+		self.assertNotEqual(responseJson["section"], self.grade.section)
+
+		response = self.client.put(
+			self.URL_GRADE_UPDATE,
+			self.update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.grade.id)
+		self.assertEqual(responseJson["name"], self.update["name"])
+		self.assertEqual(responseJson["level"], self.update["level"])
+		self.assertEqual(responseJson["section"], self.update["section"])
+		self.assertEqual(responseJson["description"], self.update["description"])
+
+		# Update 'teacher'
+		teachers = bulk_create_school_staff(
+			size = 2, 
+			school = self.school,
+			occupation = models.OccupationStaff.teacher
+		)
+
+		teachers_id = list(map(lambda teacher: teacher.id, teachers))
+
+		partial_update_teacher = {"teacher": teachers_id}
+
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			partial_update_teacher
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.grade.id)
+		self.assertEqual(
+			len(responseJson["teacher"]), 
+			len(list(partial_update_teacher["teacher"]))
+		)
+
+	def test_update_grade_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /grade/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_case = testcases_data.CREATE_GRADE_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_GRADE_UPDATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatusCode = response.status_code
+
+				self.assertEqual(responseStatusCode, 400)
+
+	def test_update_grade_with_data_already_exist(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /grade/:id" por enviar datos ya registrados
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		grade = create_grade(school = self.school)
+
+		update = {
+			"level" : grade.level,
+			"section":  grade.section,
+			"stage" : grade.stage.id
+		}
+
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 400)
+
+	def test_update_grade_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /grade/:id" por información que pertenece a otra escuela
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		other_grade = create_grade()
+
+		response = self.client.patch(
+			get_detail_grade_url(id = other_grade.id),
+			self.partial_update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_grade_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /grade/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			self.partial_update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_grade_with_wrong_user(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /grade/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_grade"])
+		)
+		self.client.force_authenticate(user = user)
+
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			self.partial_update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_grade_without_authentication(self):
+		"""
+			Generar [Error 401] "PUT/PATCH /grade/:id" sin autenticación
+		"""
+		response = self.client.patch(
+			self.URL_GRADE_UPDATE,
+			self.partial_update
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
