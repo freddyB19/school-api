@@ -868,171 +868,15 @@ class MSchoolStaffRequest(serializers.ModelSerializer):
 GRADE_ALREADY_EXISTS = "Esta enviado los datos de un grado que ya se encuentra registrado"
 ONLY_TEACHING_STAFF = "Solo debe agregar personal docente"
 
-class MSchoolGradeRequest(serializers.ModelSerializer):
+EducationalStage = TypeVar("EducationalStage", bound = models.EducationalStage)
+GradeData = dict[str, str | int | EducationalStage]
+
+class MSchoolGradeSerializer(serializers.ModelSerializer):
 	teacher = serializers.ListField(
 		required = False,
 		child = serializers.IntegerField(min_value = 1)
 	)
 
-	class Meta:
-		model = models.Grade
-		fields = [
-			"id",
-			"name",
-			"level",
-			"section",
-			"description",
-			"stage",
-			"teacher"
-		]
-		read_only_fields = ["id"]
-		
-		extra_kwargs = {
-			"name": {
-				"min_length": models.MIN_LENGTH_GRADE_NAME,
-				"max_length": models.MAX_LENGTH_GRADE_NAME,
-				"error_messages": {
-					"min_length": ERROR_FIELD(
-						field = "identificación del grado", 
-						type = "corto",
-						symbol = "mayor o igual",
-						value = models.MIN_LENGTH_GRADE_NAME
-					),
-					"max_length": ERROR_FIELD(
-						field = "identificación del grado", 
-						type = "largo",
-						symbol = "menor o igual",
-						value = models.MAX_LENGTH_GRADE_NAME
-					),
-				}
-			}, 
-			"level": {
-				"min_value": models.MIN_LENGTH_GRADE_LEVEL,
-				"max_value": models.MAX_LENGTH_GRADE_LEVEL,
-				"error_messages": {
-					"min_value": ERROR_FIELD(
-						field = "nivel", 
-						type = "bajo",
-						symbol = "mayor o igual",
-						value = models.MIN_LENGTH_GRADE_LEVEL
-					),
-					"max_value": ERROR_FIELD(
-						field = "nivel", 
-						type = "alto",
-						symbol = "menor o igual",
-						value = models.MAX_LENGTH_GRADE_LEVEL
-					),
-				}
-			},
-			"section": {
-				"max_length": models.MAX_LENGTH_GRADE_SECTION,
-				"error_messages": {
-					"max_length": ERROR_FIELD(
-						field = "sección", 
-						type = "largo",
-						symbol = "menor o igual",
-						value = models.MAX_LENGTH_GRADE_SECTION
-					),
-				}
-			},
-		}
-
-	# La razón del porque estoy usando *("stage").id
-	# en 'validate' y 'create' se debe al uso del campo
-	# 'PrimaryKeyRelatedField' del serializador, ya que entrega una instancia.
-
-	def validate(self, data: dict[str, str | int]) -> dict[str, str | int]:
-
-		if data.get('section'):
-		
-			validate_grade_exist = school_dto.GradeValidateDTO(
-				stage_id = data.get("stage").id,
-				section = data.get("section"),
-				level = data.get("level"),
-			).data
-
-			exist = commands.grade_exist(
-				school_id = self.context.get("pk"),
-				grade = validate_grade_exist
-			).query
-
-			if exist:
-				raise serializers.ValidationError(
-					GRADE_ALREADY_EXISTS,
-					code = "already-exists"
-				)
-
-		return data
-
-
-	def validate_teacher(self, value) -> list[int] | None:
-		# Validamos que no envie el ID de un personal administrativo de la escuela
-		admins = commands.get_administrative_staff(
-			school_id = self.context.get("pk"), 
-			admins = value
-		)
-
-		if admins:
-			raise serializers.ValidationError(
-				ONLY_TEACHING_STAFF,
-				code = "invalid-data"
-			)
-
-		return value
-
-	def create(self, validated_data: dict[str, str | int]) -> models.Grade:
-		grade = school_dto.GradeCreateDTO(
-			stage_id = validated_data.pop("stage").id,
-			teachers = validated_data.pop("teacher", None),
-			**validated_data
-		).data
-
-		command = commands.create_grade(
-			school_id = self.context.get("pk"),
-			grade = grade
-		)
-
-		if not command.status:
-			raise serializers.ValidationError(
-				ResponseError(
-					errors = command.errors
-				).model_dump(exclude_defaults = True),
-				code = "invalid"
-			)
-
-		return command.query
-
-
-class MSchoolGradeResponse(serializers.ModelSerializer):
-	stage = serializers.SlugRelatedField(
-		read_only=True,
-		slug_field='type'
-	)
-	teacher = MSchoolStaffRequest(many = True, read_only = True)
-
-	class Meta:
-		model = models.Grade
-		exclude = ["school"]
-
-
-class MSchoolGradeListResponse(serializers.ModelSerializer):
-	stage = serializers.SlugRelatedField(
-		read_only=True,
-		slug_field='type'
-    )
-
-	class Meta:
-		model = models.Grade
-		exclude = ["school", "description", "teacher"]
-
-
-Grade = TypeVar("Grade", bound = models.Grade)
-
-class MSchoolGradeUpdateRequest(serializers.ModelSerializer):
-	teacher = serializers.ListField(
-		required = False,
-		child = serializers.IntegerField(min_value = 1)
-	) 
 	class Meta:
 		model = models.Grade
 		fields = [
@@ -1097,6 +941,7 @@ class MSchoolGradeUpdateRequest(serializers.ModelSerializer):
 		}
 
 	def validate_teacher(self, value: list[int]) -> list[int] | None:
+		# Validamos que no envie el ID de un personal administrativo de la escuela
 		admins = commands.get_administrative_staff(
 			school_id = self.context.get("pk"), 
 			admins = value
@@ -1110,7 +955,85 @@ class MSchoolGradeUpdateRequest(serializers.ModelSerializer):
 
 		return value
 
-	def validate(self, data: dict[str, str | int]) -> dict[str, str | int]:
+
+class MSchoolGradeRequest(MSchoolGradeSerializer):
+
+	# La razón del porque estoy usando *("stage").id
+	# en 'validate' y 'create' se debe al uso del campo
+	# 'stage' del serializador, ya que entrega una instancia.
+
+	def validate(self, data: GradeData) -> GradeData:
+
+		if data.get('section'):
+		
+			validate_grade_exist = school_dto.GradeValidateDTO(
+				stage_id = data.get("stage").id,
+				section = data.get("section"),
+				level = data.get("level"),
+			).data
+
+			exist = commands.grade_exist(
+				school_id = self.context.get("pk"),
+				grade = validate_grade_exist
+			).query
+
+			if exist:
+				raise serializers.ValidationError(
+					GRADE_ALREADY_EXISTS,
+					code = "already-exists"
+				)
+
+		return data
+
+	def create(self, validated_data: GradeData) -> models.Grade:
+		grade = school_dto.GradeCreateDTO(
+			stage_id = validated_data.pop("stage").id,
+			teachers = validated_data.pop("teacher", None),
+			**validated_data
+		).data
+
+		command = commands.create_grade(
+			school_id = self.context.get("pk"),
+			grade = grade
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
+
+
+class MSchoolGradeResponse(serializers.ModelSerializer):
+	stage = serializers.SlugRelatedField(
+		read_only=True,
+		slug_field='type'
+	)
+	teacher = MSchoolStaffRequest(many = True, read_only = True)
+
+	class Meta:
+		model = models.Grade
+		exclude = ["school"]
+
+
+class MSchoolGradeListResponse(serializers.ModelSerializer):
+	stage = serializers.SlugRelatedField(
+		read_only=True,
+		slug_field='type'
+    )
+
+	class Meta:
+		model = models.Grade
+		exclude = ["school", "description", "teacher"]
+
+
+class MSchoolGradeUpdateRequest(MSchoolGradeSerializer):
+
+	def validate(self, data: GradeData) -> GradeData:
 		section = data.get('section')
 		level = data.get('level')
 		stage = data.get('stage')
