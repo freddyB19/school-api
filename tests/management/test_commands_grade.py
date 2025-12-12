@@ -166,7 +166,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 				with self.assertRaises(exceptions.ValidationError):
 					serializer.is_valid(raise_exception = True)
 
-	def test_create_grade_already_exist(self):
+	def test_create_grade_already_exists(self):
 		"""
 			Generar un error por enviar datos ya registrados
 		"""
