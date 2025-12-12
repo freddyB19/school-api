@@ -101,6 +101,29 @@ class GradeCreateAPITest(testcases.GradeCreateTestCase):
 		self.assertEqual(len(responseJson["teacher"]), total_teachers)
 		self.assertEqual(responseJson["section"], self.add_grade["section"])
 
+	def test_create_grade_with_data_already_exists(self):
+		"""
+			Generar [Error 400] "POST /grade" por enviar datos ya registrados
+		"""
+		self.client.force_authenticate(user = self.user_with_add_perm)
+
+		grade = create_grade(school = self.school)
+
+		self.add_grade.update({
+			"level": grade.level,
+			"section": grade.section,
+			"stage": grade.stage.id,
+		})
+		response = self.client.post(
+			self.URL_GRADE_CREATE,
+			self.add_grade
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 400)
+
 	def test_create_grade_with_wrong_staff(self):
 		"""
 			Generar [Error 400] "POST /grade" por enviar datos invalidos en el campo 'teachers_id'
@@ -742,7 +765,7 @@ class GradeUpdateAPITest(testcases.GradeDetailDeleteUpdateTestCase):
 
 				self.assertEqual(responseStatusCode, 400)
 
-	def test_update_grade_with_data_already_exist(self):
+	def test_update_grade_with_data_already_exists(self):
 		"""
 			Generar [Error 400] "PUT/PATCH /grade/:id" por enviar datos ya registrados
 		"""
