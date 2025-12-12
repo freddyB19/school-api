@@ -29,7 +29,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 			),
 			"section": faker.random_letter(),
 			"description": faker.paragraph(),
-			"stage_id": self.stage.id
+			"stage": self.stage.id
 		}
 
 	def test_create_grade(self):
@@ -51,7 +51,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		self.assertEqual(grade.level, self.add_grade["level"])
 		self.assertEqual(grade.section, self.add_grade["section"])
 		self.assertEqual(grade.description, self.add_grade["description"])
-		self.assertEqual(grade.stage.id, self.add_grade["stage_id"])
+		self.assertEqual(grade.stage.id, self.add_grade["stage"])
 		self.assertEqual(grade.teacher.count(), total_teachers)
 
 
@@ -68,7 +68,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		
 		self.add_grade.update({
 			"section": faker.random_letter(),
-			"teachers_id": teachers_id
+			"teacher": teachers_id
 		})
 		
 		serializer = serializers.MSchoolGradeRequest(
@@ -108,12 +108,12 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		)
 		admins_id = [admin.id for admin in admins]
 
-		# unir ambas listas
+		# unir listas
 		staff = teachers_id + admins_id 
 
 		self.add_grade.update({
 			"section": faker.random_letter(),
-			"teachers_id": staff
+			"teacher": staff
 		})
 
 		serializer = serializers.MSchoolGradeRequest(
@@ -144,7 +144,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		self.assertEqual(grade.name, self.add_grade["name"])
 		self.assertEqual(grade.level, self.add_grade["level"])
 		self.assertEqual(grade.description, self.add_grade["description"])
-		self.assertEqual(grade.stage.id, self.add_grade["stage_id"])
+		self.assertEqual(grade.stage.id, self.add_grade["stage"])
 
 
 	def test_create_grade_with_wrong_data(self):
@@ -156,7 +156,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 
 		for case in test_case:
 			with self.subTest(case = case):
-				case.update({"stage_id": self.stage.id})
+				case.update({"stage": self.stage.id})
 				
 				serializer = serializers.MSchoolGradeRequest(
 					data = case,
@@ -173,7 +173,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 		grade = create_grade(school = self.school)
 
 		self.add_grade.update({
-			"stage_id": grade.stage.id,
+			"stage": grade.stage.id,
 			"level": grade.level,
 			"section": grade.section
 		})
@@ -208,7 +208,7 @@ class CommandCreateGradeTest(testcases.BasicCommandTestCase):
 			Generar un error por pasar el ID de una 'Etapa educativa' que no existe
 		"""
 		self.add_grade.update({
-			"stage_id": faker.random_int(min = self.stage.id + 1
+			"stage": faker.random_int(min = self.stage.id + 1
 		)})
 		
 		serializer = serializers.MSchoolGradeRequest(
