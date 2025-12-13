@@ -8,7 +8,7 @@ from faker import Faker
 from apps.school import models
 from apps.utils.result_commands import ResultCommand
 
-from .utils.functions import set_name_image
+from .utils.functions import set_name_file
 from .utils.errors_messages import SchoolErrorsMessages, TimeGroupErrorsMessages
 from .utils.props import (
 	NewsParam,
@@ -71,7 +71,7 @@ def add_newsmedia(media: ListUploadedFile) -> models.NewsMedia:
 	# Conectarme a un servicio para subir la imagen
 	upload_images = [
 		{
-			"title": set_name_image(image_name = image.name),
+			"title": set_name_file(file_name = image.name),
 			"photo": faker.image_url()
 		}
 		for image in media
