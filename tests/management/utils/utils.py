@@ -1,3 +1,5 @@
+from typing import Literal
+
 import datetime, base64
 
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -20,34 +22,51 @@ def get_long_string():
 	return f"{faker.paragraph(nb_sentences = 5)}{faker.paragraph(nb_sentences = 5)}"
 
 
-def create_list_images(size:int = 1) -> list:
-	images = [
-		faker.file_name(category = 'image')
+TypeFile = Literal["image", "office", "text"]
+ValidFiles:list[str] = ["image", "office", "text"]
+OFFICE_FILE = "office"
+
+def create_list_files(size:int = 1, type_file: TypeFile = None) -> list[str]:
+	if type_file is None:
+		raise ValueError(f"Debe definir un tipo de archivo: {ValidFiles}")
+	elif type_file not in ValidFiles:
+		raise ValueError(f"Tipo de archivo incorrecto: {type_file}")
+
+	files = [
+		faker.file_name(category = type_file)
 		for _ in range(size)
 	]
-	return images
+	return files
 
-def list_upload_images(size: int = 1) -> list:
+def list_upload_files(size: int = 1, type_file: TypeFile = None) -> list:
+	if type_file is None:
+		raise ValueError(f"Debe definir un tipo de archivo: {ValidFiles}")
+	elif type_file not in ValidFiles:
+		raise ValueError(f"Tipo de archivo incorrecto: {type_file}")
+
+	files = []
 	content = base64.b64decode(
 		b"R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
 	)
-
-	images = []
 	
-	for num in range(size):
-		image = faker.file_name(category = 'image')
+	for _ in range(size):
+		file = faker.file_name(category = type_file)
 
-		_, ext = image.split(".")
-		content_type = f"image/{ext}"
-		images.append(
+		if type_file == OFFICE_FILE:
+			content_type = faker.mime_type(category = "application")
+		else:
+			_, ext = file.split(".")
+			content_type = f"{type_file}/{ext}" 
+
+		files.append(
 			SimpleUploadedFile(
-				image, 
+				file, 
 				content=content, 
 				content_type=content_type
 			)
 		)
 
-	return images
+	return files
 
 
 def set_time(hour: int, minute: int) -> str:
