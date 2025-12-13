@@ -382,3 +382,30 @@ def create_grade(school_id: int, grade: GradeParam) -> ResultCommand:
 		)
 
 	return ResultCommand(query = new_grade, status = True)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def add_repository_media(media: ListUploadedFile) -> list[models.RepositoryMediaFile]:
+	# Conectarme a un servicio para subir los archivos
+
+	upload_files = [
+		{
+			"title": set_name_file(file_name = file.name),
+			"file": f"{faker.url()}{set_name_file(file_name = file.name)}"
+		}
+		for file in media
+	]
+	# Simulamos: 
+	# Cambiar el nombre de los archivos .
+	# El resultado de la carga de archivos.
+	# Obtener la url del archivo almacenado.
+
+	repository_media = [
+		models.RepositoryMediaFile(
+			title = file.get("title"),
+			file = file.get("file")
+		)
+		for file in upload_files
+	]
+
+	return models.RepositoryMediaFile.objects.bulk_create(repository_media)
