@@ -6,12 +6,9 @@ import unittest, base64
 
 from django.core.files.uploadedfile import SimpleUploadedFile
 
-
 from rest_framework import exceptions
 
 from pydantic import ValidationError
-
-from PIL import Image
 
 from tests import faker
 
@@ -21,7 +18,7 @@ from apps.management.apiv1.school import serializers
 
 from .utils import testcases
 
-from .utils import create_list_images, list_upload_images
+from .utils import list_upload_files, create_list_files
 
 
 class CommandAddNewsMediaTest(testcases.BasicCommandTestCase):
@@ -30,7 +27,7 @@ class CommandAddNewsMediaTest(testcases.BasicCommandTestCase):
 		"""
 			Validar crear 'newsmedia'
 		"""
-		images = list_upload_images(size = 3)
+		images = list_upload_files(size = 3, type_file = "image")
 
 		list_newsmedia = commands.add_newsmedia(media = images)
 
@@ -42,7 +39,7 @@ class CommandAddNewsMediaTest(testcases.BasicCommandTestCase):
 		"""
 			Generar un error por enviar una lista de datos invalidos
 		"""
-		images = create_list_images()
+		images = create_list_files(type_file = "image")
 
 		with self.assertRaises(ValidationError):
 			list_newsmedia = commands.add_newsmedia(media = images)
@@ -63,7 +60,7 @@ class CommandCreateNewsTest(testcases.BasicCommandTestCase):
 		self.data_news = {
 			"title": faker.text(max_nb_chars=20),
 			"description": faker.paragraph(),
-			"media": list_upload_images(size = 2)
+			"media": list_upload_files(size = 2, type_file = "image")
 		}
 
 
@@ -163,5 +160,4 @@ class CommandCreateNewsTest(testcases.BasicCommandTestCase):
 		serializer.is_valid(raise_exception = True)
 
 		with self.assertRaises(exceptions.ValidationError):
-
 			news = serializer.save()
