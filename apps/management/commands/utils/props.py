@@ -5,7 +5,7 @@ from typing_extensions import Annotated
 from django.utils.datastructures import MultiValueDict
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
-from pydantic import BaseModel, AnyHttpUrl
+from pydantic import BaseModel, AnyHttpUrl, ConfigDict
 
 from apps.school import models
 
@@ -73,3 +73,11 @@ class GradeParam(BaseModel):
 	description: str | None = None 
 	stage_id: int
 	teachers: list[int] | None = None
+
+
+class RepositoryParam(BaseModel):
+	model_config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True)
+	
+	name_project: str
+	description: str = None
+	media: ListUploadedFile | None = None
