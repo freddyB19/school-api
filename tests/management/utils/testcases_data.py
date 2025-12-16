@@ -216,3 +216,14 @@ CREATE_GRADE_WITH_WRONG_DATA = [
 		)
 	}
 ]
+
+
+CREATE_REPOSITORY_WITH_WRONG_DATA = [
+	{"name_project": faker.pystr(
+		max_chars = school_models.MIN_LENGTH_REPOSITORY_NAME_PROJECT - 1)
+	},
+	{"name_project": faker.pystr(
+		max_chars = school_models.MAX_LENGTH_REPOSITORY_NAME_PROJECT + 1)
+	},
+	{"description": faker.paragraph()}
+]
