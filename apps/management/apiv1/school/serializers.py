@@ -1058,3 +1058,67 @@ class MSchoolGradeUpdateRequest(MSchoolGradeSerializer):
 				)
 
 		return data
+
+REPOSITORY_ALREADY_EXISTS = "Esta enviado los datos de un repositorio que ya se encuentra registrado"
+MAX_LENGTH_FILE_NAME = 30
+
+class MSchoolRepositoryRequest(serializers.ModelSerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+	class Meta:
+		model = models.Repository
+		fields = ["id", "created", "name_project", "description", "media"]
+		read_only_fields = ["id", "created"]
+
+		extra_kwargs = {
+			"name_project": {
+				"min_length": models.MIN_LENGTH_REPOSITORY_NAME_PROJECT,
+				"max_length": models.MAX_LENGTH_REPOSITORY_NAME_PROJECT,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre del proyecto", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_REPOSITORY_NAME_PROJECT
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre del proyecto", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_REPOSITORY_NAME_PROJECT
+					)
+				}
+			}
+		}
+
+	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
+		exist = commands.repository_exist(
+			school_id = self.context.get("pk"),
+			name_project = data.get("name_project")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				REPOSITORY_ALREADY_EXIST,
+				code = "already-exists"
+			)
+
+		return data
+
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> models.Repository:
+		command = commands.create_repository(
+			school_id = self.context.get("pk"),
+			repository = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
