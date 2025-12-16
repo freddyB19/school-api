@@ -27,6 +27,7 @@ from .utils.props import (
 	StaffParam,
 	GradeValidateParam,
 	GradeParam,
+	RepositoryParam,
 )
 
 faker = Faker(locale="es")
@@ -409,3 +410,33 @@ def add_repository_media(media: ListUploadedFile) -> list[models.RepositoryMedia
 	]
 
 	return models.RepositoryMediaFile.objects.bulk_create(repository_media)
+
+@validate_call(config=ConfigDict(hide_input_in_errors=True))
+def repository_exist(school_id: int, name_project: str) -> ResultCommand:
+
+	exist = models.Repository.objects.filter(
+		school_id = school_id,
+		name_project = name_project
+	).exists()
+
+	return ResultCommand(query = exist, status = True)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_repository(school_id: int, repository: RepositoryParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	new_repository = models.Repository.objects.create(
+		school_id = school_id,
+		name_project = repository.name_project,
+		description = repository.description
+	)
+
+	if repository.media:
+		new_repository.media.set(
+			add_repository_media(media = repository.media)
+		)
+
+	return ResultCommand(query = new_repository, status = True) 
