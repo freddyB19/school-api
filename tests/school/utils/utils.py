@@ -294,7 +294,7 @@ class RepositoryFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = models.Repository
 
-	name_project = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = 20))
+	name_project = factory.LazyAttribute(lambda x: f"{faker.text(max_nb_chars = 20)} {faker.pyint()}")
 	description = factory.LazyAttribute(lambda x: faker.paragraph())
 	school = factory.SubFactory(SchoolFactory)
 
