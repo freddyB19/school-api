@@ -28,6 +28,13 @@ def get_list_create_repository_url(school_id,**extra):
 		**extra
 	)
 
+def get_detail_repository(id):
+	return reverse(
+		"management:repository-detail",
+		kwargs={"pk": id},
+
+	)
+
 class RepositoryCreateAPITest(testcases.RepositoryCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -758,6 +765,77 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 			Generar [Error 401] "GET /repository" sin autenticación
 		"""
 		response = self.client.get(self.URL_REPOSITORY_LIST)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
+
+
+class RepositoryDetailAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.repository = create_repository(school = self.school)
+
+		self.URL_REPOSITORY_DETAIL = get_detail_repository(id = self.repository.id)
+
+
+	def test_detail_repository(self):
+		"""
+			Validar "GET /repository/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_REPOSITORY_DETAIL)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.repository.id)
+		self.assertEqual(responseJson["name_project"], self.repository.name_project)
+		self.assertEqual(responseJson["description"], self.repository.description)
+		self.assertEqual(len(responseJson["media"]), self.repository.media.count())
+
+	def test_detail_repository_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /repository/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		other_respository = create_repository()
+
+		response = self.client.get(
+			get_detail_repository(id = other_respository.id)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_detail_repository_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /repository/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+
+		self.client.force_authenticate(user = user)
+
+		response = self.client.get(self.URL_REPOSITORY_DETAIL)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+
+	def test_detail_repository_without_authenticate(self):
+		"""
+			Generar [Error 401] "GET /repository/:id" sin autenticación
+		"""
+		response = self.client.get(self.URL_REPOSITORY_DETAIL)
 
 		responseJson = response.data
 		responseStatusCode = response.status_code
