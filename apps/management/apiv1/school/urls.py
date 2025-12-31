@@ -83,4 +83,9 @@ urlpatterns = [
 		views.GradeDetailDeleteUpdateAPIView.as_view(),
 		name = "grade-detail" 
 	),
+	path(
+		"<int:pk>/repository",
+		views.RepositoryListCreateAPIView.as_view(),
+		name = "repository-list-create"
+	),
 ]
