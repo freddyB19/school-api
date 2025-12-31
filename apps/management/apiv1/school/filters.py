@@ -2,7 +2,6 @@ import django_filters
 
 from apps.school import models
 
-
 class NewsFilter(django_filters.FilterSet):
 	created_year = django_filters.NumberFilter(
 		field_name='created', lookup_expr='year'
@@ -106,3 +105,28 @@ class GradeFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.Grade
 		fields = ["level", "section"]
+
+
+class RepositoryFilter(django_filters.FilterSet):
+	project = django_filters.CharFilter(
+		field_name="name_project", lookup_expr="icontains"
+	)
+	created = django_filters.DateTimeFromToRangeFilter()
+	created_year = django_filters.NumberFilter(
+		field_name="created", lookup_expr = "year"
+	)
+	created_month = django_filters.NumberFilter(
+		field_name="created", lookup_expr = "month"
+	)
+
+	updated = django_filters.DateTimeFromToRangeFilter()
+	updated_year = django_filters.NumberFilter(
+		field_name="updated", lookup_expr = "year"
+	)
+	updated_month = django_filters.NumberFilter(
+		field_name="updated", lookup_expr = "month"
+	)
+
+	class Meta:
+		model = models.Repository
+		fields = ["created", "updated"]
