@@ -531,3 +531,47 @@ class GradeDetailDeleteUpdateAPIView(generics.RetrieveUpdateDestroyAPIView):
 			data = self.serializer_class(grade).data,
 			status = status.HTTP_200_OK
 		)
+
+
+class RepositoryListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Repository.objects.all()
+	serializer_class = serializers.MSchoolRepositoryResponse 
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.RepositoryFilter
+
+	def get_serializer_class(self):
+		if self.request.method == "POST":
+			return serializers.MSchoolRepositoryRequest
+		elif self.request.method == "GET":
+			return serializers.MSchoolRepositoryListResponse
+		return self.serializer_class
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk"),
+		).order_by('-created', '-updated')
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		repository = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(repository).data,
+			status = status.HTTP_201_CREATED
+		)
