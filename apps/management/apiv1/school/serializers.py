@@ -1101,7 +1101,7 @@ class MSchoolRepositoryRequest(serializers.ModelSerializer):
 
 		if exist:
 			raise serializers.ValidationError(
-				REPOSITORY_ALREADY_EXIST,
+				REPOSITORY_ALREADY_EXISTS,
 				code = "already-exists"
 			)
 
@@ -1122,3 +1122,23 @@ class MSchoolRepositoryRequest(serializers.ModelSerializer):
 			)
 
 		return command.query
+
+
+class MSchoolRepositoryMediaFileResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.RepositoryMediaFile
+		fields = ["file"]
+
+
+class MSchoolRepositoryResponse(serializers.ModelSerializer):
+	media = MSchoolRepositoryMediaFileResponse(many = True)
+	
+	class Meta:
+		model = models.Repository
+		exclude = ["school"]
+
+
+class MSchoolRepositoryListResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Repository
+		fields = ["id", "name_project", "created", "updated"]
