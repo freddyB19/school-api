@@ -841,3 +841,81 @@ class RepositoryDetailAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
 		responseStatusCode = response.status_code
 
 		self.assertEqual(responseStatusCode, 401)
+
+
+class RepositoryDeleteAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		repository = create_repository(school = self.school)
+
+		self.URL_REPOSITORY_DELETE = get_detail_repository(id = repository.id)
+
+	def test_delete_repository(self):
+		"""
+			Validar "DELETE /repository/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_REPOSITORY_DELETE)
+
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 204)
+
+	def test_delete_repository_without_school_permission(self):
+		"""
+			Generar [Error 403]  "DELETE /repository/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		repository = create_repository()
+
+		response = self.client.delete(
+			get_detail_repository(id = repository.id)
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_repository_without_user_permission(self):
+		"""
+			Generar [Error 403]  "DELETE /repository/:id" por usuario que no tiene permiso.
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_REPOSITORY_DELETE)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_repository_with_wrong_user(self):
+		"""
+			Generar [Error 403]  "DELETE /repository/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_repository"])
+		)
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_REPOSITORY_DELETE)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_delete_repository_without_authenticate(self):
+		"""
+			Generar [Error 401]  "DELETE /repository/:id" sin autenticación
+		"""
+		response = self.client.delete(self.URL_REPOSITORY_DELETE)
+
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
