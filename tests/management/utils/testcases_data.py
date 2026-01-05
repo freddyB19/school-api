@@ -227,3 +227,13 @@ CREATE_REPOSITORY_WITH_WRONG_DATA = [
 	},
 	{"description": faker.paragraph()}
 ]
+
+
+UPDATE_REPOSITORY_WITH_WRONG_DATA = [
+	{"name_project": faker.pystr(
+		max_chars = school_models.MIN_LENGTH_REPOSITORY_NAME_PROJECT - 1)
+	},
+	{"name_project": faker.pystr(
+		max_chars = school_models.MAX_LENGTH_REPOSITORY_NAME_PROJECT + 1)
+	}
+]
