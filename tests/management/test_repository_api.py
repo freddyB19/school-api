@@ -919,3 +919,176 @@ class RepositoryDeleteAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
 		responseStatusCode = response.status_code
 
 		self.assertEqual(responseStatusCode, 401)
+
+
+class RepositoryUpdateAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.repository = create_repository(school = self.school)
+
+		self.URL_REPOSITORY_UPDATE = get_detail_repository(
+			id = self.repository.id
+		)
+
+		self.update_repository = {
+			"name_project": faker.text(max_nb_chars = models.MAX_LENGTH_REPOSITORY_NAME_PROJECT),
+			"description": faker.paragraph()
+		}
+
+		self.partial_repository = {
+			"description": faker.paragraph()
+		}
+
+	def test_update_repository(self):
+		"""
+			Validar "PUT/PATCH /repository/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		# PUT /repository/:id
+
+		response = self.client.put(
+			self.URL_REPOSITORY_UPDATE,
+			self.update_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.repository.id)
+		self.assertEqual(
+			responseJson["name_project"], 
+			self.update_repository["name_project"]
+		)
+		self.assertEqual(
+			responseJson["description"], 
+			self.update_repository["description"]
+		)
+
+		# PATCH /repository/:id
+
+		response = self.client.patch(
+			self.URL_REPOSITORY_UPDATE,
+			self.partial_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.repository.id)
+		self.assertEqual(
+			responseJson["description"], 
+			self.partial_repository["description"]
+		)
+
+
+	def test_update_repository_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /repository/:id" por enviar datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		test_case = testcases_data.UPDATE_REPOSITORY_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_REPOSITORY_UPDATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatusCode = response.status_code
+
+				self.assertEqual(responseStatusCode, 400)
+
+	def test_update_repository_with_data_already_exists(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /repository/:id" por datos ya registrados
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		update_name_project = {
+			"name_project": self.repository.name_project
+		}
+
+		response = self.client.patch(
+			self.URL_REPOSITORY_UPDATE,
+			update_name_project
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 400)
+
+	def test_update_repository_without_school_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /repository/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		repository = create_repository()
+
+		response = self.client.patch(
+			get_detail_repository(id = repository.id),
+			self.partial_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_repository_without_user_permission(self):
+		"""
+			Generar [Error 403] "PUT/PATCH /repository/:id" por usuarion sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.patch(
+			self.URL_REPOSITORY_UPDATE,
+			self.partial_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_repository_with_wrong_user(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /repository/:id" por usuario que no forma parte de la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_repository"])
+		)
+		self.client.force_authenticate(user = user)
+
+		response = self.client.patch(
+			self.URL_REPOSITORY_UPDATE,
+			self.partial_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_update_repository_without_authentication(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /repository/:id" sin autenticación
+		"""
+		response = self.client.patch(
+			self.URL_REPOSITORY_UPDATE,
+			self.partial_repository
+		)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 401)
