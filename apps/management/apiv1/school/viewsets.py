@@ -137,3 +137,79 @@ class NewsDetailUpdateDeleteVS(DetailModelVS):
 			data = self.serializer_class(news).data,
 			status = status.HTTP_200_OK
 		)
+
+
+class RepositoryDetailUpdateDeleteVS(DetailModelVS):
+	queryset = school_models.Repository.objects.all()
+	serializer_class = serializers.MSchoolRepositoryResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.RepositoryPermissionDetail
+	]
+
+	def get_serializer_class(self):
+		upload_images = "upload_images"
+		is_update = [
+			"update",
+			"partial_update"
+		]
+
+		if self.action in is_update:
+			return serializers.MSchoolRepositoryUpdateRequest
+		elif self.action == upload_images:
+			return serializers.MSchoolRepositoryUpdateMediaRequest
+
+		return self.serializer_class
+
+	def update(self, request, *args, **kwargs):
+		partial = kwargs.get("partial", False)
+		repository = self.get_object()
+		serializer = self.get_serializer(
+			repository, 
+			data=request.data, 
+			partial= partial,
+			context = {"pk": repository.school_id}
+		)
+
+		serializer.is_valid(raise_exception=True)
+
+		self.perform_update(serializer)
+
+		return response.Response(
+			data = serializer.data,
+			status = status.HTTP_200_OK
+		)
+
+	@action(detail = True, methods = ["patch"], url_name = "upload-files")
+	def upload_files(self, request, pk = None):
+		repository = self.get_object()
+		serializer = self.get_serializer(
+			repository,
+			data=request.data,
+			partial = True
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST,
+			)
+
+		update_repository = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(update_repository).data,
+			status = status.HTTP_200_OK
+		)
+
+	@action(detail = True, methods = ["delete"], url_name = "delete-all-files")
+	def delete_all_files(self, request, pk=None):
+		repository = self.get_object()
+
+		repository.media.all().delete()
+
+		return response.Response(
+			data = self.serializer_class(repository).data,
+			status = status.HTTP_200_OK
+		)
