@@ -1062,6 +1062,8 @@ class MSchoolGradeUpdateRequest(MSchoolGradeSerializer):
 REPOSITORY_ALREADY_EXISTS = "Esta enviado los datos de un repositorio que ya se encuentra registrado"
 MAX_LENGTH_FILE_NAME = 30
 
+Repository = TypeVar("Repository", bound = models.Repository)
+
 class MSchoolRepositoryRequest(serializers.ModelSerializer):
 	media = serializers.ListField(
 		required = False,
@@ -1142,3 +1144,66 @@ class MSchoolRepositoryListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Repository
 		fields = ["id", "name_project", "created", "updated"]
+
+
+class MSchoolRepositoryUpdateRequest(serializers.ModelSerializer):
+	class Meta:
+		model = models.Repository
+		fields = ["id", "created", "updated", "name_project", "description"]
+		read_only_fields = ["id", "created", "updated"]
+
+		extra_kwargs = {
+			"name_project": {
+				"min_length": models.MIN_LENGTH_REPOSITORY_NAME_PROJECT,
+				"max_length": models.MAX_LENGTH_REPOSITORY_NAME_PROJECT,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre del proyecto", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_REPOSITORY_NAME_PROJECT
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre del proyecto", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_REPOSITORY_NAME_PROJECT
+					)
+				}
+			}
+		}
+
+	def validate_name_project(self, value: str) -> str:
+		exist = commands.repository_exist(
+			school_id = self.context.get("pk"),
+			name_project = value
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				REPOSITORY_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return value
+
+
+class MSchoolRepositoryUpdateMediaRequest(serializers.Serializer):
+	media = serializers.ListField(
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+
+	def update(self, instance: Repository, validated_data: dict[str, ListUploadedFile]) -> Repository:
+
+		command = commands.add_repository_media(files = validated_data.get("media"))
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+		
+		instance.media.add(*command.query)		
+
+		return instance
