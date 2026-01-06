@@ -1092,3 +1092,74 @@ class RepositoryUpdateAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
 		responseStatusCode = response.status_code
 
 		self.assertEqual(responseStatusCode, 401)
+
+
+class RepositoryUpdateDeleteFilesAPITest(testcases.RepositoryDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.repository = create_repository(school = self.school)
+
+		self.URL_REPOSITORY_DELETE_MEDIA = self.get_delete_all_files_repository_url(
+			id = self.repository.id
+		)
+		self.URL_REPOSITORY_UPDATE_MEDIA = self.get_upload_files_repository_url(
+			id = self.repository.id
+		)
+
+	def get_upload_files_repository_url(self, id):
+		return reverse(
+			"management:repository-upload-files",
+			kwargs={"pk": id}
+		)
+
+	def get_delete_all_files_repository_url(self, id):
+		return reverse(
+			"management:repository-delete-all-files",
+			kwargs={"pk": id}
+		)
+
+	def test_update_repository_files(self):
+		"""
+			Validar "PATCH /respository/:id/upload-files"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		with tempfile.NamedTemporaryFile(suffix = ".pdf") as ntf:
+			ntf.write(b"Datos del archivo")
+			ntf.seek(0)
+
+			update_repository_files = {"media": [ntf]}
+
+			response = self.client.patch(
+				self.URL_REPOSITORY_UPDATE_MEDIA,
+				update_repository_files,
+				format="multipart"
+			)
+
+			responseJson = response.data
+			responseStatusCode = response.status_code
+
+			repository = models.Repository.objects.get(id = self.repository.id)
+
+			self.assertEqual(responseStatusCode, 200)
+			self.assertEqual(responseJson["id"], repository.id)
+			self.assertEqual(
+				len(responseJson["media"]), 
+				repository.media.count()
+			)
+
+	def test_delete_repository_files(self):
+		"""
+			Validar "DELETE /respository/:id/delete-all-files"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_REPOSITORY_DELETE_MEDIA)
+
+		responseJson = response.data
+		responseStatusCode = response.status_code
+
+		self.assertEqual(responseStatusCode, 200)
+		self.assertEqual(responseJson["id"], self.repository.id)
+		self.assertFalse(responseJson["media"])
