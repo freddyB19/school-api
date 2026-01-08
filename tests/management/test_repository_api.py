@@ -1132,14 +1132,8 @@ class RepositoryUpdateDeleteFilesAPITest(testcases.RepositoryDetailDeleteUpdateT
 			responseJson = response.data
 			responseStatusCode = response.status_code
 
-			repository = models.Repository.objects.get(id = self.repository.id)
-
-			self.assertEqual(responseStatusCode, 200)
-			self.assertEqual(responseJson["id"], repository.id)
-			self.assertEqual(
-				len(responseJson["media"]), 
-				repository.media.count()
-			)
+			self.assertEqual(responseStatusCode, 202)
+			self.assertEqual(responseJson["id"], self.repository.id)
 
 	def test_delete_repository_files(self):
 		"""
