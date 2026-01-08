@@ -386,7 +386,7 @@ def create_grade(school_id: int, grade: GradeParam) -> ResultCommand:
 
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def add_repository_media(media: ListUploadedFile) -> list[models.RepositoryMediaFile]:
+def add_repository_media(media: ListUploadedFile) -> ResultCommand:
 	# Conectarme a un servicio para subir los archivos
 
 	upload_files = [
@@ -409,7 +409,12 @@ def add_repository_media(media: ListUploadedFile) -> list[models.RepositoryMedia
 		for file in upload_files
 	]
 
-	return models.RepositoryMediaFile.objects.bulk_create(repository_media)
+	return ResultCommand(
+		query = models.RepositoryMediaFile.objects.bulk_create(
+			repository_media
+		), 
+		status = True
+	)
 
 @validate_call(config=ConfigDict(hide_input_in_errors=True))
 def repository_exist(school_id: int, name_project: str) -> ResultCommand:
@@ -435,8 +440,11 @@ def create_repository(school_id: int, repository: RepositoryParam) -> ResultComm
 	)
 
 	if repository.media:
-		new_repository.media.set(
-			add_repository_media(media = repository.media)
-		)
+		command = add_repository_media(media = repository.media)
+
+		if not command.status:
+			return command
+
+		new_repository.media.set(command.query)
 
 	return ResultCommand(query = new_repository, status = True) 
