@@ -1195,7 +1195,7 @@ class MSchoolRepositoryUpdateMediaRequest(serializers.Serializer):
 
 	def update(self, instance: Repository, validated_data: dict[str, ListUploadedFile]) -> Repository:
 
-		command = commands.add_repository_media(files = validated_data.get("media"))
+		command = commands.add_repository_media(media = validated_data.get("media"))
 
 		if not command.status:
 			raise serializers.ValidationError(
