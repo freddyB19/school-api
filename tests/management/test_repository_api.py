@@ -1100,28 +1100,20 @@ class RepositoryUpdateDeleteFilesAPITest(testcases.RepositoryDetailDeleteUpdateT
 
 		self.repository = create_repository(school = self.school)
 
-		self.URL_REPOSITORY_DELETE_MEDIA = self.get_delete_all_files_repository_url(
-			id = self.repository.id
-		)
-		self.URL_REPOSITORY_UPDATE_MEDIA = self.get_upload_files_repository_url(
+		self.URL_REPOSITORY_FILES = self.get_detail_repository_files_url(
 			id = self.repository.id
 		)
 
-	def get_upload_files_repository_url(self, id):
-		return reverse(
-			"management:repository-upload-files",
-			kwargs={"pk": id}
-		)
 
-	def get_delete_all_files_repository_url(self, id):
+	def get_detail_repository_files_url(self, id):
 		return reverse(
-			"management:repository-delete-all-files",
+			"management:repository-files",
 			kwargs={"pk": id}
 		)
 
 	def test_update_repository_files(self):
 		"""
-			Validar "PATCH /respository/:id/upload-files"
+			Validar "PATCH /respository/:id/files"
 		"""
 		self.client.force_authenticate(user = self.user_with_change_perm)
 
@@ -1132,7 +1124,7 @@ class RepositoryUpdateDeleteFilesAPITest(testcases.RepositoryDetailDeleteUpdateT
 			update_repository_files = {"media": [ntf]}
 
 			response = self.client.patch(
-				self.URL_REPOSITORY_UPDATE_MEDIA,
+				self.URL_REPOSITORY_FILES,
 				update_repository_files,
 				format="multipart"
 			)
@@ -1151,15 +1143,19 @@ class RepositoryUpdateDeleteFilesAPITest(testcases.RepositoryDetailDeleteUpdateT
 
 	def test_delete_repository_files(self):
 		"""
-			Validar "DELETE /respository/:id/delete-all-files"
+			Validar "DELETE /respository/:id/files"
 		"""
 		self.client.force_authenticate(user = self.user_with_delete_perm)
 
-		response = self.client.delete(self.URL_REPOSITORY_DELETE_MEDIA)
+		total_repository_files = 0
 
-		responseJson = response.data
+		self.assertGreater(self.repository.media.count(), total_repository_files)
+
+		response = self.client.delete(self.URL_REPOSITORY_FILES)
+
 		responseStatusCode = response.status_code
+		
+		repository = models.Repository.objects.get(id = self.repository.id)
 
-		self.assertEqual(responseStatusCode, 200)
-		self.assertEqual(responseJson["id"], self.repository.id)
-		self.assertFalse(responseJson["media"])
+		self.assertEqual(responseStatusCode, 204)
+		self.assertEqual(total_repository_files, repository.media.count())
