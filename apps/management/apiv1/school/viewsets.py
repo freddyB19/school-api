@@ -1,3 +1,5 @@
+from http import HTTPMethod
+
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import response, status, viewsets, mixins
@@ -6,9 +8,14 @@ from apps.school import models as school_models
 from apps.school.apiv1 import serializers as school_serializers
 
 from apps.management.commands import commands
-from apps.utils.result_commands import ResponseError
+from apps.utils.result_commands import ResponseError, ResponseMessage
 
 from . import serializers, permissions
+from .utils import (
+	update_repository_files,
+	delete_repository_files
+)
+
 
 class DetailModelVS(viewsets.GenericViewSet, mixins.UpdateModelMixin, mixins.RetrieveModelMixin, mixins.DestroyModelMixin):
 	pass
@@ -147,19 +154,21 @@ class RepositoryDetailUpdateDeleteVS(DetailModelVS):
 		permissions.IsUserPermission,
 		permissions.RepositoryPermissionDetail
 	]
+	error_message_500 = ResponseMessage(
+		message = "Solicitud no procesada por error interno"
+	).model_dump()
 
 	def get_serializer_class(self):
-		upload_images = "upload_images"
+		upload_files = "detail_files"
 		is_update = [
 			"update",
 			"partial_update"
 		]
 
-		if self.action in is_update:
-			return serializers.MSchoolRepositoryUpdateRequest
-		elif self.action == upload_images:
+		if self.action == upload_files:
 			return serializers.MSchoolRepositoryUpdateMediaRequest
-
+		elif self.action in is_update:
+			return serializers.MSchoolRepositoryUpdateRequest
 		return self.serializer_class
 
 	def update(self, request, *args, **kwargs):
@@ -180,36 +189,27 @@ class RepositoryDetailUpdateDeleteVS(DetailModelVS):
 			data = serializer.data,
 			status = status.HTTP_200_OK
 		)
-
-	@action(detail = True, methods = ["patch"], url_name = "upload-files")
-	def upload_files(self, request, pk = None):
+	
+	@action(detail = True, methods = [HTTPMethod.PATCH, HTTPMethod.DELETE], url_name = "files")
+	def detail_files(self, request, pk = None):
 		repository = self.get_object()
-		serializer = self.get_serializer(
-			repository,
-			data=request.data,
-			partial = True
+
+		context_response = {
+			HTTPMethod.PATCH: update_repository_files,
+			HTTPMethod.DELETE: delete_repository_files
+		}
+		
+		process_request = context_response[request.method]
+
+		response_data = process_request(
+			request = request, instance = repository
 		)
 
-		if not serializer.is_valid():
+		if not response_data:
+
 			return response.Response(
-				data = serializer.errors,
-				status = status.HTTP_400_BAD_REQUEST,
+				data = self.error_message_500,
+				status = status.HTTP_500_INTERNAL_SERVER_ERROR
 			)
 
-		update_repository = serializer.save()
-
-		return response.Response(
-			data = self.serializer_class(update_repository).data,
-			status = status.HTTP_200_OK
-		)
-
-	@action(detail = True, methods = ["delete"], url_name = "delete-all-files")
-	def delete_all_files(self, request, pk=None):
-		repository = self.get_object()
-
-		repository.media.all().delete()
-
-		return response.Response(
-			data = self.serializer_class(repository).data,
-			status = status.HTTP_200_OK
-		)
+		return response.Response(**response_data)
