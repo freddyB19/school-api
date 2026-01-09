@@ -1064,15 +1064,11 @@ MAX_LENGTH_FILE_NAME = 30
 
 Repository = TypeVar("Repository", bound = models.Repository)
 
-class MSchoolRepositoryRequest(serializers.ModelSerializer):
-	media = serializers.ListField(
-		required = False,
-		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
-	)
+class MSchoolRepositorySerializer(serializers.ModelSerializer):
 	class Meta:
 		model = models.Repository
-		fields = ["id", "created", "name_project", "description", "media"]
-		read_only_fields = ["id", "created"]
+		fields = ["id", "created", "updated", "name_project", "description"]
+		read_only_fields = ["id", "created", "updated"]
 
 		extra_kwargs = {
 			"name_project": {
@@ -1094,6 +1090,17 @@ class MSchoolRepositoryRequest(serializers.ModelSerializer):
 				}
 			}
 		}
+
+
+class MSchoolRepositoryRequest(MSchoolRepositorySerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+	class Meta(MSchoolRepositorySerializer.Meta):
+		fields = ["id", "created", "name_project", "description", "media"]
+		read_only_fields = ["id", "created"]
+
 
 	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
 		exist = commands.repository_exist(
@@ -1146,32 +1153,7 @@ class MSchoolRepositoryListResponse(serializers.ModelSerializer):
 		fields = ["id", "name_project", "created", "updated"]
 
 
-class MSchoolRepositoryUpdateRequest(serializers.ModelSerializer):
-	class Meta:
-		model = models.Repository
-		fields = ["id", "created", "updated", "name_project", "description"]
-		read_only_fields = ["id", "created", "updated"]
-
-		extra_kwargs = {
-			"name_project": {
-				"min_length": models.MIN_LENGTH_REPOSITORY_NAME_PROJECT,
-				"max_length": models.MAX_LENGTH_REPOSITORY_NAME_PROJECT,
-				"error_messages": {
-					"min_length": ERROR_FIELD(
-						field = "nombre del proyecto", 
-						type = "corto",
-						symbol = "mayor o igual",
-						value = models.MIN_LENGTH_REPOSITORY_NAME_PROJECT
-					),
-					"max_length": ERROR_FIELD(
-						field = "nombre del proyecto", 
-						type = "largo",
-						symbol = "menor o igual",
-						value = models.MAX_LENGTH_REPOSITORY_NAME_PROJECT
-					)
-				}
-			}
-		}
+class MSchoolRepositoryUpdateRequest(MSchoolRepositorySerializer):
 
 	def validate_name_project(self, value: str) -> str:
 		exist = commands.repository_exist(
