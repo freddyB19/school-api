@@ -1136,7 +1136,7 @@ class MSchoolRepositoryRequest(MSchoolRepositorySerializer):
 class MSchoolRepositoryMediaFileResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.RepositoryMediaFile
-		fields = ["file"]
+		fields = "__all__"
 
 
 class MSchoolRepositoryResponse(serializers.ModelSerializer):
