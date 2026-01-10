@@ -286,7 +286,7 @@ class RepositoryMediaFileFactory(SchoolMediaFileFactory):
 
 	file = factory.LazyAttribute(lambda x: f"{faker.url()}{faker.file_name()}")
 
-def bulk_create_media_respository(size:int = 1, **kwargs) -> list[models.RepositoryMediaFile]:
+def bulk_create_respository_media_files(size:int = 1, **kwargs) -> list[models.RepositoryMediaFile]:
 	return RepositoryMediaFileFactory.create_batch(size = size, **kwargs)
 
 
@@ -310,7 +310,7 @@ class RepositoryFactory(factory.django.DjangoModelFactory):
 	def _create(cls, model_class, *args, **kwargs):
 		obj = model_class(*args, **kwargs)
 		obj.save()
-		obj.media.set(bulk_create_media_respository(size = 3))
+		obj.media.set(bulk_create_respository_media_files(size = 3))
 		return obj
 
 
