@@ -88,4 +88,9 @@ urlpatterns = [
 		views.RepositoryListCreateAPIView.as_view(),
 		name = "repository-list-create"
 	),
+	path(
+		"repository/file/<int:pk>",
+		views.RepositoryMediaDetailDeleteAPIView.as_view(),
+		name = "repository-file-detail"
+	),
 ]
