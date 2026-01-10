@@ -286,6 +286,9 @@ class RepositoryMediaFileFactory(SchoolMediaFileFactory):
 
 	file = factory.LazyAttribute(lambda x: f"{faker.url()}{faker.file_name()}")
 
+def create_respository_media_file(**kwargs) -> models.RepositoryMediaFile:
+	return RepositoryMediaFileFactory.create(**kwargs)
+
 def bulk_create_respository_media_files(size:int = 1, **kwargs) -> list[models.RepositoryMediaFile]:
 	return RepositoryMediaFileFactory.create_batch(size = size, **kwargs)
 
