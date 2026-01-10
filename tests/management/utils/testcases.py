@@ -647,3 +647,25 @@ class RepositoryDetailDeleteUpdateTestCase(RepositoryTestCase):
 			self.user_with_delete_perm,
 			self.user_with_change_perm
 		))
+
+
+class RepositoryMediaFileTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+		self.school = create_school()
+
+		self.user_with_view_perm = create_user(role = 0, email = faker.email())
+		self.user_with_delete_perm = create_user(role = 0, email = faker.email())
+
+		self.user_with_view_perm.user_permissions.set(
+			get_permissions(codenames = ['view_repositorymediafile'])
+		)
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ['delete_repositorymediafile'])
+		)
+
+		admin = get_administrator(school_id = self.school.id)
+		admin.users.add(*(
+			self.user_with_view_perm,
+			self.user_with_delete_perm
+		))
