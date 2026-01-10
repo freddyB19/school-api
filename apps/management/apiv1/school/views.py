@@ -575,3 +575,12 @@ class RepositoryListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(repository).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class RepositoryMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
+	queryset = models.RepositoryMediaFile.objects.all()
+	serializer_class = serializers.MSchoolRepositoryMediaFileResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission
+	]
