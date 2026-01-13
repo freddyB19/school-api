@@ -230,11 +230,8 @@ class CalendarListCreateAPIView(generics.ListCreateAPIView):
 	filterset_class = filters.CalendarFilter
 
 	def get_queryset(self):
-		current_year = timezone.localtime().year
-
 		return self.queryset.filter(
-			school_id = self.kwargs.get("pk"),
-			date__year = current_year
+			school_id = self.kwargs.get("pk")
 		).order_by("date")
 
 	def get_serializer_class(self):
