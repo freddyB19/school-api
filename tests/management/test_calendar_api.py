@@ -1,8 +1,10 @@
 import datetime
 
-from django.utils import timezone
-
 from django.urls import reverse
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta 
+
+from freezegun import freeze_time
 
 from apps.school import models
 
@@ -214,8 +216,7 @@ class CalendarListAPITest(testcases.CalendarTestCase):
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
 		total_calendar = models.Calendar.objects.filter(
-			school_id = self.school.id,
-			date__year= timezone.localtime().year
+			school_id = self.school.id
 		).count()
 
 		response = self.client.get(self.URL_CALENDAR_LIST)
@@ -226,28 +227,30 @@ class CalendarListAPITest(testcases.CalendarTestCase):
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["count"], total_calendar)
 
-
 	def test_get_calendar_filter_by_month(self):
 		"""
-			Validar "GET /calendar?month=<...>"
+			Validar "GET /calendar?month=<...>&year=<...>"
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
 		month = faker.random_int(min = 1, max = 12)
 
 		date = self.create_date(input_month = month)
-
+		other_date =datetime.date(2023, month, faker.random_int(min = 1, max = 25))
+		
 		bulk_create_calendar(size = 3, school = self.school, date = date)
+		create_calendar(school = self.school, date = other_date)
 
 		total_calendar = models.Calendar.objects.filter(
 			school_id = self.school.id,
-			date__month = month
+			date__month = month,
+			date__year = date.year
 		).count()
 
 		response = self.client.get(
 			get_create_list_calendar_url(
 				school_id = self.school.id,
-				query = {"month": month}
+				query = {"month": month, "year": date.year}
 			)
 		)
 
@@ -256,6 +259,201 @@ class CalendarListAPITest(testcases.CalendarTestCase):
 
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["count"], total_calendar)
+
+	def test_get_calendar_filter_by_year(self):
+		"""
+			Validar "GET /calendar?year=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		date_1 = faker.date_between(start_date = "-5y", end_date = "-2y")
+		date_2 = faker.date_between(start_date = "now", end_date = "+3y")
+
+		with freeze_time(f"{date_1.year}-01-01") as frozen_time:
+			for _ in range(1, 13):
+				bulk_create_calendar(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+
+				target_time = current_date + relativedelta(months=1)
+				
+				delta = target_time - current_date
+
+				frozen_time.tick(delta = delta)
+
+		with freeze_time(f"{date_2.year}-01-01") as frozen_time:
+			for _ in range(1, 13):
+				bulk_create_calendar(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+
+				target_time = current_date + relativedelta(months=1)
+				
+				delta = target_time - current_date
+
+				frozen_time.tick(delta = delta)
+
+		date_1_year = date_1.year
+		date_2_year = date_2.year
+
+		test_cases = [
+			{
+				"filter": {"year": date_1_year},
+				"total": models.Calendar.objects.filter(
+					school_id = self.school.id,
+					date__year = date_1_year
+				).count()
+			},
+			{
+				"filter": {"year": date_2_year},
+				"total": models.Calendar.objects.filter(
+					school_id = self.school.id,
+					date__year = date_2_year
+				).count()
+			},
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				response = self.client.get(
+					get_create_list_calendar_url(
+						school_id = self.school.id,
+						query = case["filter"]
+					)
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 200)
+				self.assertEqual(responseJson["count"], case["total"])
+
+	def test_get_calendar_filter_by_date_range(self):
+		"""
+			Validar "GET /calendar?date_after=<...>&date_before=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		current_year = timezone.localtime().year
+
+		create_calendar_date = f"{current_year}-01-01"
+		with freeze_time(create_calendar_date) as frozen_time:
+			for month in range(1, 13):
+				bulk_create_calendar(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+
+				target_time = current_date + relativedelta(months=1)
+				
+				delta = target_time - current_date
+
+				frozen_time.tick(delta = delta)
+
+		format_month_str = lambda month: f'0{month}' if month < 10 else month
+		month_start = format_month_str(month = faker.random_int(min = 1, max = 5))
+		month_end = format_month_str(month = faker.random_int(min = 6, max = 12))
+
+		calendar_date_start_str = f"{current_year}-{month_start}-01"
+		calendar_date_end_str = f"{current_year}-{month_end}-30"
+
+		calendar_date_start = datetime.datetime.fromisoformat(calendar_date_start_str).date()
+		calendar_date_end = datetime.datetime.fromisoformat(calendar_date_end_str).date()
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			date__range = (calendar_date_start, calendar_date_end)
+		).count()
+
+		response = self.client.get(
+			get_create_list_calendar_url(
+				school_id = self.school.id,
+				query = {
+					"date_after": calendar_date_start_str, 
+					"date_before": calendar_date_end_str
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_calendar)
+
+	def test_get_calendar_filter_by_date_after_or_date_before(self):
+		"""
+			Validar "GET /calendar?date_after=<...> | ?date_before=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		current_year = timezone.localtime().year
+
+		create_calendar_date = f"{current_year}-01-01"
+		with freeze_time(create_calendar_date) as frozen_time:
+			for month in range(1, 13):
+				bulk_create_calendar(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+
+				target_time = current_date + relativedelta(months=1)
+				
+				delta = target_time - current_date
+
+				frozen_time.tick(delta = delta)
+
+		format_month_str = lambda month: f'0{month}' if month < 10 else month
+		month_before = format_month_str(month = faker.random_int(min = 1, max = 5))
+		month_after = format_month_str(month = faker.random_int(min = 6, max = 12))
+
+		calendar_date_before_str = f"{current_year}-{month_before}-01"
+		calendar_date_after_str = f"{current_year}-{month_after}-30"
+		
+		calendar_date_before = datetime.datetime.fromisoformat(calendar_date_before_str).date()
+		calendar_date_after = datetime.datetime.fromisoformat(calendar_date_after_str).date()
+
+		test_cases = [
+			{
+				"filter": {"date_before": calendar_date_before_str},
+				"total": models.Calendar.objects.filter(
+					school_id = self.school.id,
+					date__lte = calendar_date_before
+				).count()
+			},
+			{
+				"filter": {"date_after": calendar_date_after_str},
+				"total": models.Calendar.objects.filter(
+					school_id = self.school.id,
+					date__gte = calendar_date_after
+				).count()
+			},
+		]
+
+		for case in test_cases:
+			with self.subTest(case = case):
+				response = self.client.get(
+					get_create_list_calendar_url(
+						school_id = self.school.id,
+						query = case["filter"]
+					)
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 200)
+				self.assertEqual(responseJson["count"], case["total"])
 
 	def test_get_calendar_filter_by_title(self):
 		"""
