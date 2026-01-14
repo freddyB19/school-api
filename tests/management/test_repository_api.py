@@ -238,6 +238,9 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 			school_id = self.school.id
 		)
 
+	def delete_all_repositories(self):
+		models.Repository.objects.all().delete()
+
 	def test_get_repository(self):
 		"""
 			Validar "GET /repository"
@@ -295,6 +298,9 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 	def test_get_repository_filter_by_created(self):
 		"""
 			Validar "GET /repository?created_*=<...>"
+			- Por rango de fecha.
+			- Después de una fecha.
+			- Antes de una fecha.
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
@@ -451,17 +457,24 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 				self.assertEqual(responseStatusCode, 200)
 				self.assertEqual(responseJson["count"], case["total"])
 
-	def test_get_repository_filter_by_updated_range(self):
+	def test_get_repository_filter_by_updated(self):
 		"""
-			Validar "GET /repository?updated_after=<...>&updated_before=<...>"
+			Validar "GET /repository?updated_*=<...>"
+			- Por rango de fecha.
+			- Después de una fecha.
+			- Antes de una fecha.
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
-		bulk_create_repository(size = 20, school = self.school)
+		self.delete_all_repositories()
+
+		create_date = faker.date_time_between(start_date = "-2y", end_date = "-1y")
+		with freeze_time(create_date):
+			bulk_create_repository(size = 50, school = self.school)
 		
 		current_year = timezone.localtime().year
 
-		updated_date = f"{current_year}-01-01 12:30:00"
+		updated_date = f"{current_year}-01-01 {faker.time()}"
 		with freeze_time(updated_date) as frozen_time:
 			for _ in range(1, 13):
 				repositories = faker.random_elements(
@@ -474,93 +487,35 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 					repository.save()
 
 				current_date = datetime.now()
-
 				target_time = current_date + relativedelta(months=1)
-				
 				delta = target_time - current_date
-
-				frozen_time.tick(delta = delta)
-
-
-		updated_start_string = f"{current_year}-{faker.random_int(min = 1, max = 5)}-01  00:00:00"
-		updated_end_string = f"{current_year}-{faker.random_int(min = 6, max = 12)}-30 23:59:59"
-
-		format_datetime = "%Y-%m-%d %H:%M:%S"
-
-		updated_start = timezone.make_aware(
-			datetime.strptime(updated_start_string, format_datetime)
-		)
-		updated_end = timezone.make_aware(
-			datetime.strptime(updated_end_string, format_datetime)
-		)
-	
-		total_repos = models.Repository.objects.filter(
-			school_id = self.school.id,
-			updated__range = (updated_start, updated_end)
-		).count()
-
-		response = self.client.get(
-			get_list_create_repository_url(
-				school_id = self.school.id,
-				query={
-					"updated_after": updated_start_string, 
-					"updated_before": updated_end_string
-				}
-			)
-		)
-
-		responseJson = response.data
-		responseStatusCode = response.status_code
-
-		self.assertEqual(responseStatusCode, 200)
-		self.assertEqual(responseJson["count"], total_repos)
-
-	def test_get_repository_filter_by_updated_after_or_before_date(self):
-		"""
-			Validar "GET /repository?updated_after=<...> | ?updated_before=<...>"
-		"""
-		self.client.force_authenticate(user = self.user_with_all_perm)
-
-		bulk_create_repository(size = 20, school = self.school)
-
-		format_datetime = "%Y-%m-%d %H:%M:%S"
-		
-		current_year = timezone.localtime().year
-
-		updated_date = f"{current_year}-01-01 12:30:00"
-		with freeze_time(updated_date) as frozen_time:
-			for _ in range(1, 13):
-				repositories = faker.random_elements(
-					elements = models.Repository.objects.all(),
-					length = faker.random_int(min = 1, max = 5)
-				)
-
-				for repository in repositories:
-					repository.description = faker.paragraph()
-					repository.save()
-
-				current_date = datetime.now()
-
-				target_time = current_date + relativedelta(months=1)
-				
-				delta = target_time - current_date
-
 				frozen_time.tick(delta = delta)
 
 		format_datetime = "%Y-%m-%d %H:%M:%S"
+		format_month_after = set_format_number(faker.random_int(min = 1, max = 5))
+		format_month_before = set_format_number(faker.random_int(min = 6, max = 12))
 
-		updated_after_string = f"{current_year}-{faker.random_int(min = 1, max = 5)}-01 00:00:00"
-
-		updated_before_string = f"{current_year}-{faker.random_int(min = 6, max = 12)}-30 23:59:59"
+		updated_after_string = f"{current_year}-{format_month_after}-01  00:00:00"
+		updated_before_string = f"{current_year}-{format_month_before}-30 23:59:59"
 
 		updated_after = timezone.make_aware(
-			datetime.strptime(f"{updated_after_string}", format_datetime)
+			datetime.strptime(updated_after_string, format_datetime)
 		)
 		updated_before = timezone.make_aware(
-			datetime.strptime(f"{updated_before_string}", format_datetime)
+			datetime.strptime(updated_before_string, format_datetime)
 		)
 
 		test_case = [
+			{
+				"filter": {
+					"updated_after": updated_after_string, 
+					"updated_before": updated_before_string
+				},
+				"total": models.Repository.objects.filter(
+					school_id = self.school.id,
+					updated__range = (updated_after, updated_before)
+				).count()
+			},
 			{
 				"filter": {"updated_after": updated_after_string},
 				"total": models.Repository.objects.filter(
@@ -575,6 +530,7 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 					updated__lte = updated_before,
 				).count()
 			},
+
 		]
 
 		for case in test_case:
@@ -582,7 +538,7 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 				response = self.client.get(
 					get_list_create_repository_url(
 						school_id = self.school.id,
-						query = case["filter"]
+						query= case["filter"]
 					)
 				)
 
