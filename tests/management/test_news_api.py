@@ -293,43 +293,53 @@ class NewsListAPITest(testcases.NewsListTestCase):
 
 	def test_get_news_filter_by_status(self):
 		"""
-			"GET /news" filtrados por estado de publicación ["publicado", "pendiente"]
+			Validar "GET /news?status=<...>"
 		"""
-		STATUS_PUBLISHED = "publicado"
-		STATUS_PENDING = "pendiente"
-
-		news_published = models.News.objects.filter(status = STATUS_PUBLISHED)
-		news_pending = models.News.objects.filter(status = STATUS_PENDING)
-
 		self.client.force_authenticate(user = self.user_with_all_perm)
+		
+		STATUS_PUBLISHED = models.News.TypeStatus.published
+		STATUS_PENDING =  models.News.TypeStatus.pending
 
-		response = self.client.get(
-			self.get_school_news_url(
-				school_id = self.school.id,
-				query = {"status": STATUS_PUBLISHED}
-			)
+		news_published = models.News.objects.filter(
+			school_id = self.school.id,
+			status = STATUS_PUBLISHED
+		)
+		news_pending = models.News.objects.filter(
+			school_id = self.school.id,
+			status = STATUS_PENDING
 		)
 
-		responseJson = response.data
-		responseStatus = response.status_code
+		test_case = [
+			{
+				"filter": {"status": STATUS_PUBLISHED},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					status = STATUS_PUBLISHED
+				).count()
+			},
+			{
+				"filter": {"status": STATUS_PENDING},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					status = STATUS_PENDING
+				).count()
+			},
 
-		self.assertEqual(responseStatus, 200)
-		self.assertEqual(len(responseJson["results"]), len(news_published))
+		]
 
-		self.client.force_authenticate(user = self.user_with_all_perm)
-
-		response = self.client.get(
-			self.get_school_news_url(
-				school_id = self.school.id,
-				query = {"status": STATUS_PENDING}
+		for case in test_case:
+			response = self.client.get(
+				self.get_school_news_url(
+					school_id = self.school.id,
+					query = case["filter"]
+				)
 			)
-		)
 
-		responseJson = response.data
-		responseStatus = response.status_code
+			responseJson = response.data
+			responseStatus = response.status_code
 
-		self.assertEqual(responseStatus, 200)
-		self.assertEqual(len(responseJson["results"]), len(news_pending))
+			self.assertEqual(responseStatus, 200)
+			self.assertEqual(responseJson["count"], case["total"])
 
 	def test_get_news_filter_by_created_day(self):
 		"""
