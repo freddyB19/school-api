@@ -3,6 +3,7 @@ import django_filters
 from apps.school import models
 
 class NewsFilter(django_filters.FilterSet):
+	created = django_filters.DateTimeFromToRangeFilter()
 	created_year = django_filters.NumberFilter(
 		field_name='created', lookup_expr='year'
 	)
@@ -12,7 +13,8 @@ class NewsFilter(django_filters.FilterSet):
 	created_day = django_filters.NumberFilter(
 			field_name='created', lookup_expr='day'
 	)
-
+	
+	updated = django_filters.DateTimeFromToRangeFilter()
 	updated_year = django_filters.NumberFilter(
 			field_name='updated', lookup_expr='year'
 	)
