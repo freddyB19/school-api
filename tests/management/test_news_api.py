@@ -232,8 +232,6 @@ class NewsListAPITest(testcases.NewsListTestCase):
 	def setUp(self):
 		super().setUp()
 
-		self.list_news = bulk_create_news(size = 5, school = self.school)
-
 		self.URL_NEWS = self.get_school_news_url(school_id = self.school.id)
 
 	def get_school_news_url(self, school_id, **extra):
@@ -253,13 +251,17 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
+		bulk_create_news(size = 20, school = self.school)
+
+		total_news = models.News.objects.filter(school_id = self.school.id).count()
+
 		response = self.client.get(self.URL_NEWS)
 
 		responseJson = response.data
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
-		self.assertEqual(len(responseJson["results"]), len(self.list_news))
+		self.assertEqual(responseJson["count"], total_news)
 
 	def test_get_news_without_school_permission(self):
 		"""
