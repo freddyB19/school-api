@@ -35,6 +35,8 @@ def get_detail_repository(id):
 
 	)
 
+set_format_number = lambda number: f"0{number}" if number < 10 else number
+
 class RepositoryCreateAPITest(testcases.RepositoryCreateTestCase):
 	def setUp(self):
 		super().setUp()
@@ -290,9 +292,9 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 		self.assertEqual(responseStatusCode, 200)
 		self.assertEqual(responseJson["count"], total_repositories)
 
-	def test_get_repository_filter_by_created_range(self):
+	def test_get_repository_filter_by_created(self):
 		"""
-			Validar "GET /repository?created_after=<...>&created_before=<...>"
+			Validar "GET /repository?created_*=<...>"
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
@@ -313,69 +315,13 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 				delta = target_time - current_date
 
 				frozen_time.tick(delta = delta)
-				
-		created_start_string = f"{current_year}-{faker.random_int(min = 1, max = 5)}-01 00:00:00"
-		created_end_string = f"{current_year}-{faker.random_int(min = 6, max = 12)}-30 23:59:59"
 
 		format_datetime = "%Y-%m-%d %H:%M:%S"
-		
-		created_start = timezone.make_aware(
-			datetime.strptime(created_start_string, format_datetime)
-		)
-		created_end = timezone.make_aware(
-			datetime.strptime(created_end_string, format_datetime)
-		)
-	
-		total_repos = models.Repository.objects.filter(
-			school_id = self.school.id,
-			created__range = (created_start, created_end)
-		).count()
+		format_month_after = set_format_number(faker.random_int(min = 1, max = 5))
+		format_month_before = set_format_number(faker.random_int(min = 6, max = 12))
 
-		response = self.client.get(
-			get_list_create_repository_url(
-				school_id = self.school.id,
-				query = {
-					"created_after": created_start_string,
-					"created_before": created_end_string
-				}
-			)
-		)
-
-		responseJson = response.data
-		responseStatusCode = response.status_code
-
-		self.assertEqual(responseStatusCode, 200)
-		self.assertEqual(responseJson["count"], total_repos)
-
-	def test_get_repository_filter_by_created_after_or_before_date(self):
-		"""
-			Validar "GET /repository?created_after=<...> | ?created_before=<...>"
-		"""
-		self.client.force_authenticate(user = self.user_with_all_perm)
-
-		current_year = timezone.localtime().year
-
-		created_date = f"{current_year}-01-01 12:30:00"
-		with freeze_time(created_date) as frozen_time:
-			for _ in range(1, 13):
-				bulk_create_repository(
-					size = faker.random_int(min = 1, max = 5),
-					school = self.school
-				)
-
-				current_date = datetime.now()
-
-				target_time = current_date + relativedelta(months=1)
-				
-				delta = target_time - current_date
-
-				frozen_time.tick(delta = delta)
-
-		format_datetime = "%Y-%m-%d %H:%M:%S"
-
-		created_after_string = f"{current_year}-{faker.random_int(min = 1, max = 5)}-01 00:00:00"
-
-		created_before_string = f"{current_year}-{faker.random_int(min = 6, max = 12)}-30  23:59:59"
+		created_after_string = f"{current_year}-{format_month_after}-01 00:00:00"
+		created_before_string = f"{current_year}-{format_month_before}-30 23:59:59"
 
 		created_after = timezone.make_aware(
 			datetime.strptime(created_after_string, format_datetime)
@@ -383,8 +329,18 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 		created_before = timezone.make_aware(
 			datetime.strptime(created_before_string, format_datetime)
 		)
-			
+	
 		test_case = [
+			{
+				"filter": {
+					"created_after": created_after_string,
+					"created_before": created_before_string
+				},
+				"total": models.Repository.objects.filter(
+					school_id = self.school.id,
+					created__range = (created_after, created_before)
+				).count()
+			},
 			{
 				"filter": {"created_after": created_after_string},
 				"total": models.Repository.objects.filter(
@@ -639,7 +595,7 @@ class RepositoryListAPITest(testcases.RepositoryTestCase):
 	def test_get_repository_filter_by_updated_month(self):
 		"""
 			Validar "GET /repository?updated_month=<...>&updated_year=<...>"
-			Filtra los repositorios de un mes especifico denifiendo el año.
+			Filtra los repositorios de un mes especifico definiendo el año.
 		"""
 		self.client.force_authenticate(user = self.user_with_all_perm)
 		
