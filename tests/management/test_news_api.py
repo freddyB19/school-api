@@ -1,17 +1,16 @@
-import unittest, tempfile
+import unittest, tempfile, datetime
 
 from django.urls import reverse
+from django.utils import timezone
+from dateutil.relativedelta import relativedelta 
 
 from PIL import Image
-
 from freezegun import freeze_time
 
-from apps.school import models as school_models
+from apps.school import models
 
 from tests import faker
-
 from tests.user.utils import create_user
-
 from tests.school.utils import(
 	create_news,
 	create_school, 
@@ -27,6 +26,7 @@ def get_detail_news_url(id):
 		kwargs = {"pk": id}
 	)
 
+set_format_number = lambda number: f"0{number}" if number < 10 else number
 
 class NewsCreateAPITest(testcases.NewsCreateTestCase):
 	def setUp(self):
@@ -244,7 +244,7 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		)
 
 	def delete_all_news(self):
-		school_models.News.objects.all().delete()
+		models.News.objects.all().delete()
 
 	
 	def test_get_news(self):
@@ -260,7 +260,6 @@ class NewsListAPITest(testcases.NewsListTestCase):
 
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(len(responseJson["results"]), len(self.list_news))
-
 
 	def test_get_news_without_school_permission(self):
 		"""
@@ -278,7 +277,6 @@ class NewsListAPITest(testcases.NewsListTestCase):
 
 		self.assertEqual(responseStatus, 403)
 
-
 	def test_list_news_with_wrong_user(self):
 		"""
 			Generar [Error 403] "GET /news" por usuario que no forma parte de la administración de la escuela
@@ -293,7 +291,6 @@ class NewsListAPITest(testcases.NewsListTestCase):
 
 		self.assertEqual(responseStatus, 403)
 
-
 	def test_get_news_filter_by_status(self):
 		"""
 			"GET /news" filtrados por estado de publicación ["publicado", "pendiente"]
@@ -301,8 +298,8 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		STATUS_PUBLISHED = "publicado"
 		STATUS_PENDING = "pendiente"
 
-		news_published = school_models.News.objects.filter(status = STATUS_PUBLISHED)
-		news_pending = school_models.News.objects.filter(status = STATUS_PENDING)
+		news_published = models.News.objects.filter(status = STATUS_PUBLISHED)
+		news_pending = models.News.objects.filter(status = STATUS_PENDING)
 
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
@@ -334,43 +331,351 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(len(responseJson["results"]), len(news_pending))
 
-
-	def test_get_news_filter_by_date(self):
+	def test_get_news_filter_by_created_day(self):
 		"""
-			"GET /news" filtrados por creación/actualización [año, mes, día]
+			Validar "GET /news?created_day=<...>"
 		"""
-		self.delete_all_news()
-
 		self.client.force_authenticate(user = self.user_with_all_perm)
 
-		SEARCH_NEWS_UPDATE_DAY = 20
-		SEARCH_NEWS_CREATE_MONTH_OCT = 10
-		SEARCH_NEWS_CREATE_MONTH_NOV = 11
-		SEARCH_NEWS_CREATE_YEAR = 2023
+		current_date = timezone.localtime()
 
-		with freeze_time(f"2025-{SEARCH_NEWS_CREATE_MONTH_OCT}-10"):
-			news_create_oct = bulk_create_news(size = 3, school= self.school)
+		create_date = f"{current_date.year}-{current_date.month}-01 {faker.time()}"
+		with freeze_time(create_date) as frozen_time:
+			for _ in range(26):
+				bulk_create_news(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
 
-		with freeze_time(f"2025-{SEARCH_NEWS_CREATE_MONTH_NOV}-10"):
-			news_create_nov = bulk_create_news(size = 5, school = self.school)
+				frozen_time.tick(delta = datetime.timedelta(days = 1))
+
+		search_day = faker.random_int(min = 1, max = 25)
+		format_day = set_format_number(search_day)
+
+		past_date = faker.date_between(start_date = "-5y", end_date = "-2y")
+
+		create_date = f"{past_date.year}-{past_date.month}-{format_day} {faker.time()}"
+		with freeze_time(create_date):
+			bulk_create_news(
+				size = faker.random_int(min = 1, max = 10),
+				school = self.school
+			)
+
+		total_news_by_fulldate = models.News.objects.filter(
+			school_id = self.school.id,
+			created__day = search_day,
+			created__month = current_date.month,
+			created__year = current_date.year
+		).count()
+
+		total_news_by_day = models.News.objects.filter(
+			school_id = self.school.id,
+			created__day = search_day
+		).count()
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {
+					"created_year": current_date.year,
+					"created_month": current_date.month,
+					"created_day": search_day
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_fulldate)
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {
+					"created_day": search_day
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_day)
+
+	def test_get_news_filter_by_created_month(self):
+		"""
+			Validar "GET /news?created_month=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		current_year = timezone.localtime().year
+
+		create_date = f"{current_year}-01-01 {faker.time()}"
+		with freeze_time(create_date) as frozen_time:
+			for _ in range(1, 13):
+				bulk_create_news(
+					size = faker.random_int(min = 1, max = 10),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+				target_time = current_date + relativedelta(months=1)
+				delta = target_time - current_date
+				frozen_time.tick(delta = delta)
+
+		search_month = faker.random_int(min = 1, max = 12)
+		format_month = set_format_number(search_month)
+
+		past_date = faker.date_between(start_date = "-5y", end_date = "-2y")
+
+		create_date = f"{past_date.year}-{format_month}-01 {faker.time()}"
+		with freeze_time(create_date):
+			bulk_create_news(
+				size = faker.random_int(min = 1, max = 10),
+				school = self.school
+			)
+
+		total_news_by_year_month = models.News.objects.filter(
+			school_id = self.school.id,
+			created__year = current_year,
+			created__month = search_month
+		).count()
+
+		total_news_by_month = models.News.objects.filter(
+			school_id = self.school.id,
+			created__month = search_month
+		).count()
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {
+					"created_year": current_year,
+					"created_month": search_month
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_year_month)
 		
-		with freeze_time(f"{SEARCH_NEWS_CREATE_YEAR}-04-10"):
-			news_create_year = bulk_create_news(size = 2, school = self.school)
+		#
 
-		with freeze_time(f"2026-10-{SEARCH_NEWS_UPDATE_DAY} 12:30:30"):
-			news_update_day = news_create_oct.copy()[0]
-			news_update_day.title = faker.text(max_nb_chars = 20)
-			news_update_day.save()
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {
+					"created_month": search_month
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_month)
+
+	def test_get_news_filter_by_created_year(self):
+		"""
+			Validar "GET /news?created_year=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		start_date = faker.date_between(start_date = "-5y", end_date = "-1y")
+
+		list_years = []
+
+		with freeze_time(start_date) as frozen_time:
+			for _ in range(3):
+				bulk_create_news(
+					size = faker.random_int(min = 10, max = 50),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+				target_time = current_date + relativedelta(years=1)
+				delta = target_time - current_date
+				frozen_time.tick(delta = delta)
+
+				list_years.append(current_date.year)
+
+		search_year = faker.random_element(elements = list_years)
+
+		total_news_by_year = models.News.objects.filter(
+			school_id = self.school.id,
+			created__year = search_year
+		).count()
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {
+					"created_year": search_year,
+				}
+			)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_year)
+
+	def test_get_news_filter_by_created(self):
+		"""
+			Validar "GET /news?created_*=<...>"
+			- Por rango de fecha.
+			- Después de una fecha.
+			- Antes de una fecha.
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		current_year = timezone.localtime().year
+
+		current_date = f"{current_year}-01-01 {faker.time()}"
+		with freeze_time(current_date) as frozen_time:
+			for _ in range(13):
+				bulk_create_news(
+					size = faker.random_int(min = 1, max = 15),
+					school = self.school
+				)
+
+				current_date = datetime.datetime.now()
+				target_time = current_date + relativedelta(months=1)
+				delta = target_time - current_date
+				frozen_time.tick(delta = delta)
+
+		format_datetime = "%Y-%m-%d %H:%M:%S"
+		format_month_after = set_format_number(faker.random_int(min = 1, max = 5))
+		format_month_before = set_format_number(faker.random_int(min = 6, max = 12))
+
+		created_after_string = f"{current_year}-{format_month_after}-01 00:00:00"
+		created_before_string = f"{current_year}-{format_month_before}-30 23:59:59"
+
+		created_after = timezone.make_aware(
+			datetime.datetime.strptime(created_after_string, format_datetime)
+		)
+		created_before = timezone.make_aware(
+			datetime.datetime.strptime(created_before_string, format_datetime)
+		)
+
+		test_case = [
+			{
+				"filter": {
+					"created_after": created_after_string,
+					"created_before": created_before_string
+				},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					created__range = (created_after, created_before)
+				).count()
+			},
+			{
+				"filter": {"created_after": created_after_string},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					created__gte = created_after
+				).count()
+			},
+			{
+				"filter": {"created_before": created_before_string},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					created__lte = created_before
+				).count()
+			}
+		]
+
+		for case in test_case:
+			with self.subTest(case = case):
+
+				response = self.client.get(
+					self.get_school_news_url(
+						school_id = self.school.id,
+						query = case["filter"]
+					)
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 200)
+				self.assertEqual(responseJson["count"], case["total"])
+
+	def test_get_news_filter_by_update_day(self):
+		"""
+			Validar "GET /news?updated_day=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
 		
-			news_update_day.refresh_from_db()
+		self.delete_all_news()
+		
+		create_date = faker.date_time_between(start_date = "-2y", end_date = "-1y")
+		with freeze_time(create_date):
+			bulk_create_news(size = 60, school = self.school)
 
-			total_news_updated = 1
+		current_date = timezone.localtime()
 
+		update_date = f"{current_date.year}-{current_date.month}-01 {faker.time()}"
+		with freeze_time(update_date) as frozen_time:
+			for _ in range(26):
+				list_news = faker.random_elements(
+					elements = models.News.objects.all(),
+					length = faker.random_int(min = 1, max = 4)
+				)
+
+				for news in list_news:
+					news.description = faker.paragraph()
+					news.save()
+
+				frozen_time.tick(delta = datetime.timedelta(days = 1))
+					
+		search_day = faker.random_int(min = 1, max = 25)
+		format_day = set_format_number(search_day)
+
+		past_date = faker.date_time_between(start_date = "-90d", end_date = "-30d")
+
+		past_update_date = f"{past_date.year}-{past_date.month}-{format_day} {faker.time()}"
+		with freeze_time(past_update_date):
+			list_news = faker.random_elements(
+				elements = models.News.objects.all(),
+				length = faker.random_int(min = 1, max = 4)
+			)
+
+			for news in list_news:
+				news.description = faker.paragraph()
+				news.save()
+
+		current_month = current_date.month
+		current_year= current_date.year
+
+		total_news_by_fulldate = models.News.objects.filter(
+			school_id = self.school.id,
+			updated__day = search_day,
+			updated__month = current_month,
+			updated__year = current_year
+		).count()
+
+		total_news_by_day = models.News.objects.filter(
+			school_id = self.school.id,
+			updated__day = search_day
+		).count()
 
 		response = self.client.get(
 			self.get_school_news_url(
 				school_id = self.school.id,
-				query = {"created_month": SEARCH_NEWS_CREATE_MONTH_OCT}
+				query = {
+					"updated_year": current_year,
+					"updated_month":current_month,
+					"updated_day": search_day
+				}
 			)
 		)
 
@@ -378,15 +683,14 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
-		self.assertEqual(
-			len(responseJson["results"]), 
-			len(news_create_oct)
-		)
+		self.assertEqual(responseJson["count"], total_news_by_fulldate)
+
+		#
 
 		response = self.client.get(
 			self.get_school_news_url(
 				school_id = self.school.id,
-				query = {"created_month": SEARCH_NEWS_CREATE_MONTH_NOV}
+				query = {"updated_day": search_day}
 			)
 		)
 
@@ -394,15 +698,67 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
-		self.assertEqual(
-			len(responseJson["results"]), 
-			len(news_create_nov)
-		)
+		self.assertEqual(responseJson["count"], total_news_by_day)
+
+	def test_get_news_filter_by_update_month(self):
+		"""
+			Validar "GET /news?update_month=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+		
+		self.delete_all_news()
+		
+		create_date = faker.date_time_between(start_date = "-2y", end_date = "-1y")
+		with freeze_time(create_date):
+			bulk_create_news(size = 50, school = self.school)
+
+		updated_date = timezone.localtime()
+
+		with freeze_time(updated_date) as frozen_time:
+			list_news = faker.random_elements(
+				elements = models.News.objects.all(),
+				length = faker.random_int(min = 2, max = 10)
+			)
+
+			for news in list_news:
+				news.description = faker.paragraph()
+				news.save()
+		
+		past_date = faker.date_between(start_date = "-180d", end_date = "-90d")
+		format_month = set_format_number(updated_date.month)
+
+		past_update_date = f"{past_date.year}-{format_month}-{past_date.day} {faker.time()}" 
+		with freeze_time(past_update_date) as frozen_time:
+			list_news = faker.random_elements(
+				elements = models.News.objects.all(),
+				length = faker.random_int(min = 2, max = 10)
+			)
+
+			for news in list_news:
+				news.description = faker.paragraph()
+				news.save()
+
+		search_month = updated_date.month
+		updated_year = updated_date.year
+
+		total_news_by_year_month = models.News.objects.filter(
+			school_id = self.school.id,
+			updated__month = search_month,
+			updated__year = updated_year
+		).count()
+
+		total_news_by_month = models.News.objects.filter(
+			school_id = self.school.id,
+			updated__month = search_month
+		).count()
 
 		response = self.client.get(
 			self.get_school_news_url(
 				school_id = self.school.id,
-				query = {"updated_day": SEARCH_NEWS_UPDATE_DAY}
+				query = {
+					"updated_year": updated_year,
+					"updated_month": search_month
+				}
 			)
 		)
 
@@ -410,16 +766,14 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_year_month)
 
-		self.assertGreaterEqual(
-			len(responseJson["results"]), 
-			total_news_updated
-		)
+		#
 
 		response = self.client.get(
 			self.get_school_news_url(
 				school_id = self.school.id,
-				query = {"created_year": SEARCH_NEWS_CREATE_YEAR}
+				query = {"updated_month": search_month}
 			)
 		)
 
@@ -427,11 +781,151 @@ class NewsListAPITest(testcases.NewsListTestCase):
 		responseStatus = response.status_code
 
 		self.assertEqual(responseStatus, 200)
-		self.assertEqual(
-			len(responseJson["results"]), 
-			len(news_create_year)
+		self.assertEqual(responseJson["count"], total_news_by_month)
+
+	def test_get_news_filter_by_update_year(self):
+		"""
+			Validar "GET /news?update_year=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		self.delete_all_news()
+		
+		create_date = faker.date_time_between(start_date = "-10y", end_date = "-5y")
+		with freeze_time(create_date):
+			bulk_create_news(size = 100, school = self.school)
+
+		list_years = []
+
+		updated_date = faker.date_time_between(start_date = "-4y", end_date = "-2y")
+		with freeze_time(updated_date) as frozen_time:
+			for _ in range(3):
+				list_news = faker.random_elements(
+					elements = models.News.objects.all(),
+					length = faker.random_int(min = 10, max = 20)
+				)
+
+				for news in list_news:
+					news.description = faker.paragraph()
+					news.save()
+				
+				current_date = datetime.datetime.now()
+				target_time = current_date + relativedelta(years=1)
+				delta = target_time - current_date
+				frozen_time.tick(delta = delta)
+
+				list_years.append(current_date.year)
+
+		search_year = faker.random_element(elements = list_years)
+
+		total_news_by_year = models.News.objects.filter(
+			school_id = self.school.id,
+			updated__year = search_year
+		).count()
+
+		response = self.client.get(
+			self.get_school_news_url(
+				school_id = self.school.id,
+				query = {"updated_year": search_year}
+			)
 		)
 
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["count"], total_news_by_year)
+
+	def test_get_news_filter_by_update(self):
+		"""
+			Validar "GET /news?update_*=<...>"
+			- Por rango de fecha
+			- Después de una fecha
+			- Antes de una fecha
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+		
+		self.delete_all_news()
+		
+		create_date = faker.date_time_between(start_date = "-2y", end_date = "-1y")
+		with freeze_time(create_date):
+			bulk_create_news(size = 40, school = self.school)
+
+		current_year = timezone.localtime().year
+
+		updated_date = f"{current_year}-01-01 {faker.time()}"
+		with freeze_time(updated_date) as frozen_time:
+			for _ in range(13):
+				list_news = faker.random_elements(
+					elements = models.News.objects.all(),
+					length = faker.random_int(min = 1, max = 5)
+				)
+
+				for news in list_news:
+					news.description = faker.paragraph()
+					news.save()
+
+				current_date = datetime.datetime.now()
+				target_time = current_date + relativedelta(months=1)
+				delta = target_time - current_date
+				frozen_time.tick(delta = delta)
+
+		format_datetime = "%Y-%m-%d %H:%M:%S"
+
+		format_month_after = set_format_number(faker.random_int(min = 1, max = 5))
+		format_month_before = set_format_number(faker.random_int(min = 6, max = 12))
+
+		updated_after_string = f"{current_year}-{format_month_after}-01 00:00:00"
+		updated_before_string = f"{current_year}-{format_month_before}-30 23:59:59"
+
+		updated_after = timezone.make_aware(
+			datetime.datetime.strptime(updated_after_string, format_datetime)
+		)
+		updated_before = timezone.make_aware(
+			datetime.datetime.strptime(updated_before_string, format_datetime)
+		)
+
+		test_case = [
+			{
+				"filter": {
+					"updated_after": updated_after_string,
+					"updated_before": updated_before_string
+				},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					updated__range = (updated_after, updated_before)
+				).count()
+			},
+			{
+				"filter": {"updated_after": updated_after_string},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					updated__gte = updated_after
+				).count()
+			},
+			{
+				"filter": {"updated_before": updated_before_string},
+				"total": models.News.objects.filter(
+					school_id = self.school.id,
+					updated__lte = updated_before
+				).count()
+			},
+		]
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.get(
+					self.get_school_news_url(
+						school_id = self.school.id,
+						query = case["filter"]
+					)
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code 
+
+				self.assertEqual(responseStatus, 200)
+				self.assertEqual(responseJson["count"], case["total"])
 
 	def test_get_news_without_authentication(self):
 		"""
@@ -555,7 +1049,7 @@ class NewsUpdateAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 		self.assertEqual(responseJson["description"], self.update_news["description"])
 
 		self.update_news.update({
-			"status": school_models.News.TypeStatus.pending
+			"status": models.News.TypeStatus.pending
 		})
 
 		response = self.client.patch(
