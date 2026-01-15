@@ -1,4 +1,4 @@
-import pprint
+import pprint, datetime
 from django.urls import reverse
 
 from .utils import testcases
@@ -11,7 +11,8 @@ from .utils import testcases_data, set_daysweek, set_format_dasyweek_query
 from tests.school.utils import (
 	create_school,
 	create_time_group,
-	bulk_create_officehour,
+	create_officehour,
+	bulk_create_officehour
 )
 from tests.user.utils import create_user
 
@@ -163,6 +164,132 @@ class TimeGroupListAPITest(testcases.TimeGroupTestCase):
 
 		self.assertEqual(responseStatus, 200)
 		self.assertEqual(responseJson["count"], time_group_filter_by_active)
+
+
+	def test_list_timegroup_filter_by_time_intervals(self):
+		"""
+			Validar "GET /officehour/time?opening_time_*=<...> | ?closing_time_*=<...>"
+			Filtrar por:
+			- Rango de tiempo
+			- Antes de un horario
+			- Después de un horario.
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		list_time_group = []
+		for _ in range(6):
+			list_time_group.append(
+				create_time_group(
+					opening_time = datetime.time(
+						faker.random_int(min = 6, max = 12),
+						faker.random_int(min = 1, max = 50)
+					),
+					closing_time = datetime.time(
+						faker.random_int(min = 13, max = 18),
+						faker.random_int(min = 1, max = 50)
+					)
+				)
+			)
+
+		total_create = len(list_time_group)
+		for _ in range(total_create):
+			bulk_create_officehour(
+				size = faker.random_int(min = 1, max = 3),
+				school = self.school,
+				time_group = faker.random_element(elements = list_time_group)
+			)
+
+		opening_time_after = datetime.time(
+			faker.random_int(min = 6, max = 9),
+			faker.random_int(min = 1, max = 50)
+		)
+		opening_time_before = datetime.time(
+			faker.random_int(min = 10, max = 12),
+			faker.random_int(min = 1, max = 59)
+		)
+
+		closing_time_after = datetime.time(
+			faker.random_int(min = 13, max = 15),
+			faker.random_int(min = 1, max = 50)
+		)
+		closing_time_before = datetime.time(
+			faker.random_int(min = 16, max = 18),
+			faker.random_int(min = 1, max = 59)
+		)
+
+		test_case = [
+			{
+				"filter": {
+					"opening_time_after": opening_time_after.isoformat(),
+					"opening_time_before": opening_time_before.isoformat(),
+				},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					opening_time__range = (opening_time_after, opening_time_before)
+				).count()
+			},
+			{
+				"filter": {"opening_time_after": opening_time_after.isoformat()},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					opening_time__gte = opening_time_after
+				).count()
+			},
+			{
+				"filter": {"opening_time_before": opening_time_before.isoformat()},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					opening_time__lte = opening_time_before
+				).count()
+			},
+			{
+				"filter": {
+					"closing_time_after": closing_time_after.isoformat(),
+					"closing_time_before": closing_time_before.isoformat(),
+				},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					closing_time__range = (closing_time_after, closing_time_before)
+				).count()
+			},
+			{
+				"filter": {"closing_time_after": closing_time_after.isoformat()},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					closing_time__gte = closing_time_after
+				).count()
+			},
+			{
+				"filter": {"closing_time_before": closing_time_before.isoformat()},
+				"total": models.TimeGroup.objects.filter(
+					intervalsList__school_id = self.school.id,
+					closing_time__lte = closing_time_before
+				).count()
+			},
+
+		]
+
+		for case in test_case:
+			with self.subTest(case = case):
+
+				response = self.client.get(
+					self.get_list_timegroup_url(
+						school_id = self.school.id,
+						query = case["filter"]
+					)
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 200)
+				self.assertEqual(responseJson["count"], case["total"])
+
+	def test_list_timegroup_filter_by_closing_time(self):
+		"""
+			Validar "GET /officehour/time?closing_time_*=<...>"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
 
 
 	def test_list_timegroup_without_school_permission(self):
