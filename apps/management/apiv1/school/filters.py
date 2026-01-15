@@ -60,16 +60,18 @@ class TimeGroupFilter(django_filters.FilterSet):
 	)
 	
 	is_active = django_filters.BooleanFilter(field_name="active")
-	
+
 	days = NumberInFilter(
 		field_name = "daysweek", 
 		lookup_expr = "day__in",
 		distinct = True
 	)
-
+	opening_time = django_filters.TimeRangeFilter()
+	closing_time = django_filters.TimeRangeFilter()
+	
 	class Meta:
 		model = models.TimeGroup
-		fields = ["type", "days", "is_active"]
+		fields = ["type", "days", "is_active", "opening_time", "closing_time"]
 
 
 class CalendarFilter(django_filters.FilterSet):
