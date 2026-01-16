@@ -1,3 +1,4 @@
+import datetime
 from django.utils import timezone
 
 import graphene
@@ -42,7 +43,7 @@ class SchoolQuery(graphene.ObjectType):
 	schoolCalendar = relay.ConnectionField(
 		CalendarConnection,
 		subdomain = graphene.String(required = True),
-		month = graphene.Argument(Months),
+		month = graphene.Argument(Months)
 	)
 
 
@@ -51,8 +52,6 @@ class SchoolQuery(graphene.ObjectType):
 			school = models.School.objects.get(subdomain = subdomain)
 		except models.School.DoesNotExist as e:
 			return models.School.objects.none()
-
-		current_month = timezone.localtime().month
 
 		settings = school.setting
 		news = school.newsList.filter(status = "publicado")[:10]		
@@ -74,11 +73,15 @@ class SchoolQuery(graphene.ObjectType):
 		except models.School.DoesNotExist as e:
 			return models.School.objects.none()
 
-		current_month = timezone.localtime().month if not month else Months.get(month).value
+		current_time = timezone.localtime()
+
+		search_month = current_time.month if not month else Months.get(month).value
+		search_year = current_time.year
 
 		calendar = school.calendarsList.filter(
-			date__month = current_month
-		)
+			date__month = search_month,
+			date__year = search_year
+		).order_by("date")
 
 		return calendar
 	
