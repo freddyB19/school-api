@@ -1,6 +1,15 @@
-import json
- 
+import json, pprint, datetime
+
+from django.utils import timezone
+
+from apps.graphql.school.types import Months
+from apps.school import models
+
+from tests import faker
+from tests.school.utils import bulk_create_calendar, create_calendar
+
 from .utils import testcases
+
 
 class SchoolQueryBySubdomainTest(testcases.SchoolQuerySubdomainTestCase):
 
@@ -58,10 +67,44 @@ class SchoolQuerySchoolService(testcases.SchoolQueryServicesTestCase):
 
 
 class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
+	def setUp(self):
+		super().setUp()
+		bulk_create_calendar(
+			size = 20,
+			school = self.school,
+		)
+
+		self.current_date = timezone.localtime()
+		self.variables_schoolCalendar = {
+			"subdomain": self.school.subdomain,
+			"month": Months.get(self.current_date.month).name,
+		}
+
 	def test_get_schoolCalendar(self):
 		"""
 			Fechas del calendario de una escuela
 		"""
+		
+		for day in range(1, 26):
+			date = datetime.date(self.current_date.year, self.current_date.month, day)
+			create_calendar(school = self.school, date = date)
+
+		other_date = faker.date_between(start_date = "-2y", end_date = "-1y")
+		bulk_create_calendar(
+			size = 5, 
+			school = self.school,
+			date = datetime.date(
+				other_date.year,
+				self.current_date.month,
+				other_date.day
+			)
+		)
+		
+		total_calendar = models.Calendar.objects.filter(
+			date__month = self.current_date.month,
+			date__year = self.current_date.year
+		).count()
+
 		result = self.query(
 			self.query_schoolCalendar,
 			variables = self.variables_schoolCalendar
@@ -74,6 +117,7 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		calendar = response["data"]["schoolCalendar"]
 
 		self.assertTrue(calendar["edges"])
+		self.assertEqual(len(calendar["edges"]), total_calendar)
 
 
 	def test_get_schoolCalendar_with_wrong_subdomain(self):
