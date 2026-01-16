@@ -265,11 +265,8 @@ class MSchoolNewsUpdateImagesRequest(serializers.Serializer):
 	)
 
 	def update(self, instance: News, validated_data: dict[str, ListUploadedFile]) -> News:
-		validated = school_dto.NewsUpdateImages(
-			images = validated_data.get("media")
-		)
 
-		command = commands.update_news_media(images = validated.images)
+		command = commands.add_newsmedia(media = validated_data.get("media"))
 
 		if not command.status:
 			raise serializers.ValidationError(
