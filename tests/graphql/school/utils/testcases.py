@@ -48,25 +48,9 @@ class SchoolQuerySubdomainTestCase(SchoolQueryTestCase):
 class SchoolQueryCalendarTestCase(SchoolQueryTestCase):
 	def setUp(self):
 		super().setUp()
-		self.current_date = timezone.localtime()
-
-		total_create_current_date = 5
 		
-		utils.bulk_create_calendar(
-			size = total_create_current_date,
-			school = self.school, 
-			date = self.current_date
-		)
-		utils.bulk_create_calendar(
-			size = 3,
-			school = self.school,
-		)
-
 		self.query_schoolCalendar = QUERY_SCHOOL_CALENDAR
-		self.variables_schoolCalendar = {
-			"subdomain": self.school.subdomain,
-			"month": Months.get(self.current_date.month).name,
-		}
+		
 
 
 class SchoolQueryServicesTestCase(SchoolQueryTestCase):
