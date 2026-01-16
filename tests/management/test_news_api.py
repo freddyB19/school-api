@@ -1300,12 +1300,13 @@ class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			kwargs = {"pk": id}
 		)
 
-	@unittest.skip("Esta función aún no está completada")
 	def test_update_news_images(self):
 		"""
 			Validar "PATCH /news-upload-images/:id"
 		"""
 		self.client.force_authenticate(user = self.user_with_update_perm)
+
+		total_newsmedia = self.news.media.count()
 
 		with tempfile.NamedTemporaryFile(suffix = ".jpg") as ntf:
 			img = Image.new("RGB", (10, 10))
@@ -1323,8 +1324,8 @@ class NewsUpdateDeleteImagesAPITest(testcases.NewsDetailUpdateDeleteTestCase):
 			responseJson = response.data
 			responseStatus = response.status_code
 
-			self.assertEqual(responseStatus, 200)
-
+			self.assertEqual(responseStatus, 202)
+			self.assertEqual(responseJson["id"], self.news.id)
 
 	def test_delete_all_news_images(self):
 		"""
