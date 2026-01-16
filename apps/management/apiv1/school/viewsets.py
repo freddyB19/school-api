@@ -121,17 +121,13 @@ class NewsDetailUpdateDeleteVS(DetailModelVS):
 			partial = True
 		)
 
-		if not serializer.is_valid():
-			return response.Response(
-				data = serializer.errors,
-				status = status.HTTP_400_BAD_REQUEST,
-			)
+		serializer.is_valid(raise_exception = True)
 
 		news = serializer.save()
 
 		return response.Response(
 			data = self.serializer_class(news).data,
-			status = status.HTTP_200_OK
+			status = status.HTTP_202_ACCEPTED
 		)
 
 	@action(detail = True, methods = ["delete"], url_name = "delete-all-images")
