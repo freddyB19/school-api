@@ -68,7 +68,7 @@ def get_school_by_id(id: int) -> ResultCommand:
 
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def add_newsmedia(media: ListUploadedFile) -> models.NewsMedia:
+def add_newsmedia(media: ListUploadedFile) -> ResultCommand:
 	# Conectarme a un servicio para subir la imagen
 	upload_images = [
 		{
@@ -90,7 +90,10 @@ def add_newsmedia(media: ListUploadedFile) -> models.NewsMedia:
 		for image in upload_images
 	]
 
-	return models.NewsMedia.objects.bulk_create(newsmedia)
+	return ResultCommand(
+		query = models.NewsMedia.objects.bulk_create(newsmedia),
+		status = True
+	)
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True))
 def add_news(news:NewsParam, school_id:int) -> models.News:
@@ -117,37 +120,13 @@ def create_news(school_id: int, news:NewsParam, images:ListUploadedFile | None =
 	news_created = add_news(news = news, school_id = school_id)
 
 	if images:
-		news_created.media.set( 
-			add_newsmedia(media = images) 
-		)
+		command = add_newsmedia(media = images)
+		if not command.status:
+			return command
+
+		news_created.media.set(command.query)
 
 	context.update({"query": news_created, "status": True})
-
-	return ResultCommand(**context)
-
-
-@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
-def update_news_media(images:ListUploadedFile = None) -> ResultCommand:
-	context = {
-		"status": False,
-	}
-
-	if not images:
-		context.update({
-			"errors": ["Debe pasar por lo menos una imagen"],
-			"error_code": status_code.HTTP_400_BAD_REQUEST
-		})
-	
-	# Conectarme a un servicio para subir la imagen
-	total_images = len(images)
-	upload_images = [
-		models.NewsMedia(photo = faker.image_url()) 
-		for _ in range(total_images)
-	]
-
-	newsmedia = models.NewsMedia.objects.bulk_create(upload_images)
-
-	context.update({"query": newsmedia, "status": True})
 
 	return ResultCommand(**context)
 
