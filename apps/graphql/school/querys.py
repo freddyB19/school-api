@@ -48,15 +48,14 @@ class SchoolQuery(graphene.ObjectType):
 
 
 	def resolve_schoolBySubdomain(root, info, subdomain):
-		try:
-			school = models.School.objects.get(subdomain = subdomain)
-		except models.School.DoesNotExist as e:
+		school = models.School.objects.filter(subdomain = subdomain).first()
+		if not school:
 			return models.School.objects.none()
 
-		settings = school.setting
-		news = school.newsList.filter(status = "publicado")[:10]		
-		socialMedia = school.socialMediasList.all()[:6]
-		coordinates = school.coordinatesList.all()
+		settings = models.SettingFormat.objects.get(school_id = school.id)
+		news = models.News.objects.filter(school_id = school.id)[:10]		
+		socialMedia = models.SocialMedia.objects.filter(school_id = school.id)
+		coordinates = models.Coordinate.objects.filter(school_id = school.id)
 
 		return SchoolHomePageType(
 			school = school,
