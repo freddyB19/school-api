@@ -109,10 +109,8 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		"""
 			Fechas del calendario de una escuela
 		"""
-		
-		for day in range(1, 26):
-			date = datetime.date(self.current_date.year, self.current_date.month, day)
-			create_calendar(school = self.school, date = date)
+		for _ in range(30):
+			create_calendar(school = self.school, date = faker.date_this_month())
 
 		other_date = faker.date_between(start_date = "-2y", end_date = "-1y")
 		bulk_create_calendar(
@@ -126,20 +124,23 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		)
 		
 		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
 			date__month = self.current_date.month,
 			date__year = self.current_date.year
 		).count()
+
 
 		result = self.query(
 			self.query_schoolCalendar,
 			variables = self.variables_schoolCalendar
 		)
 
-		self.assertResponseNoErrors(result)
+		responseJson = result.json()
+		resposeStatusCode = result.status_code
 
-		response = json.loads(result.content)
+		self.assertEqual(resposeStatusCode, 200)
 
-		calendar = response["data"]["schoolCalendar"]
+		calendar = responseJson["data"]["schoolCalendar"]
 
 		self.assertTrue(calendar["edges"])
 		self.assertEqual(len(calendar["edges"]), total_calendar)
@@ -149,16 +150,19 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		"""
 			Obtener fechas del calendario de una escuela pero, enviando un 'subdomain' incorrecto
 		"""
-		self.variables_schoolCalendar.update({"subdomain": "san-carmen"})
+		self.variables_schoolCalendar.update({"subdomain": faker.slug()})
 
 		result = self.query(
 			self.query_schoolCalendar,
 			variables = self.variables_schoolCalendar
 		)
 
-		response = json.loads(result.content)
+		responseJson = result.json()
+		resposeStatusCode = result.status_code
 
-		calendar = response["data"]["schoolCalendar"]
+		self.assertEqual(resposeStatusCode, 200)
+
+		calendar = responseJson["data"]["schoolCalendar"]
 
 		self.assertFalse(calendar["edges"])
 
@@ -166,14 +170,27 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 	def test_get_schoolCalendar_current_month(self):
 		"""
 			Obtener fechas del calendario del mes actual de una escuela
+			- Sin definir parámetro de búsqueda: [month]
 		"""
 		self.variables_schoolCalendar.pop("month")
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			date__month = self.current_date.month,
+			date__year = self.current_date.year
+		).count()
 
 		result = self.query(
 			self.query_schoolCalendar,
 			variables = self.variables_schoolCalendar
 		)
 
-		response = json.loads(result.content)
+		responseJson = result.json()
+		resposeStatusCode = result.status_code
 
-		calendar = response["data"]["schoolCalendar"]
+		self.assertEqual(resposeStatusCode, 200)
+
+		calendar = responseJson["data"]["schoolCalendar"]
+
+		self.assertTrue(calendar["edges"])
+		self.assertEqual(len(calendar["edges"]), total_calendar)
