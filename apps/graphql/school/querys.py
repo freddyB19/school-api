@@ -67,9 +67,8 @@ class SchoolQuery(graphene.ObjectType):
 
 
 	def resolve_schoolCalendar(root, info, subdomain, month = None, **kwargs):
-		try:
-			school = models.School.objects.get(subdomain = subdomain)
-		except models.School.DoesNotExist as e:
+		school = models.School.objects.filter(subdomain = subdomain).first()
+		if not school:
 			return models.School.objects.none()
 
 		current_time = timezone.localtime()
@@ -77,12 +76,13 @@ class SchoolQuery(graphene.ObjectType):
 		search_month = current_time.month if not month else Months.get(month).value
 		search_year = current_time.year
 
-		calendar = school.calendarsList.filter(
+		list_calendar = models.Calendar.objects.filter(
+			school_id = school.id,
 			date__month = search_month,
 			date__year = search_year
 		).order_by("date")
 
-		return calendar
+		return list_calendar
 	
 
 	def resolve_schoolServiceOffline(root, info, schoolId):
