@@ -43,6 +43,31 @@ class SchoolQueryBySubdomainTest(testcases.SchoolQuerySubdomainTestCase):
 		self.assertTrue(school["coordinates"])
 
 
+	def test_get_schoolBySubdomain_with_wrong_subdomain(self):
+		"""
+			Obtener un error por 'subdomain' invalida
+		"""
+
+		self.variables_schoolBySubdomain.update({"subdomain": faker.slug()})
+
+		result = self.query(
+			self.query_schoolBySubdomain,
+			variables = self.variables_schoolBySubdomain
+		)
+
+		responseJson = result.json()
+		responseStatusCode = result.status_code
+		
+		self.assertEqual(responseStatusCode, 200)
+		
+		school = responseJson["data"]["schoolBySubdomain"]
+
+		self.assertIsNone(school["school"])
+		self.assertIsNone(school["settings"])
+		self.assertIsNone(school["networks"])
+		self.assertIsNone(school["news"])
+		self.assertIsNone(school["coordinates"])
+
 class SchoolQuerySchoolService(testcases.SchoolQueryServicesTestCase):
 	def test_get_schoolService(self):
 		"""
