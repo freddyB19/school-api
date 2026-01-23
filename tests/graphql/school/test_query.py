@@ -145,10 +145,48 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		self.assertTrue(calendar["edges"])
 		self.assertEqual(len(calendar["edges"]), total_calendar)
 
+	def test_get_schoolCalendar_filter_by_month(self):
+		"""
+			Obtener fechas del calendario, definiendo parámetro de búsqueda [month] 
+		"""
+		current_year = self.current_date.year
+		for month in range(1, 13):
+			calendars = bulk_create_calendar(
+				size = faker.random_int(min = 10, max = 20), 
+				school = self.school,
+				date = datetime.date(
+					current_year, 
+					month, 
+					faker.random_int(min = 1, max = 26)
+				)
+			)
+
+		search_month = faker.random_int(min = 1, max = 12)
+		self.variables_schoolCalendar.update({"month": Months.get(search_month).name})
+
+		total_calendar = models.Calendar.objects.filter(
+			school_id = self.school.id,
+			date__month = search_month,
+			date__year = current_year
+		).count()
+
+		result = self.query(
+			self.query_schoolCalendar,
+			variables = self.variables_schoolCalendar
+		)
+
+		responseJson = result.json()
+		resposeStatusCode = result.status_code
+
+		self.assertEqual(resposeStatusCode, 200)
+
+		calendar = responseJson["data"]["schoolCalendar"]
+
+		self.assertEqual(len(calendar["edges"]), total_calendar)
 
 	def test_get_schoolCalendar_with_wrong_subdomain(self):
 		"""
-			Obtener fechas del calendario de una escuela pero, enviando un 'subdomain' incorrecto
+			Obtener fechas del calendario de una escuela, pero enviando un 'subdomain' incorrecto
 		"""
 		self.variables_schoolCalendar.update({"subdomain": faker.slug()})
 
