@@ -1,72 +1,83 @@
-import json, pprint
+import pprint
 
 from apps.management import models
 
 from tests import faker
 
-from .utils import testcases, schemas
+from .utils import testcases, utils
+
 
 class AdministratorDetailQueryTest(testcases.AdminDetailQueryTestCase):
 
-	def test_get_detail_administrator_info(self):
+	def test_get_detail_administrator(self):
 		"""
 			Validar obtener el detalle de una administración
 		"""
-		total_admins = self.administrator.users.count()
+		total_admins = len(self.administrator.users.all())
 
-		result = self.query(
-			self.query_administrator_detail,
-			variables = self.variables_administrator_detail,
-			headers = self.headers
+		result = self.client.query(
+			self.query,
+			headers = self.headers,
+			variables = self.variables,
 		)
 
-		self.assertResponseNoErrors(result)
+		self.assertIsNone(result.errors)
+		
+		response = result.data.get("administrator")
 
-		response = json.loads(result.content)
-
-		detail = response["data"]["detail"]
-		admins = response["data"]["admins"]["edges"]
-
-		self.assertEqual(int(detail["id"]), self.administrator.id)
-		self.assertEqual(int(detail["school"]["id"]), self.school.id)
-		self.assertEqual(len(admins), total_admins)
-
-		admin = admins[0]['node']
-
-		self.assertTrue(
-			self.administrator.users.filter(id = admin["userId"]).exists()
-		)
-
+		self.assertTrue(response)
+		self.assertEqual(response["id"], str(self.administrator.id))
+		self.assertEqual(response["school"]["id"], str(self.school.id))
+		self.assertEqual(response["users"]["totalCount"], total_admins)
 	
 	def test_get_administrator_when_does_not_exist(self):
 		"""
 			Intentanto obtener el detalle de una administración que no existe
 		"""
-		admin_id = models.Administrator.objects.last().id
+		last_admin_id = models.Administrator.objects.last().id
 		
-		# Nos basamos en el último ID y le sumamos 1, para generar un ID falso
-		variables = {
-			"pk": faker.random_int(min = admin_id + 1),
-			"first": 2
-		}
+		self.variables.update({"pk": faker.random_int(min = last_admin_id + 1)})
 
-		admins_total_elements = 0
-
-		result = self.query(
-			self.query_administrator_detail,
-			variables = variables,
-			headers = self.headers
+		result = self.client.query(
+			self.query,
+			headers = self.headers,
+			variables = self.variables,
 		)
 
-		self.assertResponseNoErrors(result)
+		self.assertIsNone(result.errors)
 
-		response = json.loads(result.content)
-
-		detail = response["data"]["detail"]
-		admins = response["data"]["admins"]
+		response = result.data["administrator"]['messages']
 		
-		self.assertIsNone(detail)
-		self.assertEqual(
-			len(admins["edges"]), 
-			admins_total_elements
+		responseStatusCode = response[0]["code"]["status"]
+		
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_get_detail_administrator_with_wrong_user(self):
+		"""
+			Generar un error por intentar acceder a información que no se tiene permiso
+		"""
+		authorization = utils.authorization_user()
+
+		self.headers['Authorization'] = f"Bearer {authorization['token']}"
+
+		result = self.client.query(
+			self.query,
+			headers = self.headers,
+			variables = self.variables,
 		)
+
+		response = result.data["administrator"]['messages']
+		responseStatusCode = response[0]["code"]["status"]
+
+		self.assertEqual(responseStatusCode, 403)
+
+	def test_get_detail_administrator_without_authentication(self):
+		"""
+			Generar error por obtener detalle de una administración sin autenticar
+		"""
+		result = self.client.query(self.query, variables = self.variables)
+		
+		response = result.data["administrator"]['messages']
+		responseStatusCode = response[0]["code"]["status"]
+
+		self.assertEqual(responseStatusCode, 401)

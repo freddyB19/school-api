@@ -1,114 +1,51 @@
-import datetime
 from django.utils import timezone
 
-import graphene
-from graphene import relay
+import strawberry, strawberry_django
+from strawberry_django.relay import DjangoListConnection
+from strawberry_django.pagination import OffsetPaginated
 
 from apps.school import models
 
 from .types import (
-	Months,
-	SchoolType,
-	NewsType,
-	CalendarConnection,
-	SettingsType,
-	SocialMediaType,
-	CoordinateType,
-	InfraestructureType,
-	DownloadType,
-	RepositoryType,
-	SchoolHomePageType,
-	ServiceOnlineType,
-	ServiceOfflineType
-
+	MonthsEnum,
+	School,
+	News,
+	Calendar,
+	CalendarOrder,
+	SettingFormat,
+	SocialMedia,
+	Coordinate,
+	Infraestructure,
+	Download,
+	Repository
 )
 
 
-class SchoolQuery(graphene.ObjectType):
-	schoolBySubdomain = graphene.Field(
-		SchoolHomePageType, 
-		subdomain = graphene.String(required = True)
-	)
+@strawberry.type
+class SchoolQuery:
+	settings: list[SettingFormat] = strawberry_django.field()
+	socialmedia: list[SocialMedia] = strawberry_django.field(pagination=True)
+	news: DjangoListConnection[News] = strawberry_django.connection()
+	download: DjangoListConnection[Download] = strawberry_django.connection()
+	coordinate: DjangoListConnection[Coordinate] = strawberry_django.connection()
+	repository: DjangoListConnection[Repository] = strawberry_django.connection()
+	infraestructure: DjangoListConnection[Infraestructure] = strawberry_django.connection()
 
-	schoolServiceOffline = graphene.Field(
-		ServiceOfflineType,
-		schoolId = graphene.Int(required = True)
-	)
+	@strawberry_django.field
+	def school(self, subdomain: str) -> School | None:
+		return models.School.objects.filter(subdomain = subdomain).first()
 
-	schoolServiceOnline = graphene.Field(
-		ServiceOnlineType,
-		schoolId = graphene.Int(required = True)
-	)
-
-	schoolCalendar = relay.ConnectionField(
-		CalendarConnection,
-		subdomain = graphene.String(required = True),
-		month = graphene.Argument(Months)
-	)
-
-
-	def resolve_schoolBySubdomain(root, info, subdomain):
-		school = models.School.objects.filter(subdomain = subdomain).first()
-		if not school:
-			return models.School.objects.none()
-
-		settings = models.SettingFormat.objects.get(school_id = school.id)
-		news = models.News.objects.filter(school_id = school.id)[:10]		
-		socialMedia = models.SocialMedia.objects.filter(school_id = school.id)
-		coordinates = models.Coordinate.objects.filter(school_id = school.id)
-
-		return SchoolHomePageType(
-			school = school,
-			news = news,
-			settings = settings,
-			networks = socialMedia,
-			coordinates = coordinates
-		)
-
-
-	def resolve_schoolCalendar(root, info, subdomain, month = None, **kwargs):
-		school = models.School.objects.filter(subdomain = subdomain).first()
-		if not school:
-			return models.School.objects.none()
-
+	@strawberry_django.offset_paginated(OffsetPaginated[Calendar], order = CalendarOrder)
+	def calendar(self, subdomain: str, month: MonthsEnum = None) -> list[Calendar] | None:
+		
 		current_time = timezone.localtime()
 
-		search_month = current_time.month if not month else Months.get(month).value
-		search_year = current_time.year
+		search_month = month if month else current_time.month
 
-		list_calendar = models.Calendar.objects.filter(
-			school_id = school.id,
+		calendar = models.Calendar.objects.filter(
+			school__subdomain = subdomain,
 			date__month = search_month,
-			date__year = search_year
-		).order_by("date")
-
-		return list_calendar
-	
-
-	def resolve_schoolServiceOffline(root, info, schoolId):
-		MAX_LEN_SERVICE_OFFLINE = 11
-
-		infraestructures = models.Infraestructure.objects.filter(
-			school_id = schoolId
-		)[:MAX_LEN_SERVICE_OFFLINE]
-		
-		return ServiceOfflineType(
-			infraestructures = infraestructures
+			date__year = current_time.year
 		)
 
-
-	def resolve_schoolServiceOnline(root, info, schoolId):
-		MAX_LEN_SERVICE_ONLINE = 11
-
-		downloads = models.Download.objects.filter(
-			school_id = schoolId
-		)[:MAX_LEN_SERVICE_ONLINE]
-
-		repositories = models.Repository.objects.filter(
-			school_id = schoolId
-		)[:MAX_LEN_SERVICE_ONLINE]
-
-		return ServiceOnlineType(
-			downloads = downloads,
-			repositories = repositories
-		)
+		return calendar

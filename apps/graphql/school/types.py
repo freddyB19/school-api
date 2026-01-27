@@ -1,12 +1,15 @@
-import graphene
-from graphene import relay
-from graphene_django import DjangoObjectType
-from graphene_django import DjangoListField
+
+from enum import IntEnum
+
+import strawberry, strawberry_django
+
+from strawberry import auto, relay
 
 from apps.school import models
 
 
-class Months(graphene.Enum):
+@strawberry.enum
+class MonthsEnum(IntEnum):
 	ENE = 1
 	FEB = 2
 	MAR = 3
@@ -20,108 +23,184 @@ class Months(graphene.Enum):
 	NOV = 11
 	DIC = 12
 
+@strawberry_django.filter_type(models.School)
+class SchoolFilter:
+	id: auto
+	subdomain: auto
 
-class SchoolType(DjangoObjectType):
-	class Meta:
-		model = models.School
-		fields = "__all__"
-
-
-class NewsType(DjangoObjectType):
-	photo = graphene.String()
-
-	class Meta:
-		model = models.News
-		exclude = ("school", "media", "status", "description")
-
-	def resolve_photo(obj, info):
-
-		media = obj.media.first()
-		return media.photo
+@strawberry_django.type(models.School, filters=SchoolFilter)
+class School:
+	id: auto
+	name: auto
+	subdomain: auto
+	logo: auto
+	address: auto
+	mission: auto
+	vision: auto
+	history: auto
+	private: auto
 
 
-class CalendarType(DjangoObjectType):
-	calendarId = graphene.Int()
+@strawberry_django.filter_type(models.News)
+class NewsFilter:
+	school: SchoolFilter | None
 
-	class Meta:
-		model = models.Calendar
-		exclude = ("school", "description")
-		interfaces = (relay.Node, )
+@strawberry_django.order_type(models.News)
+class NewsOrder:
+	created: auto
+	updated: auto
 
-	def resolve_calendarId(obj, info):
-		return obj.id
-
-
-class CalendarConnection(relay.Connection):
-
-	class Meta:
-		node = CalendarType
+@strawberry_django.type(models.NewsMedia)
+class NewsMedia:
+	photo: auto
 
 
-class SettingsType(DjangoObjectType):
-	color = graphene.List(graphene.String)
-	
-	class Meta:
-		model = models.SettingFormat
-		exclude = ("colors", "school", "id")
-
-	def resolve_color(obj, info):
-		return [data.color for data in obj.colors.all()]
-
-
-class SocialMediaType(DjangoObjectType):
-	class Meta:
-		model = models.SocialMedia
-		fields = ("profile", )
+@strawberry_django.type(models.News, filters = NewsFilter, ordering = NewsOrder)
+class News(relay.Node):
+	id: auto
+	title: auto
+	created: auto
+	updated: auto
+	media: list[NewsMedia] = strawberry_django.field(
+		prefetch_related = "media"
+	) 
 
 
-class CoordinateType(DjangoObjectType):
-	class Meta:
-		model = models.Coordinate
-		exclude = ("school", ) 
+
+@strawberry_django.order_type(models.Calendar)
+class CalendarOrder:
+	date: auto
+
+@strawberry_django.filter_type(models.Calendar)
+class CalendarFilter:
+	school: SchoolFilter | None
+
+@strawberry_django.type(models.Calendar)
+class Calendar:
+	id: auto
+	title: auto
+	date: auto
 
 
-class InfraestructureType(DjangoObjectType):
-	photo = graphene.String()
-	
-	class Meta:
-		model = models.Infraestructure
-		exclude = ("school", "description", "media") 
+@strawberry_django.type(models.ColorHexFormat)
+class ColorHexFormat:
+	color: auto
 
-	def resolve_photo(obj, info):
-		media = obj.media.first()
-		return media.photo
+@strawberry_django.filter_type(models.SettingFormat)
+class SettingFormatFilter:
+	school: SchoolFilter | None
 
 
-class DownloadType(DjangoObjectType):
-	class Meta:
-		model = models.Download
-		exclude = ("school", "description")
+@strawberry_django.type(models.SettingFormat, filters = SettingFormatFilter)
+class SettingFormat:
+	colors: list[ColorHexFormat]
 
 
-class RepositoryType(DjangoObjectType):
-	project = graphene.String(required = True)
 
-	class Meta:
-		model = models.Repository
-		exclude = ("school", "name_project", "media", "description")
-
-	def resolve_project(obj, info):
-		return obj.name_project
+@strawberry_django.filter_type(models.SocialMedia)
+class SocialMediaFilter:
+	school: SchoolFilter | None
 
 
-class SchoolHomePageType(graphene.ObjectType):
-	school = graphene.Field(SchoolType)
-	news = graphene.List(NewsType) # DjangoListField(NewsType)
-	settings = graphene.Field(SettingsType)
-	networks = graphene.List(SocialMediaType) # DjangoListField(SocialMediaType)
-	coordinates = graphene.List(CoordinateType) # DjangoListField(CoordinateType)
+@strawberry_django.type(models.SocialMedia, filters = SocialMediaFilter)
+class SocialMedia:
+	profile: auto
 
 
-class ServiceOnlineType(graphene.ObjectType):
-	downloads = graphene.List(DownloadType) # DjangoListField(DownloadType)
-	repositories = graphene.List(RepositoryType) # DjangoListField(RepositoryType)
+@strawberry_django.order_type(models.Coordinate)
+class CoordinateOrder:
+	title: auto
+
+@strawberry_django.filter_type(models.Coordinate)
+class CoordinateFilter:
+	school: SchoolFilter | None
 
 
-class ServiceOfflineType(graphene.ObjectType):
-	infraestructures = graphene.List(InfraestructureType) # DjangoListField(InfraestructureType)
+@strawberry_django.type(models.Coordinate, filters = CoordinateFilter, ordering = CoordinateOrder)
+class Coordinate(relay.Node):
+	id: auto
+	title: auto
+	latitude: auto
+	longitude: auto
+
+
+@strawberry_django.order_type(models.Infraestructure)
+class InfraestructureOrder:
+	name: auto
+
+
+@strawberry_django.filter_type(models.Infraestructure)
+class InfraestructureFilter:
+	school: SchoolFilter | None
+
+
+@strawberry_django.type(models.InfraestructureMedia)
+class InfraestructureMedia:
+	photo: auto
+
+
+@strawberry_django.type(models.Infraestructure, filters = InfraestructureFilter, ordering = InfraestructureOrder)
+class Infraestructure(relay.Node):
+	id: strawberry.relay.GlobalID
+	name: auto
+	media: list[InfraestructureMedia] = strawberry_django.field(
+		prefetch_related = ["media"]
+	)
+
+
+@strawberry_django.order_type(models.Download)
+class DownloadOrder:
+	title: auto
+
+@strawberry_django.filter_type(models.Download)
+class DownloadFilter:
+	school: SchoolFilter | None
+
+@strawberry_django.type(models.Download, filters = DownloadFilter, ordering = DownloadOrder)
+class Download(relay.Node):
+	id: auto
+	title: auto
+	file: auto
+
+
+@strawberry_django.order_type(models.Repository)
+class RepositoryOrder:
+	created:auto
+	updated: auto
+
+
+@strawberry_django.filter_type(models.Repository)
+class RepositoryFilter:
+	school: SchoolFilter | None
+
+
+@strawberry_django.type(models.RepositoryMediaFile)
+class RepositoryMediaFile:
+	title: auto
+	file: auto
+
+
+@strawberry_django.type(models.Repository, filters = RepositoryFilter, ordering = RepositoryOrder)
+class Repository(relay.Node):
+	id: auto
+	name_project: auto
+	created: auto
+	updated: auto
+	media: list[RepositoryMediaFile] = strawberry_django.field(
+		prefetch_related = ["media"]
+	)
+
+
+__all__ = [
+	"MonthsEnum",
+	"CalendarOrder",
+	"School",
+	"News",
+	"Calendar",
+	"SettingFormat",
+	"SocialMedia",
+	"Coordinate",
+	"Infraestructure",
+	"Download",
+	"Repository"
+]

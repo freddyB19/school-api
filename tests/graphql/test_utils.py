@@ -1,63 +1,65 @@
 from unittest import mock
 
-from graphql import GraphQLError
+from django.utils import timezone
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import AnonymousUser
+
+from freezegun import freeze_time
+
+from tests import faker
 
 from apps.graphql.utils import (
-	get_user,
-	get_payload,
 	decode_token,
-	get_user_by_id,
 	get_user_by_payload,
+	get_user_from_token,
 	get_http_authorization,
 )
 from apps.graphql import exceptions
 
-from .utils import encode_token, PAYLOAD_SET_EXP
-from .utils import testcases
+from .utils import testcases, encode_token, PAYLOAD_SET_EXP, create_token
 
 
-class GetHTTPAuthorizationTest(testcases.GetHTTPAuthorizationTestCase):		
+class GetHTTPAuthorizationTest(testcases.GetHTTPAuthorizationTestCase):
+	def setUp(self):
+		super().setUp()
+		self.token = faker.sha256()	
 
 	def test_get_authorization_header(self):
 		"""
-			Obtener token del 'header'
+			Obtener token del 'Header'
 		"""
-		headers = {
-			self.HEADER_NAME: f"{self.HEADER_PREFIX} {self.token}"
-		}
+		headers = f"{self.HEADER_PREFIX} {self.token}"
 
-		request = self.request_factory.get("/", **headers)
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 
-		auth_header = get_http_authorization(request = request)
+		is_token = get_http_authorization(request = request)
 
-		self.assertEqual(auth_header, self.token)
-
+		self.assertTrue(is_token)
+		self.assertIsInstance(is_token, str)
 
 	def test_invalid_header_prefix(self):
 		"""
-			Obtener un 'None' por pasar un prefijo incorrecto en el 'header'
+			Obtener un 'None' por pasar un prefijo incorrecto en el 'Header'
 		"""
-		headers = {
-			self.HEADER_NAME: f"Token {self.token}"
-		}
+		headers = f"Token {self.token}"
 
-		request = self.request_factory.get("/", **headers)
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 		
-		auth_header = get_http_authorization(request = request)
+		is_token = get_http_authorization(request = request)
 
-		self.assertIsNone(auth_header)
+		self.assertIsNone(is_token)
 
 	def test_without_authorization_header(self):
 		"""
-			Obtener un 'None' por no pasar nada en el 'header'
+			Obtener un 'None' por no pasar nada en el 'Header'
 		"""
 		headers = {}
 		
-		request = self.request_factory.get("/", **headers)
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 		
-		auth_header = get_http_authorization(request = request)
+		is_token = get_http_authorization(request = request)
 
-		self.assertIsNone(auth_header)
+		self.assertIsNone(is_token)
 
 
 class DecodeTokenTest(testcases.HTTPAuthorizationTestCase):
@@ -71,7 +73,6 @@ class DecodeTokenTest(testcases.HTTPAuthorizationTestCase):
 		with self.assertRaisesMessage(exceptions.JWTDecodeError, exceptions.JWT_ERROR_MESSAGE_EXPIRED):
 			decode_token(token)
 
-
 	def test_decode_error(self):
 		"""
 			Ausencia de segmentos en el token
@@ -82,54 +83,26 @@ class DecodeTokenTest(testcases.HTTPAuthorizationTestCase):
 			decode_token(token[1:])
 
 
-class GetUserByIDTest(testcases.HTTPAuthorizationTestCase):
-
-	def test_get_user(self):
-		"""
-			Obtener un usuario por su ID
-		"""
-		user_id = self.user.id
-
-		user = get_user_by_id(user_id)
-
-		self.assertIsNotNone(user)
-		self.assertEqual(user.id, user_id)
-
-
-	def test_user_does_not_exists(self):
-		"""
-			Obtener un 'None' cuando no existe un usuario
-		"""
-		user_id = 5
-
-		user = get_user_by_id(user_id)
-
-		self.assertIsNone(user)
-
-
 class GetUserbyPayloadTest(testcases.HTTPAuthorizationTestCase):
 
 	def test_get_user_by_payload(self):
 		"""
 			Obtener un usuario mediate un diccionario que almecena el ID de un usuario
 		"""
-
 		payload = {"user_id": self.user.id}
 
 		user = get_user_by_payload(payload)
 
-		self.assertTrue(user)
+		self.assertNotIsInstance(user, AnonymousUser)
 		self.assertEqual(user.id, self.user.id)
-
 
 	def test_get_user_by_invalid_payload(self):
 		"""
 			Enviando un diccionario con formato invalido
 		"""
+		user = get_user_by_payload({})
 
-		with self.assertRaises(exceptions.InvalidPayload):
-			user = get_user_by_payload({})
-
+		self.assertIsInstance(user, AnonymousUser)
 
 	def test_get_user_does_not_exists_by_payload(self):
 		"""
@@ -137,8 +110,9 @@ class GetUserbyPayloadTest(testcases.HTTPAuthorizationTestCase):
 		"""
 		payload = {"user_id": 5}
 		
-		with self.assertRaises(exceptions.InvalidUser):
-			user = get_user_by_payload(payload)
+		user = get_user_by_payload(payload)
+		self.assertIsInstance(user, AnonymousUser)
+
 
 	@mock.patch(
 		"apps.graphql.utils.UserModel.is_active",
@@ -151,74 +125,81 @@ class GetUserbyPayloadTest(testcases.HTTPAuthorizationTestCase):
 		"""
 		payload = {"user_id": self.user.id}
 
-		with self.assertRaises(exceptions.UserIsNotActive):
-			user = get_user_by_payload(payload)
+		user = get_user_by_payload(payload)
+		self.assertIsInstance(user, AnonymousUser)
 
 
-class GetPayloadTest(testcases.HTTPAuthorizationTestCase):
+class GetUserFromToken(testcases.GetHTTPAuthorizationTestCase):
 
-	def test_get_payload_from_token(self):
+	def test_valid_token(self):
 		"""
-			Obtener información apartir de un token
+			Validar obtener un usuario desde un token
 		"""
-		token = encode_token(user = self.user)
+		token = create_token(user_id = self.user.id)
+		headers = f"{self.HEADER_PREFIX} {token}"
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 
-		payload = get_payload(token)
+		is_user = get_user_from_token(request = request)
 
-		self.assertTrue(isinstance(payload, dict))
+		self.assertNotIsInstance(is_user, AnonymousUser)
+		self.assertEqual(is_user.id, self.user.id)
 
-	def test_error_from_invalid_token(self):
-		token = encode_token(user = self.user, exp_time=PAYLOAD_SET_EXP({"seconds": -1}))
-
-		with self.assertRaises(GraphQLError):
-			payload = get_payload(token)
-
-
-class GetUserTest(testcases.HTTPAuthorizationTestCase):
-
-	def test_get_user_from_payload(self):
+	def test_valid_token_with_invalid_header(self):
 		"""
-			Obtener un usuario a partir de un 'payload'
+			Obtener un usuario 'Anonimo' por  petición con una cabecera invalida
 		"""
+		token = create_token(user_id = self.user.id)
+		headers = f"JWT {token}"
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 
-		payload = {"user_id": self.user.id}
+		is_user = get_user_from_token(request = request)
+		self.assertIsInstance(is_user, AnonymousUser)
 
-		user = get_user(payload)
-
-		self.assertIsNotNone(user)
-		self.assertEqual(user.id, self.user.id)
-
-	def test_get_user_from_invalid_payload(self):
+	def test_valid_expired_token(self):
 		"""
-			Intentando obtener un usuario de un 'payload' incorrecto
+			Obtener un usuario 'Anonimo' por token expirado
 		"""
+		curre_date = timezone.localtime()
 
-		user = get_user({})
+		create_date = f"{curre_date.year}-{curre_date.month}-{curre_date.day}"
 
-		self.assertIsNone(user)
+		with freeze_time(f"{create_date} 12:00"):
+			expired_token = encode_token(user = self.user)
+		
+		headers = f"{self.HEADER_PREFIX} {expired_token}"
+		
+		with freeze_time(f"{create_date} 15:00"):
+			request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
+
+			is_user = get_user_from_token(request = request)
+
+			self.assertIsInstance(is_user, AnonymousUser)
 
 	@mock.patch(
 		"apps.graphql.utils.UserModel.is_active",
-		new_callable = mock.PropertyMock,
-		return_value =  False
+        new_callable=mock.PropertyMock,
+		return_value = False
 	)
-	def test_get_disabled_user_from_payload(self, *args):
+	def test_valid_token_with_disabled_user(self, *args):
 		"""
-			Intentando obtener un usuario desactivado 
+			Obtener un usuario 'Anonimo' por cuenta del usuario desactivada
 		"""
-		payload = {"user_id": self.user.id}
+		token = create_token(user_id = self.user.id)
+		headers = f"{self.HEADER_PREFIX} {token}"
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 
-		user = get_user(payload)
+		is_user = get_user_from_token(request = request)
+		self.assertIsInstance(is_user, AnonymousUser)
 
-		self.assertIsNone(user)
-
-	def test_get_user_does_not_exists_from_payload(self):
+	def test_valid_token_with_non_existent_user(self):
 		"""
-			Intentando obtener un usuario que no existe
+			Obtener un usuario 'Anonimo' por cuenta del usuario no existente
 		"""
+		wrong_user_id = get_user_model().objects.last().id
+		
+		token = create_token(user_id = faker.random_int(min = wrong_user_id + 1))
+		headers = f"{self.HEADER_PREFIX} {token}"
+		request = self.request_factory.get("/", HTTP_AUTHORIZATION = headers)
 
-		payload = {"user_id": 5}
-
-		user = get_user(payload)
-
-		self.assertIsNone(user)
+		is_user = get_user_from_token(request = request)
+		self.assertIsInstance(is_user, AnonymousUser)

@@ -1,83 +1,123 @@
-from unittest import mock
 
+from django.utils import timezone
 from django.contrib.auth.models import AnonymousUser
 
-from graphql import GraphQLError
 
-from apps.graphql import exceptions 
+from freezegun import freeze_time
 
-from .utils import testcases
+from apps.graphql.middleware import GraphqlJWTAuthMiddleware
+
+from .utils import testcases, encode_token, PAYLOAD_SET_EXP, create_token
 
 
-class AuthorizationMiddlewareTest(testcases.AuthorizationMiddlewareTestCase):
+class JWTAuthorizationMiddlewareTest(testcases.AuthorizationMiddlewareTestCase):
+	def setUp(self):
+		super().setUp()
+		self.URL = "/graphql"
 
 	def test_authorization_user(self):
 		"""
 			Validar la autenticación de un usuario
 		"""
-		header = {
-			self.HEADER_NAME: f"{self.HEADER_PREFIX} {self.token}"
-		}
+		headers = f"{self.HEADER_PREFIX} {self.token}"
 
-		next_mock = mock.Mock()
+		request = self.request_factory.get(self.URL, HTTP_AUTHORIZATION = headers)
 
-		info_mock = self.info_mock(user = AnonymousUser(), header = header)
+		middleware = GraphqlJWTAuthMiddleware(lambda get_request: get_request)
+		middleware(request)
 
-		self.middleware.resolve(next_mock, None, info_mock)
-
-		next_mock.assert_called_once_with(None, info_mock)
-
-		self.assertEqual(info_mock.context.user.id, self.user.id)
-
+		self.assertTrue(request.user.is_authenticated)
+		self.assertEqual(request.user.id, self.user.id)
 
 	def test_authorization_user_with_invalid_prefix(self):
 		"""
-			No autenticar por enviar un prefijo invalido en el 'header'
+			No autenticar por enviar un prefijo invalido en el 'Header'
 		"""
-		header = {
-			self.HEADER_NAME: f"Token {self.token}"
-		}
+		headers = f"Token {self.token}"
 
-		next_mock = mock.Mock()
+		request = self.request_factory.get(self.URL, HTTP_AUTHORIZATION = headers)
 
-		info_mock = self.info_mock(user = AnonymousUser(), header = header)
+		middleware = GraphqlJWTAuthMiddleware(lambda get_request: get_request)
+		middleware(request)
 
-		self.middleware.resolve(next_mock, None, info_mock)
+		self.assertTrue(request.user.is_anonymous)
 
-		next_mock.assert_called_once_with(None, info_mock)
-
-		self.assertIsInstance(info_mock.context.user, AnonymousUser)
-
-
-	def test_authorization_user_without_header(self):
+	def test_authorization_user_without_token(self):
 		"""
-			No autenticar por no enviar un 'header'
+			No autenticar por no enviar un token en el 'Header'
 		"""
+		headers = {}
+		request_without_header = self.request_factory.get(self.URL)
+		request_with_wrong_header = self.request_factory.get(
+			self.URL, 
+			HTTP_AUTHORIZATION = headers
+		)
 
-		next_mock = mock.Mock()
+		middleware_without_header = GraphqlJWTAuthMiddleware(
+			lambda get_request: get_request
+		)
+		middleware_without_header(request_without_header)
 
-		info_mock = self.info_mock(user = AnonymousUser())
+		middleware_with_wrong_header = GraphqlJWTAuthMiddleware(
+			lambda get_request: get_request
+		)
+		middleware_with_wrong_header(request_with_wrong_header)
 
-		self.middleware.resolve(next_mock, None, info_mock)
-
-		next_mock.assert_called_once_with(None, info_mock)
-
-		self.assertIsInstance(info_mock.context.user, AnonymousUser)
-
+		self.assertTrue(request_without_header.user.is_anonymous)
+		self.assertTrue(request_with_wrong_header.user.is_anonymous)
 
 	def test_authorization_user_with_invalid_token(self):
 		"""
-			No autenticar por enviar un token invalido en el 'header'
+			No autenticar por enviar un token invalido
 		"""
-		header = {
-			self.HEADER_NAME: f"{self.HEADER_PREFIX} invalid"
-		}
+		headers = f"{self.HEADER_PREFIX} esto-no-es-jwt"
+		
+		request = self.request_factory.get(self.URL, HTTP_AUTHORIZATION = headers)
 
-		next_mock = mock.Mock()
+		middleware = GraphqlJWTAuthMiddleware(lambda get_request: get_request)
+		middleware(request)
 
-		info_mock = self.info_mock(user = AnonymousUser(), header = header)
+		self.assertTrue(request.user.is_anonymous)
 
-		with self.assertRaises(GraphQLError):
-			self.middleware.resolve(next_mock, None, info_mock)
+	def test_authorization_user_with_expired_token(self):
+		"""
+			No autenticar por enviar token expirado
+		"""
+		curre_date = timezone.localtime()
 
-		next_mock.assert_not_called()
+		create_date = f"{curre_date.year}-{curre_date.month}-{curre_date.day}"
+
+		with freeze_time(f"{create_date} 12:00"):
+			expired_token = encode_token(user = self.user, exp_time = PAYLOAD_SET_EXP())
+
+		headers = f"{self.HEADER_PREFIX} {expired_token}"
+
+		with freeze_time(f"{create_date} 15:00"):
+		
+			request = self.request_factory.get(self.URL, HTTP_AUTHORIZATION = headers)
+
+			middleware = GraphqlJWTAuthMiddleware(lambda get_request: get_request)
+			middleware(request)
+
+			self.assertTrue(request.user.is_anonymous)
+
+
+class MiddlewareEfficiencyTest(testcases.GetHTTPAuthorizationTestCase):
+	def setUp(self):
+		super().setUp()
+		self.URL = "/graphql"
+		token = create_token(user_id = self.user.id)
+		self.headers = f"{self.HEADER_PREFIX} {token}"
+
+	def test_middleware_is_lazy(self):
+		"""
+			Verificar que el middleware no consulta la DB hasta que alguien toca al usuario.
+		"""
+		request = self.request_factory.get(self.URL, HTTP_AUTHORIZATION = self.headers)
+		middleware = GraphqlJWTAuthMiddleware(lambda get_request: get_request)
+		
+		with self.assertNumQueries(0):
+			middleware(request)
+
+		with self.assertNumQueries(1):
+			self.assertTrue(request.user.is_authenticated)

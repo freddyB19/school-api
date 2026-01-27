@@ -1,54 +1,35 @@
 QUERY_ADMINISTRATOR_DETAIL = """
-	query AdministratorDetail($pk: Int!, $first: Int){
-
-		detail(pk: $pk){
+query MyQuery($pk: ID!, $limit: Int=3, $offset: Int=0) {
+	administrator(pk: $pk) {
+		... on Administrator {
 			id
 			school {
 				id
 				name
+				subdomain
+			}
+			users(pagination: {limit: $limit, offset: $offset}) {
+				totalCount
+				results {
+					dateJoined
+					email
+					id
+					lastLogin
+					name
+				}
 			}
 		}
-
-		admins(pk: $pk, first: $first){
-			pageInfo {
-		        startCursor
-		        endCursor
-		        hasNextPage
-		        hasPreviousPage
-		    }
-		    edges {
-		        cursor
-		        node {
-					name
-					email
-					role
-					userId
-					dateJoined
-					lastLogin
-		        }
-	        }
+		... on AdminResponse {
+			__typename
+			messages {
+				code {
+					code
+					status
+				}
+				kind
+				message
+			}
 		}
-	}
-"""
-
-QUERY_ADMINISTRATOR_DETAIL_ADMINS = """
-	query AdministratorDetail($pk: Int!, $first: Int, $after: String){
-
-		admins(pk: $pk, first: $first, after: $after){
-			pageInfo {
-		        startCursor
-		        endCursor
-		        hasNextPage
-		        hasPreviousPage
-		    }
-		    edges {
-		        cursor
-		        node {
-		            id
-					name
-					email
-		        }
-	        }
-		}
-	}
+  }
+}
 """

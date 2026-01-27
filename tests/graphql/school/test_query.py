@@ -1,9 +1,12 @@
-import json, pprint, datetime
+"""
+	Estos tests cumplen la función de validar aquellas [queries]
+	cuya utilidad son para el suministro de datos para la parte web 
+	de las escuelas.
+"""
+import pprint, datetime
 
-from django.utils import timezone
-
-from apps.graphql.school.types import Months
 from apps.school import models
+from apps.graphql.school.types import MonthsEnum
 
 from tests import faker
 from tests.school.utils import bulk_create_calendar, create_calendar
@@ -11,99 +14,69 @@ from tests.school.utils import bulk_create_calendar, create_calendar
 from .utils import testcases
 
 
-class SchoolQueryBySubdomainTest(testcases.SchoolQuerySubdomainTestCase):
+class SchoolQueryHomeTest(testcases.SchoolQueryHomeTestCase):
 
-	def test_get_schoolBySubdomain(self):
+	def test_get_school(self):
 		"""
 			Obtener la información de una escuela por su 'subdomain'
 		"""
-		result = self.query(
-			self.query_schoolBySubdomain,
-			variables = self.variables_schoolBySubdomain
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		self.assertResponseNoErrors(result)
+		self.assertIsNone(result.errors)
 
-		response = json.loads(result.content)
+		response = result.data
 
-		school = response["data"]["schoolBySubdomain"]
+		self.assertIn("news", response)
+		self.assertIn("school", response)
+		self.assertIn("settings", response)
+		self.assertIn("download", response)
+		self.assertIn("coordinate", response)
+		self.assertIn("repository", response)
+		self.assertIn("socialmedia", response)
+		self.assertIn("infraestructure", response)
 
-		self.assertEqual(
-			school["school"]["subdomain"],
-			self.school.subdomain
-		)
-		self.assertEqual(
-			school["school"]["name"],
-			self.school.name
-		)
+		self.assertEqual(response["school"]["subdomain"], self.variables["subdomain"])
 
-		self.assertTrue(school["settings"])
-		self.assertTrue(school["news"])
-		self.assertTrue(school["networks"])
-		self.assertTrue(school["coordinates"])
+		self.assertTrue(response["settings"])
+		self.assertTrue(response["socialmedia"])
+		self.assertTrue(response["news"]['edges'])
+		self.assertTrue(response["download"]['edges'])
+		self.assertTrue(response["coordinate"]['edges'])
+		self.assertTrue(response["repository"]['edges'])
+		self.assertTrue(response["infraestructure"]['edges'])
 
-
-	def test_get_schoolBySubdomain_with_wrong_subdomain(self):
+	def test_get_school_with_wrong_subdomain(self):
 		"""
 			Obtener un error por 'subdomain' invalida
 		"""
 
-		self.variables_schoolBySubdomain.update({"subdomain": faker.slug()})
+		self.variables.update({"subdomain": faker.slug()})
 
-		result = self.query(
-			self.query_schoolBySubdomain,
-			variables = self.variables_schoolBySubdomain
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		responseJson = result.json()
-		responseStatusCode = result.status_code
+		self.assertIsNone(result.errors)
+
+		response = result.data
 		
-		self.assertEqual(responseStatusCode, 200)
-		
-		school = responseJson["data"]["schoolBySubdomain"]
+		self.assertIsNone(response["school"])
 
-		self.assertIsNone(school["school"])
-		self.assertIsNone(school["settings"])
-		self.assertIsNone(school["networks"])
-		self.assertIsNone(school["news"])
-		self.assertIsNone(school["coordinates"])
+		self.assertNotEqual(self.variables["subdomain"], self.school.subdomain)
 
-class SchoolQuerySchoolService(testcases.SchoolQueryServicesTestCase):
-	def test_get_schoolService(self):
-		"""
-			Obtener la información de los servicios de una escuela
-		"""
-		result = self.query(
-			self.query_schoolService,
-			variables = self.variables_schoolService
-		)
-
-		self.assertResponseNoErrors(result)
-
-		response = json.loads(result.content)
-
-		serviceOnline = response["data"]["schoolServiceOnline"]
-		serviceOffline = response["data"]["schoolServiceOffline"]
-
-		self.assertTrue(serviceOnline["downloads"])
-		self.assertTrue(serviceOnline["repositories"])
-		self.assertTrue(serviceOffline["infraestructures"])
-
-
+		self.assertFalse(response["settings"])
+		self.assertFalse(response["socialmedia"])
+		self.assertFalse(response["news"]['edges'])
+		self.assertFalse(response["download"]['edges'])
+		self.assertFalse(response["coordinate"]['edges'])
+		self.assertFalse(response["repository"]['edges'])
+		self.assertFalse(response["infraestructure"]['edges'])
 
 class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
-	def setUp(self):
-		super().setUp()
-		bulk_create_calendar(
-			size = 20,
-			school = self.school,
-		)
-
-		self.current_date = timezone.localtime()
-		self.variables_schoolCalendar = {
-			"subdomain": self.school.subdomain,
-			"month": Months.get(self.current_date.month).name,
-		}
 
 	def test_get_schoolCalendar(self):
 		"""
@@ -130,20 +103,17 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 		).count()
 
 
-		result = self.query(
-			self.query_schoolCalendar,
-			variables = self.variables_schoolCalendar
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		responseJson = result.json()
-		resposeStatusCode = result.status_code
+		response = result.data
 
-		self.assertEqual(resposeStatusCode, 200)
+		calendar = response["calendar"]
 
-		calendar = responseJson["data"]["schoolCalendar"]
-
-		self.assertTrue(calendar["edges"])
-		self.assertEqual(len(calendar["edges"]), total_calendar)
+		self.assertTrue(calendar["results"])
+		self.assertEqual(calendar["totalCount"], total_calendar)
 
 	def test_get_schoolCalendar_filter_by_month(self):
 		"""
@@ -162,7 +132,7 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 			)
 
 		search_month = faker.random_int(min = 1, max = 12)
-		self.variables_schoolCalendar.update({"month": Months.get(search_month).name})
+		self.variables.update({"month": MonthsEnum(search_month).name})
 
 		total_calendar = models.Calendar.objects.filter(
 			school_id = self.school.id,
@@ -170,47 +140,42 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 			date__year = current_year
 		).count()
 
-		result = self.query(
-			self.query_schoolCalendar,
-			variables = self.variables_schoolCalendar
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		responseJson = result.json()
-		resposeStatusCode = result.status_code
+		response = result.data
 
-		self.assertEqual(resposeStatusCode, 200)
+		calendar = response['calendar']
 
-		calendar = responseJson["data"]["schoolCalendar"]
-
-		self.assertEqual(len(calendar["edges"]), total_calendar)
+		self.assertEqual(calendar["totalCount"], total_calendar)
 
 	def test_get_schoolCalendar_with_wrong_subdomain(self):
 		"""
 			Obtener fechas del calendario de una escuela, pero enviando un 'subdomain' incorrecto
 		"""
-		self.variables_schoolCalendar.update({"subdomain": faker.slug()})
+		self.variables.update({"subdomain": faker.slug()})
 
-		result = self.query(
-			self.query_schoolCalendar,
-			variables = self.variables_schoolCalendar
+		without_dates = 0
+
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		responseJson = result.json()
-		resposeStatusCode = result.status_code
+		response = result.data
 
-		self.assertEqual(resposeStatusCode, 200)
+		calendar = response["calendar"]
 
-		calendar = responseJson["data"]["schoolCalendar"]
-
-		self.assertFalse(calendar["edges"])
-
+		self.assertEqual(calendar['totalCount'], without_dates)
 
 	def test_get_schoolCalendar_current_month(self):
 		"""
 			Obtener fechas del calendario del mes actual de una escuela
 			- Sin definir parámetro de búsqueda: [month]
 		"""
-		self.variables_schoolCalendar.pop("month")
+		self.variables.pop("month")
 
 		total_calendar = models.Calendar.objects.filter(
 			school_id = self.school.id,
@@ -218,17 +183,13 @@ class SchoolQuerySchoolCalendar(testcases.SchoolQueryCalendarTestCase):
 			date__year = self.current_date.year
 		).count()
 
-		result = self.query(
-			self.query_schoolCalendar,
-			variables = self.variables_schoolCalendar
+		result = self.client.query(
+			self.query,
+			variables = self.variables
 		)
 
-		responseJson = result.json()
-		resposeStatusCode = result.status_code
+		response = result.data
+		
+		calendar = response["calendar"]
 
-		self.assertEqual(resposeStatusCode, 200)
-
-		calendar = responseJson["data"]["schoolCalendar"]
-
-		self.assertTrue(calendar["edges"])
-		self.assertEqual(len(calendar["edges"]), total_calendar)
+		self.assertEqual(calendar['totalCount'], total_calendar)

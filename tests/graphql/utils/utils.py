@@ -11,27 +11,30 @@ import jwt
 UserModel = get_user_model()
 User = TypeVar("User", bound = UserModel)
 
-ALGOTITHM = settings.GRAPHENE_JWT['ALGORITHM']
-SECRET_KEY =  settings.GRAPHENE_JWT['GRAPHENE_PRIVATE_KEY'] or settings.GRAPHENE_JWT['GRAPHENE_KEY']
+ALGOTITHM = settings.STRAWBERRY_DJANGO_AUTH_TOKEN['ALGORITHM']
+SECRET_KEY =  settings.STRAWBERRY_DJANGO_AUTH_TOKEN['STRAWBERRY_KEY']
 
-PAYLOAD_SET_EXP = lambda time={"hours": 1}: datetime.datetime.utcnow() + datetime.timedelta(**time)
+PAYLOAD_SET_EXP = lambda time={"hours": 1}: datetime.datetime.utcnow() + datetime.timedelta(**time)            
 
-
-def encode_token(user: User, exp_time:dict = None) -> str:
-	payload = {
-		"user_id": user.id,
-		"exp": PAYLOAD_SET_EXP()
-	}
-	if exp_time:
-		payload.update({"exp": exp_time})
-
+def create_token(user_id: int) -> str:
 	return jwt.encode(
-		payload, 
-		SECRET_KEY, 
+		{"user_id": user_id},
+		SECRET_KEY,
 		algorithm = ALGOTITHM
 	)
 
+def encode_token(user: User, exp_time:datetime = None) -> str:
+	payload = {
+		"user_id": user.id,
+		"exp": PAYLOAD_SET_EXP() if not exp_time else exp_time
+	}
 
+	return jwt.encode(
+		payload,
+		SECRET_KEY,
+		algorithm = ALGOTITHM
+	)
+ 
 def get_token(email: str = "auth@example.com", password: str = "1234") -> str:
 	client = Client()
 

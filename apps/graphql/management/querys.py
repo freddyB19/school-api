@@ -1,47 +1,59 @@
-import graphene
-from graphene import relay
 
-from apps.management.models import Administrator
-from apps.graphql.decorators import login_required
-
-from .types import (
-	UserConnection,
-	AdministratorType
-)
+from django.db.models import Prefetch
+from django.contrib.auth import get_user_model
+import strawberry, strawberry_django
 
 
-AdministratorDoesNotExist = None
+from apps.management import models
+from apps.graphql.utils import get_user_from_token
 
-class AdministratorDetailQuery(graphene.ObjectType):
-	detail = graphene.Field(
-		AdministratorType, 
-		pk = graphene.Int(required = True)
-	)
-	admins = relay.ConnectionField(
-		UserConnection, 
-		pk = graphene.Int(required = True)
-	)
+from .types import Response, AdminResponse, AdminErrorResponse, ErrorCode
 
 
-	@login_required
-	def resolve_detail(root, info, pk):
-		try:
-			administrator = Administrator.objects.select_related(
-				"school"
-			).get(id = pk)
-		except Administrator.DoesNotExist as e:
-			return AdministratorDoesNotExist
+ERROR_PERMISSION = "permission"
+
+STATUS_CODE_UNAUTHENTICATED = 401
+MESSAGE_UNAUTHENTICATED = "El usuario no está autenticado"
+CODE_UNAUTHENTICATED = "UNAUTHENTICATED"
+
+STATUS_CODE_WITHOUT_PERMISSION = 403
+MESSAGE_WIHTOUT_SCHOOL_PERMISSION = "No tienes permisos para (acceder o modificar) información que no te pertenece"
+CODE_PERMISSION_DETAIL = "WITHOUT_SCHOOL_PERMISSION"
+
+@strawberry.type
+class AdministratorDetailQuery:
+	
+	@strawberry_django.field
+	def administrator(self, pk: strawberry.ID, info: strawberry.Info) -> Response:
+		messages = []
+		user = get_user_from_token(info.context.request)
 		
-		return administrator
+		if not user.is_authenticated:
+			messages.append(
+				AdminErrorResponse(
+					kind=ERROR_PERMISSION,
+					message=MESSAGE_UNAUTHENTICATED,
+					code= ErrorCode(code=CODE_UNAUTHENTICATED, status = STATUS_CODE_UNAUTHENTICATED)
+				)
+			)
+		elif not models.Administrator.objects.filter(pk = pk, users__id = user.id).exists():
+			messages.append( 
+				AdminErrorResponse(
+					kind=ERROR_PERMISSION,
+					message=MESSAGE_WIHTOUT_SCHOOL_PERMISSION,
+					code= ErrorCode(code=CODE_PERMISSION_DETAIL, status = STATUS_CODE_WITHOUT_PERMISSION)
+				)
+			)
 
 
-	@login_required
-	def resolve_admins(root, info, pk, **kwargs):
-		try:
-			administrator = Administrator.objects.prefetch_related(
-				"users"
-			).get(id = pk)
-		except Administrator.DoesNotExist as e:
-			return Administrator.objects.none()
+		if messages:
+			return AdminResponse(messages = messages)
 
-		return administrator.users.all()
+		return models.Administrator.objects.select_related(
+			"school"
+		).prefetch_related(
+			Prefetch(
+				"users",
+				queryset = get_user_model().objects.all()
+			)
+		).filter(pk = pk, users__id = user.id).first()

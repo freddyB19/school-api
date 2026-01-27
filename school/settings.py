@@ -28,14 +28,10 @@ SECRET_KEY = env("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool("DEBUG")
 
-if not DEBUG:
-    ALLOWED_HOSTS = ["*"]
-else:
-    ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [] if DEBUG else ["*"]
 
 
 # Application definition
-
 DJANGO_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -61,8 +57,7 @@ THIRDY_PARTY_APPS = [
     'rest_framework_simplejwt.token_blacklist',
     'drf_spectacular',
     'drf_spectacular_sidecar',
-    'graphene_django',
-    'django_filters',
+    'django_filters'
 ]
 
 INSTALLED_APPS = DJANGO_APPS + LOCAL_APPS + THIRDY_PARTY_APPS
@@ -76,6 +71,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
 
 ROOT_URLCONF = 'school.urls'
 
@@ -186,7 +182,7 @@ SPECTACULAR_SETTINGS = {
 
 
 
-## Stotages staticfiles for Production
+# Storages staticfiles for Production
 if not DEBUG:
     STORAGES = {
         "staticfiles": {
@@ -210,20 +206,16 @@ EMAIL_HOST_PASSWORD = email.get("password")
 EMAIL_PORT = email.get("port")
 
 
-#GRAPHENE Settings
-
-GRAPHENE = {
-    'SCHEMA': "apps.graphql.schema.schema",
-    'SCHEMA_OUTPUT': 'graphql_schema.json', 
-    'MIDDLEWARE': [
-        'apps.graphql.middleware.AuthorizationMiddleware',
-    ]
+# STRAWBERRY Settings
+STRAWBERRY_DJANGO = {
+    "FIELD_DESCRIPTION_FROM_HELP_TEXT": True,
+    "TYPE_DESCRIPTION_FROM_MODEL_DOCSTRING": True,
 }
 
-GRAPHENE_JWT = {
+
+STRAWBERRY_DJANGO_AUTH_TOKEN = {
     "ALGORITHM": "HS256",
-    "GRAPHENE_KEY": SECRET_KEY,
-    "GRAPHENE_PRIVATE_KEY": None,
-    "JWT_AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
-    "JWT_AUTH_HEADER_PREFIX": "Bearer"
+    "STRAWBERRY_KEY": SECRET_KEY,
+    "JWT_AUTH_HEADER_NAME": "Authorization",
+    "JWT_AUTH_HEADER_PREFIX": "Bearer",
 }

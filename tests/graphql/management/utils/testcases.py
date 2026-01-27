@@ -1,32 +1,37 @@
-from django.test import Client
 
-from graphene_django.utils.testing import GraphQLTestCase
+from django.test import TestCase
+
+from strawberry_django.test.client import TestClient
+
+from apps.management import models
 
 from tests.school.utils import create_school
 from tests.user.utils import bulk_create_user, create_user
 
-from apps.management.models import Administrator
-
 from . import schemas, utils
 
+URL = "/graphql"
 
-class AdminDetailQueryTestCase(GraphQLTestCase):
+class AdminDetailQueryTestCase(TestCase):
 
 	def setUp(self):
-		self.client = Client()
+		self.client = TestClient(URL)
 
 		self.school = create_school()
-		self.users = bulk_create_user(size = 6)
 		
-		token = utils.authorization_user()
+		self.authorization = utils.authorization_user()
 		self.headers = {
-			"Authorization": f"Bearer {token}"
+			"Authorization": f"Bearer {self.authorization['token']}"
 		}
 
-		self.administrator = Administrator.objects.get(school_id = self.school.id)
-		self.administrator.users.set(self.users)
+		self.administrator = models.Administrator.objects.prefetch_related(
+			"users"
+		).get(school_id = self.school.id)
+		
+		self.administrator.users.add(self.authorization['user'])
+		self.administrator.users.add(*bulk_create_user(size = 6))
 
-		self.query_administrator_detail = schemas.QUERY_ADMINISTRATOR_DETAIL		
-		self.variables_administrator_detail = {
-			"pk": self.administrator.id,
+		self.query = schemas.QUERY_ADMINISTRATOR_DETAIL		
+		self.variables = {
+			"pk": self.administrator.id
 		}
