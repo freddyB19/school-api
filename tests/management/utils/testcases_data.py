@@ -3,6 +3,14 @@ from apps.school import models as school_models
 
 from tests import faker
 
+from apps.user.apiv1 import serializers
+
+from apps.user.models import (
+	MAX_LENGTH_NAME,
+	MIN_LENGTH_NAME,
+	MIN_LENGTH_PASSWORD
+)
+
 from .utils import set_daysweek, get_long_string
 
 UPDATE_SCHOOL_WITH_WRONG_DATA = [
@@ -236,4 +244,72 @@ UPDATE_REPOSITORY_WITH_WRONG_DATA = [
 	{"name_project": faker.pystr(
 		max_chars = school_models.MAX_LENGTH_REPOSITORY_NAME_PROJECT + 1)
 	}
+]
+
+password = faker.password()
+
+short_password = faker.pystr(max_chars = MIN_LENGTH_PASSWORD - 1)
+
+CREATE_USER_WITH_WRONG_DATA = [
+	# Not match password
+	{
+		"input": {
+				"userInput": {
+				"name": faker.name(),
+				"email": faker.email(),
+				"password": faker.password(),
+				"passwordConfirm": faker.password()
+			}
+		},
+		"error": {
+			"field": "nonFieldErrors",
+			"message": serializers.PASSWORDS_NOT_MATCH
+		}
+	},
+	# too short password
+	{
+		'input': {
+			"userInput": {
+				"name": faker.name(),
+				"email": faker.email(),
+				"password": short_password,
+				"passwordConfirm": short_password
+			}
+		},
+		"error": {
+			"field": "password",
+			"message": serializers.MIN_LEN_PASSWORD
+		}
+	},
+	#too short name
+	{
+		"input": {
+			"userInput": {
+				"name": faker.pystr(max_chars = MIN_LENGTH_NAME - 1),
+				"email": faker.email(),
+				"password": password,
+				"passwordConfirm": password
+			}
+		},
+		"error": {
+			"field": "name",
+			"message": serializers.MIN_LEN_NAME
+		}
+	},
+	#too long name
+	{
+		"input": {
+			"userInput": {
+				"name": faker.pystr(max_chars = MAX_LENGTH_NAME + 1),
+				"email": faker.email(),
+				"password": password,
+				"passwordConfirm": password
+			}
+		},
+		"error": {
+			"field": "name",
+			"message": serializers.MAX_LEN_NAME
+		}
+	},
+
 ]

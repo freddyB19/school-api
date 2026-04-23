@@ -9,14 +9,43 @@ from rest_framework import (
 )
 from rest_framework.permissions import IsAuthenticated
 
-from apps.user import models
 
+from apps.user import models
 from apps.user.apiv1.permissions import (
 	IsRoleAdminOrReadOnly,
 	AdminCannotChangeOwnRole
 )
 
+
 from . import serializers
+
+
+class CreateUserAPIView(views.APIView):
+	
+	def post(self, request, format = None):
+
+		serializer_register = serializers.AdminCreateUserSerializer(
+			data = request.data,
+			context = {"request": request}
+		)
+
+		if not serializer_register.is_valid():
+			return response.Response(
+				data = serializer_register.errors, 
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		new_user = serializer_register.save()
+
+		de_serializer = serializers.MUserCreateResponse(
+			new_user,
+			context = {"request": request}
+		)
+
+		return response.Response(
+			data = de_serializer.data,
+			status = status.HTTP_201_CREATED
+		)
 
 
 class UpdateUserPermissions(generics.UpdateAPIView):

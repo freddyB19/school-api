@@ -21,6 +21,11 @@ ListProfileURL = Annotated[list[str], list[AnyHttpUrl]]
 
 Profile = ProfileURL | ListProfileURL
 
+class CreateUserParam(BaseModel):
+	name: str
+	email: str
+	password: str
+
 class NewsParam(BaseModel):
 	title: str 
 	description: str | None = None

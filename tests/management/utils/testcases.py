@@ -669,3 +669,14 @@ class RepositoryMediaFileTestCase(APITestCase):
 			self.user_with_view_perm,
 			self.user_with_delete_perm
 		))
+
+class CommandCreateUserTestCase(TransactionTestCase):
+	def setUp(self):
+		self.school = create_school()
+		self.admin = get_administrator(school_id = self.school.id)
+
+
+class AdminCreateUserTestCase(APITestCase):
+	def setUp(self):
+		self.school = create_school()
+		self.admin = get_administrator(school_id = self.school.id)

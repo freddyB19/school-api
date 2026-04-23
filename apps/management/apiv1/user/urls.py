@@ -3,6 +3,11 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
+    path(
+        "", 
+        views.CreateUserAPIView.as_view(), 
+        name = "user-create"
+    ),
 	path(
 		"<int:pk>/permission", 
 		views.UpdateUserPermissions.as_view(), 
