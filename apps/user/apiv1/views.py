@@ -1,5 +1,3 @@
-from django.contrib import auth
-
 from rest_framework import (
     status,
     response,
@@ -34,77 +32,7 @@ from apps.utils.result_commands import (
     ResponseError
 )
 
-from apps.user.utils.token import Token
 from apps.user.services.signals.signals import SignalResetPassword
-
-
-class RegisterAPIView(views.APIView):
-    @extend_schema(
-        request=serializers.UserRegisterSerializer,
-        responses={201: serializers.UserResposeSerializer, 400: MessageError},
-        auth=None,
-        methods=["POST"],
-        operation_id = "user_register"
-    )
-    def post(self, request, format = None):
-                
-        serializer_register = serializers.UserRegisterSerializer(
-            data = request.data
-        )
-
-        if not serializer_register.is_valid():
-            return response.Response(
-                data = serializer_register.errors, 
-                status = status.HTTP_400_BAD_REQUEST
-            )
-        
-        new_user = serializer_register.save()
-
-        de_serializer = serializers.UserResposeSerializer(new_user)
-
-        return response.Response(
-            data = de_serializer.data,
-            status = status.HTTP_201_CREATED
-        )
-
-        
-class LoginAPIView(views.APIView):
-    @extend_schema(
-        request=serializers.LoginSerializer,
-        responses={200: serializers.UserResponseLogin, 401: MessageError},
-        auth=None,
-        methods=["POST"],
-        operation_id = "user_login"
-
-    )
-    def post(self, request):
-        login = serializers.LoginSerializer(data = request.data)
-
-        if not login.is_valid():
-            return response.Response(data = login.errors, status = status.HTTP_400_BAD_REQUEST)
-
-        credentials = login.data
-
-        user = auth.authenticate(
-            email = credentials['email'], 
-            password = credentials['password']
-        )
-
-        if not user:
-            return response.Response(
-                data = {"errors": {"message": "Credenciales invalidas"}},
-                status = status.HTTP_401_UNAUTHORIZED
-            )
-        
-        de_serializer = serializers.UserResponseLogin(data = {
-            "user": serializers.UserResposeSerializer(user).data,
-            "token": Token.get(user = user)
-        })
-
-        return response.Response(
-            data = de_serializer.initial_data,
-            status = status.HTTP_200_OK
-        )
 
 
 class UserAPIView(generics.RetrieveUpdateDestroyAPIView):

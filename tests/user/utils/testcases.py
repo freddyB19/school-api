@@ -10,10 +10,6 @@ class UserModelTestCase(TransactionTestCase):
 	pass
 
 
-class CommandCreateUserTestCase(TransactionTestCase):
-	pass
-
-
 class CommandGetUserTestCase(TransactionTestCase):
 	def setUp(self):
 		self.user = create_user()
@@ -29,10 +25,6 @@ class CommandGetUserByEmailTestCase(TransactionTestCase):
 		self.user = create_user(email = self.EMAIL)
 
 
-class SerializersUserTestCase(TestCase):
-	pass
-
-
 class UserTestCase(APITestCase):
 	def setUp(self):
 		self.client = APIClient()
@@ -42,16 +34,6 @@ class UserDetailUpdateTestCase(UserTestCase):
 		super().setUp()
 
 		self.user = create_user()
-
-
-class UserLoginTestCase(UserTestCase):
-	def setUp(self):
-		super().setUp()
-
-		self.email = faker.email()
-		self.password = faker.password()
-
-		self.user = create_user(email = self.email, password = self.password)
 
 class ServiceTestCase(TestCase):
 	pass

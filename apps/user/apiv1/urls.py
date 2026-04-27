@@ -25,9 +25,6 @@ urlpatterns = [
         name = "reset-password"
     ),
 
-    path("login/", views.LoginAPIView.as_view(), name = "login"),
-    path("register/", views.RegisterAPIView.as_view(), name = "register"),
-
      path("api/token/", TokenObtainPairView.as_view() ,name = "obtain_token_pair"),
      path("api/token/refresh/", TokenRefreshView.as_view(),name = "obtain_refresh"),
 ]
