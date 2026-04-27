@@ -680,3 +680,34 @@ class AdminCreateUserTestCase(APITestCase):
 	def setUp(self):
 		self.school = create_school()
 		self.admin = get_administrator(school_id = self.school.id)
+
+
+class AdminTokenTestCase(APITestCase):
+	def setUp(self):
+		self.client = APIClient()
+
+		self.email = faker.email()
+		self.password = faker.password()
+
+		self.user = create_user(email = self.email, password = self.password)
+		self.school = create_school()
+
+		permissions_timegroup = get_permissions(codenames = [
+			'add_timegroup', 
+			'change_timegroup', 
+			'delete_timegroup', 
+			'view_timegroup'
+		])
+
+		permissions_repository = get_permissions(codenames = [
+			'add_repository', 
+			'change_repository', 
+			'delete_repository', 
+			'view_repository'
+		])
+
+		self.user.user_permissions.add(*permissions_timegroup)
+		self.user.user_permissions.add(*permissions_repository)
+
+		self.admin = get_administrator(school_id = self.school.id)      
+		self.admin.users.add(self.user)

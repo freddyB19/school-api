@@ -1,4 +1,5 @@
 from django.db import models
+from django.urls import reverse
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 
 from .manager import UserManager
@@ -36,6 +37,11 @@ class User(AbstractBaseUser, PermissionsMixin):
 	USERNAME_FIELD = 'email'
 	REQUIRED_FIELDS = ['name']
 
+	def get_absolute_url(self):
+		return reverse(
+			"user:user", 
+			kwargs = {"pk": self.id}
+		)
 
 	def __str__(self):
 		return self.email

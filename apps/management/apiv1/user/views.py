@@ -8,7 +8,7 @@ from rest_framework import (
     generics
 )
 from rest_framework.permissions import IsAuthenticated
-
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from apps.user import models
 from apps.user.apiv1.permissions import (
@@ -46,6 +46,10 @@ class CreateUserAPIView(views.APIView):
 			data = de_serializer.data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class LoginUserAPIView(TokenObtainPairView):
+    serializer_class = serializers.AdminTokenPairSerializer
 
 
 class UpdateUserPermissions(generics.UpdateAPIView):

@@ -140,6 +140,91 @@ class MUserCreateResponse(serializers.ModelSerializer):
         }
 
 
+class MUserResposeSerializer(serializers.ModelSerializer):
+    user_permissions = serializers.SlugRelatedField(
+        many=True,
+        read_only=True,
+        slug_field='codename'
+    )
+
+    class Meta:
+        model = user_models.User
+        fields = [
+            "id", 
+            "name", 
+            "email", 
+            "role", 
+            "last_login", 
+            "date_joined", 
+            "is_active",
+            "user_permissions"
+        ]
+
+
+class AdminTokenPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+
+        request = self.context.get("request")
+        school_subdomain = request.headers.get(SCHOOL_HEADER)
+
+        if not school_subdomain:
+            raise serializers.ValidationError(
+                {"detail": f"El encabezado [{SCHOOL_HEADER}] es requerido."}
+            )
+
+        data = super().validate(attrs)
+
+        admin = admin_models.Administrator.objects.prefetch_related(
+            "users__user_permissions"
+        ).select_related(
+            "school"
+        ).filter(
+            users__id = self.user.id, 
+            school__subdomain = school_subdomain
+        ).first()
+
+        if not admin:
+            raise serializers.ValidationError(
+                "Este usuario no está asociado a la administración de la escuela"
+            )
+
+        refresh = self.get_token(self.user)
+
+        refresh["school_id"] = str(admin.school.id)
+
+        token_access = data.pop("access")
+        token_refresh = data.pop("refresh")
+
+        data["auth"] = {
+            "access": token_access,
+            "refresh": token_refresh
+        }
+
+        data["user"] = {
+            "id": self.user.id, 
+            "name": self.user.name, 
+            "email": self.user.email, 
+            "role": self.user.role, 
+            "last_login": self.user.last_login, 
+            "date_joined": self.user.date_joined, 
+            "is_active": self.user.is_active,
+            "detail": {
+                "url": self.user.get_absolute_url()
+            },
+            "user_permissions": [
+                {"codename": perm.codename, "name": perm.name} for perm in self.user.user_permissions.all()
+            ]
+        }
+        
+        data["school"] = {
+            "id": admin.school.id,
+            "subdomain": admin.school.subdomain,
+            "name": admin.school.name,
+        }
+
+        return data
+
+
 class UserUpdateRoleSerializer(serializers.ModelSerializer):
     class Meta:
         model = user_models.User
@@ -160,24 +245,3 @@ class UserPermissionsSerializer(serializers.Serializer):
             raise serializers.ValidationError("No existe ningún permiso con alguno de esos nombres")
         
         return value
-
-
-class MUserResposeSerializer(serializers.ModelSerializer):
-    user_permissions = serializers.SlugRelatedField(
-        many=True,
-        read_only=True,
-        slug_field='codename'
-    )
-
-    class Meta:
-        model = user_models.User
-        fields = [
-            "id", 
-            "name", 
-            "email", 
-            "role", 
-            "last_login", 
-            "date_joined", 
-            "is_active",
-            "user_permissions"
-        ]
