@@ -44,7 +44,7 @@ class CommandAddRepositoryMediaTest(testcases.BasicCommandTestCase):
 			list_files = commands.add_repository_media(media = files)
 
 
-class CommandCreateRepository(testcases.BasicCommandTestCase):
+class CommandCreateRepositoryTest(testcases.BasicCommandTestCase):
 	def setUp(self):
 		super().setUp()
 
