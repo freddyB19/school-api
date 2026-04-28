@@ -3,7 +3,7 @@ from apps.school import models as school_models
 
 from tests import faker
 
-from apps.user.apiv1 import serializers
+from apps.management.apiv1.user import serializers
 
 from apps.user.models import (
 	MAX_LENGTH_NAME,
