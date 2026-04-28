@@ -1186,3 +1186,72 @@ class MSchoolRepositoryUpdateMediaRequest(serializers.Serializer):
 		instance.media.add(*command.query)		
 
 		return instance
+
+
+Infraestructure = TypeVar("Repository", bound = models.Infraestructure)
+
+MAX_LENGTH_FILE_NAME = 30
+INFRAESTRUCTURE_ALREADY_EXISTS = "Esta enviado los datos de una 'infraestructura' que ya se encuentra registrada"
+
+class MSchoolInfraestructureRequest(serializers.ModelSerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+
+	class Meta:
+		model = models.Infraestructure
+		fields = ["id", "name", "description", "media"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"name": {
+				"min_length": models.MIN_LENGTH_INFRA_NAME,
+				"max_length": models.MAX_LENGTH_INFRA_NAME,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre de la infraestructura", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_INFRA_NAME
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre de la infraestructura", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_INFRA_NAME
+					)
+				}
+			}
+		}
+
+
+	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
+		exist = commands.infraestructure_exist(
+			name = data.get("name"),
+			school_id = self.context.get("pk")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				INFRAESTRUCTURE_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return data
+
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> Infraestructure:
+		command = commands.create_infraestructure(
+			school_id = self.context.get("pk"),
+			infraestructure = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query

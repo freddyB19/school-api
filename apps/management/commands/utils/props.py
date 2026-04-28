@@ -86,3 +86,10 @@ class RepositoryParam(BaseModel):
 	name_project: str
 	description: str = None
 	media: ListUploadedFile | None = None
+
+class InfraestructureParam(BaseModel):
+	model_config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True)
+	
+	name: str
+	description: str = None
+	media: ListUploadedFile | None = None

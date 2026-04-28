@@ -28,6 +28,7 @@ from .utils.props import (
 	GradeValidateParam,
 	GradeParam,
 	RepositoryParam,
+	InfraestructureParam,
 )
 
 faker = Faker(locale="es")
@@ -427,3 +428,67 @@ def create_repository(school_id: int, repository: RepositoryParam) -> ResultComm
 		new_repository.media.set(command.query)
 
 	return ResultCommand(query = new_repository, status = True) 
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def add_infraestructure_media(media: ListUploadedFile) -> ResultCommand:
+	# Conectarme a un servicio para subir los archivos
+	upload_images = [
+		{
+			"title": set_name_file(file_name = image.name),
+			"photo": faker.image_url()
+		}
+		for image in media
+	]
+	# Simulamos: 
+	# Cambiar el nombre de los archivos 
+	# El resultado de la carga de imagenes
+	# Obtener la url del archivo almacenado
+
+	infraestructure_media = [
+		models.InfraestructureMedia(
+			title = file.get("title"),
+			photo = file.get("photo")
+		)
+		for file in upload_images
+	]
+
+	return ResultCommand(
+		query = models.InfraestructureMedia.objects.bulk_create(
+			infraestructure_media
+		), 
+		status = True
+	)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def infraestructure_exist(school_id: int, name: str) -> ResultCommand:
+	exist = models.Infraestructure.objects.filter(
+		school_id = school_id,
+		name = name
+	).exists()
+
+	return ResultCommand(status = True, query = exist)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def create_infraestructure(school_id: int, infraestructure: InfraestructureParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	new_infraestructure = models.Infraestructure.objects.create(
+		school_id = school_id,
+		name = infraestructure.name,
+		description = infraestructure.description
+	)
+
+	if infraestructure.media:
+		command = add_infraestructure_media(media = infraestructure.media)
+
+		if not command.status:
+			return command
+
+		new_infraestructure.media.set(command.query)
+
+	return ResultCommand(query = new_infraestructure, status = True)

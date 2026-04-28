@@ -313,3 +313,13 @@ CREATE_USER_WITH_WRONG_DATA = [
 	},
 
 ]
+
+CREATE_INFRAESTRUCTURE_WITH_WRONG_DATA = [
+	{"name": faker.pystr(
+		max_chars = school_models.MIN_LENGTH_INFRA_NAME - 1)
+	},
+	{"name": faker.pystr(
+		max_chars = school_models.MAX_LENGTH_INFRA_NAME + 1)
+	},
+	{"description": faker.paragraph()}
+]
