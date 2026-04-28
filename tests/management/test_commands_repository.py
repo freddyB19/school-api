@@ -30,8 +30,8 @@ class CommandAddRepositoryMediaTest(testcases.BasicCommandTestCase):
 
 		list_files = commands.add_repository_media(media = files)
 
-		self.assertTrue(list_files)
-		self.assertEqual(len(list_files), len(files))
+		self.assertTrue(list_files.status)
+		self.assertEqual(len(list_files.query), len(files))
 
 	def test_add_repositorymedia_with_wrong_data(self):
 		"""
