@@ -93,4 +93,9 @@ urlpatterns = [
 		views.RepositoryMediaDetailDeleteAPIView.as_view(),
 		name = "repository-file-detail"
 	),
+	path(
+		"infraestructure/image/<int:pk>",
+		views.InfraestructureMediaDetailDeleteAPIView.as_view(),
+		name = "infraestructure-image-detail"
+	),
 ]

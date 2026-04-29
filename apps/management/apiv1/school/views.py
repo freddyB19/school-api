@@ -581,3 +581,12 @@ class RepositoryMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
 		IsAuthenticated, 
 		permissions.IsUserPermission
 	]
+
+
+class InfraestructureMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
+	queryset = models.InfraestructureMedia.objects.all()
+	serializer_class = serializers.MSchoolInfraestructureMediaResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission
+	]

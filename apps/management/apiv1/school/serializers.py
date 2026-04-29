@@ -1255,3 +1255,9 @@ class MSchoolInfraestructureRequest(serializers.ModelSerializer):
 			)
 
 		return command.query
+
+
+class MSchoolInfraestructureMediaResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.InfraestructureMedia
+		fields = "__all__"
