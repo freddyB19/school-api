@@ -1192,11 +1192,17 @@ Infraestructure = TypeVar("Repository", bound = models.Infraestructure)
 
 MAX_LENGTH_FILE_NAME = 30
 INFRAESTRUCTURE_ALREADY_EXISTS = "Esta enviado los datos de una 'infraestructura' que ya se encuentra registrada"
+ERROR_MESSAGE_MAX_LENGTH_FILE_NAME = f"El nombre de la imágen es muy largo, debe ser menor o igual a {MAX_LENGTH_FILE_NAME} carácteres."
 
 class MSchoolInfraestructureRequest(serializers.ModelSerializer):
 	media = serializers.ListField(
 		required = False,
-		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+		child = serializers.FileField(
+			max_length = MAX_LENGTH_FILE_NAME,
+			error_messages = {
+				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+			}
+		)
 	)
 
 	class Meta:
@@ -1261,3 +1267,16 @@ class MSchoolInfraestructureMediaResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.InfraestructureMedia
 		fields = "__all__"
+
+
+class MSchoolInfraestructureResponse(serializers.ModelSerializer):
+	media = MSchoolInfraestructureMediaResponse(many = True)
+
+	class Meta:
+		model = models.Infraestructure
+		exclude = ["school"]
+
+class MSchoolInfraestructureListResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Infraestructure
+		fields = ["id", "name", "description"]

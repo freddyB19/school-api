@@ -98,4 +98,9 @@ urlpatterns = [
 		views.InfraestructureMediaDetailDeleteAPIView.as_view(),
 		name = "infraestructure-image-detail"
 	),
+	path(
+		"<int:pk>/infraestructure",
+		views.InfraestructureListCreateAPIView.as_view(),
+		name = "infraestructure-list-create"
+	),
 ]

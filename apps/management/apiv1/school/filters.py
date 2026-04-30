@@ -139,3 +139,13 @@ class RepositoryFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.Repository
 		fields = ["created", "updated"]
+
+
+class InfraestructureFilter(django_filters.FilterSet):
+	name = django_filters.CharFilter(
+		field_name="name", lookup_expr="icontains"
+	)
+
+	class Meta:
+		model = models.Infraestructure
+		fields = ["name"]

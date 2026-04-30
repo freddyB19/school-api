@@ -590,3 +590,47 @@ class InfraestructureMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
 		IsAuthenticated, 
 		permissions.IsUserPermission
 	]
+
+
+class InfraestructureListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Infraestructure.objects.all()
+	serializer_class = serializers.MSchoolInfraestructureResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.InfraestructureFilter
+
+	def get_serializer_class(self):
+		if self.request.method == "POST":
+			return serializers.MSchoolInfraestructureRequest
+		elif self.request.method == "GET":
+			return serializers.MSchoolInfraestructureListResponse
+		return self.serializer_class
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		).order_by("name")
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		infraestructure = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(infraestructure).data,
+			status = status.HTTP_201_CREATED
+		)
