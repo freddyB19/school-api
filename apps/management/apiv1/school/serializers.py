@@ -1188,26 +1188,17 @@ class MSchoolRepositoryUpdateMediaRequest(serializers.Serializer):
 		return instance
 
 
-Infraestructure = TypeVar("Repository", bound = models.Infraestructure)
+Infraestructure = TypeVar("Infraestructure", bound = models.Infraestructure)
 
 MAX_LENGTH_FILE_NAME = 30
 INFRAESTRUCTURE_ALREADY_EXISTS = "Esta enviado los datos de una 'infraestructura' que ya se encuentra registrada"
 ERROR_MESSAGE_MAX_LENGTH_FILE_NAME = f"El nombre de la imágen es muy largo, debe ser menor o igual a {MAX_LENGTH_FILE_NAME} carácteres."
 
-class MSchoolInfraestructureRequest(serializers.ModelSerializer):
-	media = serializers.ListField(
-		required = False,
-		child = serializers.FileField(
-			max_length = MAX_LENGTH_FILE_NAME,
-			error_messages = {
-				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
-			}
-		)
-	)
+class MSchoolInfraestructureSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = models.Infraestructure
-		fields = ["id", "name", "description", "media"]
+		fields = ["id", "name", "description"]
 		read_only_fields = ["id"]
 
 		extra_kwargs = {
@@ -1230,6 +1221,22 @@ class MSchoolInfraestructureRequest(serializers.ModelSerializer):
 				}
 			}
 		}
+
+class MSchoolInfraestructureRequest(MSchoolInfraestructureSerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(
+			max_length = MAX_LENGTH_FILE_NAME,
+			error_messages = {
+				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+			}
+		)
+	)
+
+	class Meta(MSchoolInfraestructureSerializer.Meta):
+		fields = ["id", "name", "description", "media"]
+		read_only_fields = ["id"]
+
 
 
 	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
@@ -1261,6 +1268,44 @@ class MSchoolInfraestructureRequest(serializers.ModelSerializer):
 			)
 
 		return command.query
+
+
+class MSchoolInfraestructureUpdateRequest(MSchoolInfraestructureSerializer):
+
+	def validate_name(self, value: str) -> str:
+		exist = commands.infraestructure_exist(
+			name = value,
+			school_id = self.context.get("pk")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				INFRAESTRUCTURE_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return value
+
+
+class MSchoolInfraestructureUpdateMediaRequest(serializers.Serializer):
+	media = serializers.ListField(
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+
+	def update(self, instance: Infraestructure, validated_data: dict[str, ListUploadedFile]) -> Infraestructure:
+
+		command = commands.add_infraestructure_media(media = validated_data.get("media"))
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+		
+		instance.media.add(*command.query)		
+
+		return instance
 
 
 class MSchoolInfraestructureMediaResponse(serializers.ModelSerializer):

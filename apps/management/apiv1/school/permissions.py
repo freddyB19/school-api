@@ -95,3 +95,7 @@ class GradePermissionDetail(BasePermissionDetailObject):
 
 class RepositoryPermissionDetail(BasePermissionDetailObject):
 	model = school_models.Repository
+
+
+class InfraestructurePermissionDetail(BasePermissionDetailObject):
+	model = school_models.Infraestructure

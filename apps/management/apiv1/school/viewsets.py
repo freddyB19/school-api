@@ -13,7 +13,9 @@ from apps.utils.result_commands import ResponseError, ResponseMessage
 from . import serializers, permissions
 from .utils import (
 	update_repository_files,
-	delete_repository_files
+	delete_repository_files,
+	update_infraestructure_images,
+	delete_infraestructure_images
 )
 
 
@@ -199,6 +201,73 @@ class RepositoryDetailUpdateDeleteVS(DetailModelVS):
 
 		response_data = process_request(
 			request = request, instance = repository
+		)
+
+		if not response_data:
+
+			return response.Response(
+				data = self.error_message_500,
+				status = status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+		return response.Response(**response_data)
+
+
+
+class InfraestructureDetailUpdateDeleteVS(DetailModelVS):
+	queryset = school_models.Infraestructure.objects.all()
+	serializer_class = serializers.MSchoolInfraestructureResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.InfraestructurePermissionDetail
+	]
+	error_message_500 = ResponseMessage(
+		message = "Solicitud no procesada por error interno"
+	).model_dump()
+
+	def get_serializer_class(self):
+		is_update = [
+			"update",
+			"partial_update"
+		]
+
+		if self.action in is_update:
+			return serializers.MSchoolInfraestructureUpdateRequest
+		return self.serializer_class
+
+	def update(self, request, *args, **kwargs):
+		partial = kwargs.get("partial", False)
+		infraestructure = self.get_object()
+		serializer = self.get_serializer(
+			infraestructure, 
+			data=request.data, 
+			partial= partial,
+			context = {"pk": infraestructure.school_id}
+		)
+
+		serializer.is_valid(raise_exception=True)
+
+		self.perform_update(serializer)
+
+		return response.Response(
+			data = serializer.data,
+			status = status.HTTP_200_OK
+		)
+
+	@action(detail = True, methods = [HTTPMethod.PATCH, HTTPMethod.DELETE], url_name = "image")
+	def detail_image(self, request, pk = None):
+		infraestructure = self.get_object()
+
+		context_response = {
+			HTTPMethod.PATCH: update_infraestructure_images,
+			HTTPMethod.DELETE: delete_infraestructure_images
+		}
+		
+		process_request = context_response[request.method]
+
+		response_data = process_request(
+			request = request, instance = infraestructure
 		)
 
 		if not response_data:

@@ -51,3 +51,41 @@ def delete_repository_files(request: Request, instance: Repository) -> dict[str,
 	return {
 		"status": status.HTTP_204_NO_CONTENT
 	}
+
+
+Infraestructure = TypeVar("Infraestructure", bound = models.Infraestructure)
+
+class InfraestructureDict(TypedDict):
+	name: str
+	description: str | None
+	media: ListUploadedFile | None
+
+def update_infraestructure_images(request: Request, instance: Infraestructure) -> dict[str, int | InfraestructureDict]:
+
+	if request.method != HTTPMethod.PATCH:
+		return None
+
+	serializer = serializers.MSchoolInfraestructureUpdateMediaRequest(
+		instance,
+		data=request.data,
+		partial = True
+	)
+
+	serializer.is_valid(raise_exception=True)
+
+	update_infraestructure = serializer.save()
+
+	return {
+		"data" : serializers.MSchoolInfraestructureResponse(update_infraestructure).data,
+		"status" : status.HTTP_202_ACCEPTED
+	}
+
+def delete_infraestructure_images(request: Request, instance: Infraestructure) -> dict[str, int]:
+	if request.method != HTTPMethod.DELETE:
+		return None
+
+	instance.media.all().delete()
+
+	return {
+		"status": status.HTTP_204_NO_CONTENT
+	}
