@@ -103,4 +103,9 @@ urlpatterns = [
 		views.InfraestructureListCreateAPIView.as_view(),
 		name = "infraestructure-list-create"
 	),
+	path(
+		"<int:pk>/download",
+		views.DownloadListCreateAPIView.as_view(),
+		name = "download-list-create"
+	),
 ]

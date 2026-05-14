@@ -1,6 +1,7 @@
 import datetime
 from typing import TypeVar
 
+from django.utils import timezone
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 from rest_framework import serializers
@@ -1325,3 +1326,87 @@ class MSchoolInfraestructureListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Infraestructure
 		fields = ["id", "name", "description"]
+
+
+Download = TypeVar("Download", bound = models.Download)
+
+MAX_LENGTH_FILE_NAME = 30
+ERROR_MESSAGE_MAX_LENGTH_FILE_NAME = f"El nombre del archivo es muy largo, debe ser menor o igual a {MAX_LENGTH_FILE_NAME} carácteres."
+DOWNLOAD_ALREADY_EXISTS = "Esta enviado los datos sobre un 'archivo de descarga' que ya se encuentra registrado"
+
+class MSchoolDownloadRequest(serializers.ModelSerializer):
+	media = serializers.FileField(
+		max_length = MAX_LENGTH_FILE_NAME,
+		error_messages = {
+			"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+		}
+	)
+	class Meta:
+		model = models.Download
+		fields = ["id", "name", "description", "media"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"name": {
+				"default": f"Agregado: {timezone.localtime()}",
+				"min_length": models.MIN_LENGTH_DOWNLOAD_NAME,
+				"max_length": models.MAX_LENGTH_DOWNLOAD_NAME,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_DOWNLOAD_NAME
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_DOWNLOAD_NAME
+					)
+				}
+			}
+		}
+
+	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
+		exist = commands.download_exist(
+			name = data.get("name"),
+			school_id = self.context.get("pk")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				DOWNLOAD_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return data
+
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> Download:
+
+		command = commands.create_download(
+			school_id = self.context.get("pk"),
+			download = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
+
+
+class MSchoolDownloadResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Download
+		exclude = ["school"]
+
+
+class MSchoolDownloadListResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.Download
+		fields = ["id", "name", "file"]

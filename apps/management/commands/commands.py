@@ -29,6 +29,7 @@ from .utils.props import (
 	GradeParam,
 	RepositoryParam,
 	InfraestructureParam,
+	DownloadParam,
 )
 
 faker = Faker(locale="es")
@@ -492,3 +493,41 @@ def create_infraestructure(school_id: int, infraestructure: InfraestructureParam
 		new_infraestructure.media.set(command.query)
 
 	return ResultCommand(query = new_infraestructure, status = True)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def download_exist(school_id: int, name: str) -> ResultCommand:
+	exist = models.Download.objects.filter(
+		school_id = school_id,
+		name = name
+	).exists()
+
+	return ResultCommand(status = True, query = exist)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def create_download(school_id: int, download: DownloadParam) -> ResultCommand:
+	# Conectarme a un servicio para subir los archivos
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+	
+	upload_file = {
+		"title": set_name_file(file_name = download.media.name),
+		"file": f"{faker.url()}{set_name_file(file_name = download.media.name)}"
+	}
+
+	# Simulamos: 
+	# Cambiar el nombre de los archivos .
+	# El resultado de la carga de archivos.
+	# Obtener la url del archivo almacenado.
+	
+	return ResultCommand(
+		query = models.Download.objects.create(
+			name = download.name,
+			description = download.description,
+			title = upload_file["title"],
+			file = upload_file["file"],
+		), 
+		status = True
+	)

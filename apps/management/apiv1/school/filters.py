@@ -149,3 +149,13 @@ class InfraestructureFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.Infraestructure
 		fields = ["name"]
+
+
+class DownloadFilter(django_filters.FilterSet):
+	name = django_filters.CharFilter(
+		field_name="name", lookup_expr="icontains"
+	)
+
+	class Meta:
+		model = models.Download
+		fields = ["name"]

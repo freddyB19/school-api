@@ -365,6 +365,7 @@ class DownloadFactory(SchoolMediaFileFactory):
 	class Meta:
 		model = models.Download
 
+	name = factory.LazyAttribute(lambda x: faker.text(max_nb_chars = models.MAX_LENGTH_DOWNLOAD_NAME - 1))
 	description = factory.LazyAttribute(lambda x: faker.paragraph())
 	school = factory.SubFactory(SchoolFactory)
 

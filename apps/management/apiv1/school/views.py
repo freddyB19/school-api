@@ -634,3 +634,47 @@ class InfraestructureListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(infraestructure).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class DownloadListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.Download.objects.all()
+	serializer_class = serializers.MSchoolDownloadResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.DownloadFilter
+
+	def get_serializer_class(self):
+		if self.request.method == "POST":
+			return serializers.MSchoolDownloadRequest
+		elif self.request.method == "GET":
+			return serializers.MSchoolDownloadListResponse
+		return self.serializer_class
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		).order_by("-id")
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		download = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(download).data,
+			status = status.HTTP_201_CREATED
+		)

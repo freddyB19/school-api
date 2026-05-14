@@ -892,7 +892,21 @@ class SettingFormat(models.Model):
 		return f"SettingFormat(id = {self.id}, colors = {colors}, school = {self.school.name})"
 
 
+MIN_LENGTH_DOWNLOAD_NAME = 4
+MAX_LENGTH_DOWNLOAD_NAME = 50
+
 class Download(SchoolFile):
+	name = models.CharField(
+		blank=True,
+		null=True,
+		max_length = MAX_LENGTH_DOWNLOAD_NAME ,
+		validators = [
+			MinLengthValidator(
+				limit_value = MIN_LENGTH_DOWNLOAD_NAME, 
+				message = "El nombre del archivo es muy corto"
+			)
+		]
+	)
 	description = models.TextField(blank = True, null = True)
 
 	school = models.ForeignKey(
@@ -904,21 +918,21 @@ class Download(SchoolFile):
 	)
 
 	class Meta:
-		unique_together = ['title', 'school']
+		unique_together = ['name', 'school']
 		verbose_name = "Descarga"
 		verbose_name_plural = "Descargas"
 		db_table = "download"
 		indexes = [
-			models.Index(fields = ["title"], name = "download_title_idx"),
+			models.Index(fields = ["name"], name = "download_name_idx"),
 			models.Index(fields = ["school"], name = "download_school_idx")
 		]
 
 
 	def __str__(self):
-		return f"Archivo: {self.title}"
+		return self.name
 
 	def __repr__(self):
-		return f"Download(id = {self.id}, title = {self.title}, file = {self.file}, school = {self.school.name})"
+		return f"Download(id = {self.id}, name = {self.name}, file = {self.file})"
 
 
 class RepositoryMediaFile(SchoolFile):
