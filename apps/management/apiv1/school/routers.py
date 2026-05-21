@@ -27,3 +27,9 @@ router.register(
 	viewsets.InfraestructureDetailUpdateDeleteVS, 
 	basename="infraestructure"
 )
+
+router.register(
+	"school/download", 
+	viewsets.DownloadDetailDeleteUpdateVS, 
+	basename="download"
+)

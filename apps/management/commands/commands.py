@@ -505,6 +505,24 @@ def download_exist(school_id: int, name: str) -> ResultCommand:
 	return ResultCommand(status = True, query = exist)
 
 @validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def update_download_file(media: UploadedFile) -> ResultCommand:
+	# Conectarme a un servicio para subir los archivos
+
+	upload_file = {
+		"title": set_name_file(file_name = media.name),
+		"file": f"{faker.url()}{set_name_file(file_name = media.name)}"
+	}
+
+	# Simulamos: 
+	# Cambiar el nombre de los archivos .
+	# El resultado de la carga de archivos.
+	# Obtener la url del archivo almacenado.
+	
+	url_file = upload_file["file"]
+
+	return ResultCommand(status = True, query = url_file)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
 def create_download(school_id: int, download: DownloadParam) -> ResultCommand:
 	# Conectarme a un servicio para subir los archivos
 	command = get_school_by_id(id = school_id)

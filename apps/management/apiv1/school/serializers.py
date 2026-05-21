@@ -1400,6 +1400,77 @@ class MSchoolDownloadRequest(serializers.ModelSerializer):
 		return command.query
 
 
+class MSchoolDownloadUpdateRequest(serializers.ModelSerializer):
+
+	class Meta:
+		model = models.Download
+		fields = ["id", "name", "description"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"name": {
+				"default": f"Agregado: {timezone.localtime()}",
+				"min_length": models.MIN_LENGTH_DOWNLOAD_NAME,
+				"max_length": models.MAX_LENGTH_DOWNLOAD_NAME,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_DOWNLOAD_NAME
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_DOWNLOAD_NAME
+					)
+				}
+			}
+		}
+
+	def validate_name(self, value: str) -> str:
+		exist = commands.download_exist(
+			name = value,
+			school_id = self.context.get("pk")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				DOWNLOAD_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+
+		return value
+
+class MSchoolDownloadUpdateFileRequest(serializers.ModelSerializer):
+	media = serializers.FileField(
+		max_length = MAX_LENGTH_FILE_NAME,
+		error_messages = {
+			"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+		}
+	)
+	class Meta:
+		model = models.Download
+		fields = ["id", "media"]
+		read_only_fields = ["id"]
+
+	def update(self, instance: Download, validated_data: dict[str, ListUploadedFile]) -> Download:
+
+		command = commands.update_download_file(media = validated_data.get("media"))
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+		
+		instance.file = command.query
+
+		return instance
+
+
 class MSchoolDownloadResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Download

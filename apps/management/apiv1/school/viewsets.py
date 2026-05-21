@@ -213,7 +213,6 @@ class RepositoryDetailUpdateDeleteVS(DetailModelVS):
 		return response.Response(**response_data)
 
 
-
 class InfraestructureDetailUpdateDeleteVS(DetailModelVS):
 	queryset = school_models.Infraestructure.objects.all()
 	serializer_class = serializers.MSchoolInfraestructureResponse
@@ -278,3 +277,62 @@ class InfraestructureDetailUpdateDeleteVS(DetailModelVS):
 			)
 
 		return response.Response(**response_data)
+
+
+class DownloadDetailDeleteUpdateVS(DetailModelVS):
+	queryset = school_models.Download.objects.all()
+	serializer_class = serializers.MSchoolDownloadResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.DownloadPermissionDetail
+	]
+
+	def get_serializer_class(self):
+		UploadFile = "upload_file"
+		is_update = [
+			"update",
+			"partial_update"
+		]
+
+		if self.action in is_update:
+			return serializers.MSchoolDownloadUpdateRequest
+		elif self.action == UploadFile:
+			return serializers.MSchoolDownloadUpdateFileRequest
+		return self.serializer_class
+
+	def update(self, request, *args, **kwargs):
+		partial = kwargs.get("partial", False)
+		download = self.get_object()
+		serializer = self.get_serializer(
+			download, 
+			data=request.data, 
+			partial= partial,
+			context = {"pk": download.school_id}
+		)
+
+		serializer.is_valid(raise_exception=True)
+
+		self.perform_update(serializer)
+
+		return response.Response(
+			data = serializer.data,
+			status = status.HTTP_200_OK
+		)
+	@action(detail = True, methods = [HTTPMethod.PATCH], url_name = "file")
+	def upload_file(self, request, pk = None):
+		download = self.get_object()
+		serializer = self.get_serializer(
+			download, 
+			data=request.data, 
+			partial=True
+		)
+
+		serializer.is_valid(raise_exception=True)
+
+		update_download = serializer.save()
+
+		return response.Response(
+			data = serializers.MSchoolDownloadListResponse(update_download).data,
+			status = status.HTTP_202_ACCEPTED
+		)

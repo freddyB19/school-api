@@ -831,3 +831,23 @@ class DownloadCreateTestCase(DownloadTestCase):
 			self.user_with_add_perm,
 			self.user_with_change_perm
 		))
+
+
+class DownloadDetailDeleteUpdateTestCase(DownloadTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.user_with_change_perm = create_user(role = 0, email = faker.email())
+		self.user_with_delete_perm = create_user(role = 0, email = faker.email())
+
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ['change_download'])
+		)
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ['delete_download'])
+		)
+
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))

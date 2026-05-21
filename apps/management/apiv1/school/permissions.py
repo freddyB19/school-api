@@ -99,3 +99,6 @@ class RepositoryPermissionDetail(BasePermissionDetailObject):
 
 class InfraestructurePermissionDetail(BasePermissionDetailObject):
 	model = school_models.Infraestructure
+
+class DownloadPermissionDetail(BasePermissionDetailObject):
+	model = school_models.Download
