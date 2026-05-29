@@ -549,3 +549,34 @@ def create_download(school_id: int, download: DownloadParam) -> ResultCommand:
 		), 
 		status = True
 	)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def add_cultural_event_media(media: ListUploadedFile) -> ResultCommand:
+	
+	# Conectarme a un servicio para subir los archivos
+	upload_images = [
+		{
+			"title": set_name_file(file_name = image.name),
+			"photo": faker.image_url()
+		}
+		for image in media
+	]
+	# Simulamos: 
+	# Cambiar el nombre de los archivos 
+	# El resultado de la carga de imagenes
+	# Obtener la url del archivo almacenado
+
+	cultural_event_media = [
+		models.CulturalEventMedia(
+			title = file.get("title"),
+			photo = file.get("photo")
+		)
+		for file in upload_images
+	]
+
+	return ResultCommand(
+		status = True, 
+		query = models.CulturalEventMedia.objects.bulk_create(
+			cultural_event_media
+		)
+	)

@@ -1481,3 +1481,9 @@ class MSchoolDownloadListResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.Download
 		fields = ["id", "name", "file"]
+
+
+class MSchoolCulturalEventMediaResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.CulturalEventMedia
+		fields = "__all__"

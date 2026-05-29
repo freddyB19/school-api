@@ -417,16 +417,16 @@ def bulk_create_news(size: int = 1, **kwargs) -> list[models.News]:
 	return NewsFactory.create_batch(size = size, **kwargs)
 
 
-class CulturaEventMediaFactory(SchoolMediaPhotoFactory):
+class CulturalEventMediaFactory(SchoolMediaPhotoFactory):
 	class Meta:
 		model = models.CulturalEventMedia
 
 
-def bulk_create_cultura_event_media(size: int = 1, **kwargs) -> list[models.CulturalEventMedia]:
-	return CulturaEventMediaFactory.create_batch(size = size, **kwargs)
+def bulk_create_cultural_event_media(size: int = 1, **kwargs) -> list[models.CulturalEventMedia]:
+	return CulturalEventMediaFactory.create_batch(size = size, **kwargs)
 
 
-class CulturaEventFactory(factory.django.DjangoModelFactory):
+class CulturalEventFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = models.CulturalEvent
 		django_get_or_create = ('title', )
@@ -447,15 +447,15 @@ class CulturaEventFactory(factory.django.DjangoModelFactory):
 	def _create(cls, model_class, *args, **kwargs):
 		obj = model_class(*args, **kwargs)
 		obj.save()
-		obj.media.set(bulk_create_cultura_event_media(size = 3))
+		obj.media.set(bulk_create_cultural_event_media(size = 3))
 		return obj
 
 
-def create_cultura_event(**kwargs) -> models.CulturalEvent:
-	return CulturaEventFactory.create(**kwargs)
+def create_cultural_event(**kwargs) -> models.CulturalEvent:
+	return CulturalEventFactory.create(**kwargs)
 
-def bulk_create_cultura_event(size:int = 1, **kwargs) -> list[models.CulturalEvent]:
-	return CulturaEventFactory.create_batch(size = size, **kwargs)
+def bulk_create_cultural_event(size:int = 1, **kwargs) -> list[models.CulturalEvent]:
+	return CulturalEventFactory.create_batch(size = size, **kwargs)
 
 
 class PaymentInfoFactory(SchoolMediaPhotoFactory):

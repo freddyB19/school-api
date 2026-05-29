@@ -678,3 +678,12 @@ class DownloadListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(download).data,
 			status = status.HTTP_201_CREATED
 		)
+
+
+class CulturaEventMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
+	queryset = models.CulturalEventMedia.objects.all()
+	serializer_class = serializers.MSchoolCulturalEventMediaResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission
+	]

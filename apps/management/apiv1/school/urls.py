@@ -108,4 +108,9 @@ urlpatterns = [
 		views.DownloadListCreateAPIView.as_view(),
 		name = "download-list-create"
 	),
+	path(
+		"culturalevent/image/<int:pk>",
+		views.CulturaEventMediaDetailDeleteAPIView.as_view(),
+		name = "culturalevent-image-detail"
+	),
 ]
