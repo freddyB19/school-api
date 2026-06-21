@@ -553,7 +553,7 @@ class CulturalEvent(models.Model):
 	)
 
 	class Meta:
-		unique_together = ["title", "school"]
+		unique_together = ["title", "date", "school"]
 		ordering = ["-date"]
 		verbose_name = "Evento cultural"
 		verbose_name_plural = "Eventos culturales"

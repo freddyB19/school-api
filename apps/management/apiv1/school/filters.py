@@ -159,3 +159,21 @@ class DownloadFilter(django_filters.FilterSet):
 	class Meta:
 		model = models.Download
 		fields = ["name"]
+
+
+class CulturalEventFilter(django_filters.FilterSet):
+	title = django_filters.CharFilter(
+		field_name = "title", lookup_expr = "icontains"
+	)
+
+	date = django_filters.DateFromToRangeFilter()
+	month = django_filters.NumberFilter(
+		field_name='date', lookup_expr='month'
+	)
+	year = django_filters.NumberFilter(
+		field_name='date', lookup_expr='year'
+	)
+	
+	class Meta:
+		model = models.CulturalEvent
+		fields = ["date", "title"]

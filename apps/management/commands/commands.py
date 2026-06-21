@@ -30,6 +30,7 @@ from .utils.props import (
 	RepositoryParam,
 	InfraestructureParam,
 	DownloadParam,
+	CulturalEventParam,
 )
 
 faker = Faker(locale="es")
@@ -542,6 +543,7 @@ def create_download(school_id: int, download: DownloadParam) -> ResultCommand:
 	
 	return ResultCommand(
 		query = models.Download.objects.create(
+			school_id = school_id,
 			name = download.name,
 			description = download.description,
 			title = upload_file["title"],
@@ -580,3 +582,38 @@ def add_cultural_event_media(media: ListUploadedFile) -> ResultCommand:
 			cultural_event_media
 		)
 	)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True))
+def cultural_event_exist(school_id: int, title: str, date: datetime.date) -> ResultCommand:
+	exist = models.CulturalEvent.objects.filter(
+		school_id = school_id,
+		date = date,
+		title = title 
+	).exists()
+
+	return ResultCommand(status = True, query = exist)
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def create_cultural_event(school_id: int, cultural_event: CulturalEventParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	new_cultural_event = models.CulturalEvent.objects.create(
+		school_id = school_id,
+		title = cultural_event.title,
+		date = cultural_event.date,
+		description = cultural_event.description,
+
+	)
+
+	if cultural_event.media:
+		command = add_cultural_event_media(media = cultural_event.media)
+
+		if not command.status:
+			return command
+
+		new_cultural_event.media.set(command.query)
+
+	return ResultCommand(status = True, query = new_cultural_event)

@@ -332,3 +332,13 @@ UPDATE_INFRAESTRUCTURE_WITH_WRONG_DATA = [
 		max_chars = school_models.MAX_LENGTH_INFRA_NAME + 1)
 	}
 ]
+
+CREATE_CULTURAL_EVENT_WITH_WRONG_DATA = [
+	{"title": faker.pystr(
+		max_chars = school_models.MIN_LENGTH_CULTURALEVENT_TITLE - 1)
+	},
+	{"title": faker.pystr(
+		max_chars = school_models.MAX_LENGTH_CULTURALEVENT_TITLE + 1)
+	},
+	{"description": faker.paragraph()}
+]

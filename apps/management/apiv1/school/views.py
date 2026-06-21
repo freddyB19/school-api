@@ -1,4 +1,5 @@
 from django.utils import timezone
+from django.db.models import Prefetch
 
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, response, status
@@ -680,10 +681,60 @@ class DownloadListCreateAPIView(generics.ListCreateAPIView):
 		)
 
 
-class CulturaEventMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
+class CulturalEventMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
 	queryset = models.CulturalEventMedia.objects.all()
 	serializer_class = serializers.MSchoolCulturalEventMediaResponse
 	permission_classes = [
 		IsAuthenticated, 
 		permissions.IsUserPermission
 	]
+
+
+class CulturalEventListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.CulturalEvent.objects.all()
+	serializer_class = serializers.MSchoolCulturalEventResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.BelongToOurAdministrator
+	]
+	filter_backends = [DjangoFilterBackend]
+	filterset_class = filters.CulturalEventFilter
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		).prefetch_related(
+			Prefetch(
+				"media",
+				queryset = models.CulturalEventMedia.objects.all(),
+				to_attr = "prefetched_media"
+			)
+		).order_by("date")
+
+	def get_serializer_class(self):
+		if self.request.method == "GET":
+			return serializers.MSchoolCulturalEventListResponse
+		elif self.request.method == "POST":
+			return serializers.MSchoolCulturalEventRequest
+		return self.serializer_class
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		cultural_event = serializer.save()
+		
+		return response.Response(
+			data = self.serializer_class(cultural_event).data,
+			status = status.HTTP_201_CREATED
+		) 

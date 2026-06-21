@@ -110,7 +110,12 @@ urlpatterns = [
 	),
 	path(
 		"culturalevent/image/<int:pk>",
-		views.CulturaEventMediaDetailDeleteAPIView.as_view(),
+		views.CulturalEventMediaDetailDeleteAPIView.as_view(),
 		name = "culturalevent-image-detail"
+	),
+	path(
+		"<int:pk>/culturalevent",
+		views.CulturalEventListCreateAPIView.as_view(),
+		name = "culturalevent-list-create"
 	),
 ]

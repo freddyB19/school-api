@@ -1487,3 +1487,94 @@ class MSchoolCulturalEventMediaResponse(serializers.ModelSerializer):
 	class Meta:
 		model = models.CulturalEventMedia
 		fields = "__all__"
+
+
+CULTURAL_EVENT_ALREADY_EXISTS = "Esta enviado los datos sobre un 'evento cultural' que ya se encuentra registrado"
+
+class MSchoolCulturalEventRequest(serializers.ModelSerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(
+			required = False,
+			max_length = MAX_LENGTH_FILE_NAME,
+			error_messages = {
+				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+			}
+		)
+	)
+
+	class Meta:
+		model = models.CulturalEvent
+		fields = ["id", "title", "date", "description", "media"]
+		read_only_fields = ["id"]
+
+		extra_kwargs = {
+			"title": {
+				"min_length": models.MIN_LENGTH_CULTURALEVENT_TITLE,
+				"max_length": models.MAX_LENGTH_CULTURALEVENT_TITLE,
+				"error_messages": {
+					"min_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "corto",
+						symbol = "mayor o igual",
+						value = models.MIN_LENGTH_CULTURALEVENT_TITLE
+					),
+					"max_length": ERROR_FIELD(
+						field = "nombre del archivo", 
+						type = "largo",
+						symbol = "menor o igual",
+						value = models.MAX_LENGTH_CULTURALEVENT_TITLE
+					)
+				}
+			}
+		}
+
+	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
+		exist = commands.cultural_event_exist(
+			date = data.get("date"),
+			title = data.get("title"),
+			school_id = self.context.get("pk")
+		).query
+
+		if exist:
+			raise serializers.ValidationError(
+				CULTURAL_EVENT_ALREADY_EXISTS,
+				code = "already-exists"
+			)
+		return data
+
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> Download:
+
+		command = commands.create_cultural_event(
+			school_id = self.context.get("pk"),
+			cultural_event = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
+
+class MSchoolCulturalEventResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.CulturalEvent
+		exclude = ["school"]
+
+class MSchoolCulturalEventListResponse(serializers.ModelSerializer):
+	media = serializers.SerializerMethodField()
+
+	class Meta:
+		model = models.CulturalEvent
+		fields = ["id", "title", "date", "media"]
+
+	def get_media(self, obj):
+
+		images = getattr(obj, "prefetched_media", [])
+		if not images:
+			return None
+		return images[0].photo
