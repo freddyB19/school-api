@@ -120,6 +120,8 @@ class SchoolUpdateLogoRequest(serializers.Serializer):
 			)
 		
 		instance.logo = command.query
+		
+		instance.save()
 
 		return instance
 
@@ -502,6 +504,8 @@ class MSchoolOfficeHourUpdateRequest(serializers.Serializer):
 		).data
 		
 		instance.interval_description = validated.get("interval_description")
+
+		instance.save()
 		
 		return instance
 
@@ -1467,6 +1471,8 @@ class MSchoolDownloadUpdateFileRequest(serializers.ModelSerializer):
 			)
 		
 		instance.file = command.query
+
+		instance.save()
 
 		return instance
 
