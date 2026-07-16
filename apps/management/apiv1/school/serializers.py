@@ -1488,24 +1488,15 @@ class MSchoolCulturalEventMediaResponse(serializers.ModelSerializer):
 		model = models.CulturalEventMedia
 		fields = "__all__"
 
+CulturalEvent = TypeVar("CulturalEvent", bound = models.CulturalEvent)
 
 CULTURAL_EVENT_ALREADY_EXISTS = "Esta enviado los datos sobre un 'evento cultural' que ya se encuentra registrado"
 
-class MSchoolCulturalEventRequest(serializers.ModelSerializer):
-	media = serializers.ListField(
-		required = False,
-		child = serializers.FileField(
-			required = False,
-			max_length = MAX_LENGTH_FILE_NAME,
-			error_messages = {
-				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
-			}
-		)
-	)
+class MSchoolCulturalEventSerializer(serializers.ModelSerializer):
 
 	class Meta:
 		model = models.CulturalEvent
-		fields = ["id", "title", "date", "description", "media"]
+		fields = ["id", "title", "date", "description"]
 		read_only_fields = ["id"]
 
 		extra_kwargs = {
@@ -1528,6 +1519,21 @@ class MSchoolCulturalEventRequest(serializers.ModelSerializer):
 				}
 			}
 		}
+
+class MSchoolCulturalEventRequest(MSchoolCulturalEventSerializer):
+	media = serializers.ListField(
+		required = False,
+		child = serializers.FileField(
+			required = False,
+			max_length = MAX_LENGTH_FILE_NAME,
+			error_messages = {
+				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+			}
+		)
+	)
+
+	class Meta(MSchoolCulturalEventSerializer.Meta):
+		fields = ["id", "title", "date", "description", "media"]
 
 	def validate(self, data: dict[str, str | ListUploadedFile]) -> dict[str, str | ListUploadedFile]:
 		exist = commands.cultural_event_exist(
@@ -1561,6 +1567,8 @@ class MSchoolCulturalEventRequest(serializers.ModelSerializer):
 		return command.query
 
 class MSchoolCulturalEventResponse(serializers.ModelSerializer):
+	media = MSchoolCulturalEventMediaResponse(many = True)
+	
 	class Meta:
 		model = models.CulturalEvent
 		exclude = ["school"]
@@ -1578,3 +1586,54 @@ class MSchoolCulturalEventListResponse(serializers.ModelSerializer):
 		if not images:
 			return None
 		return images[0].photo
+
+class MSchoolCulturalEventUpdateRequest(MSchoolCulturalEventSerializer):
+
+	def update(self, instance: CulturalEvent, validated_data: dict[str, str]) -> CulturalEvent:
+		if ("date" in validated_data) and ("title" in validated_data):
+			exist = commands.cultural_event_exist(
+				date = validated_data.get("date"),
+				title = validated_data.get("title"),
+				school_id = self.context.get("pk")
+			).query
+
+			if exist:
+				raise serializers.ValidationError(
+					CULTURAL_EVENT_ALREADY_EXISTS,
+					code = "already-exists"
+				)
+		
+		elif "date" in validated_data:
+			exist = commands.cultural_event_exist(
+				date = validated_data.get("date"),
+				title = instance.title, 
+				school_id = self.context.get("pk")
+			).query
+
+			if exist:
+				raise serializers.ValidationError(
+					CULTURAL_EVENT_ALREADY_EXISTS,
+					code = "already-exists"
+				)
+
+		elif "title" in validated_data:
+			exist = commands.cultural_event_exist(
+				date = instance.date,
+				title = validated_data.get("title"), 
+				school_id = self.context.get("pk")
+			).query
+
+			if exist:
+				raise serializers.ValidationError(
+					CULTURAL_EVENT_ALREADY_EXISTS,
+					code = "already-exists"
+				)
+		
+
+		instance.date = validated_data.get("date", instance.date)
+		instance.title = validated_data.get("title", instance.title)
+		instance.description = validated_data.get("description", instance.description)
+		
+		instance.save()
+
+		return instance

@@ -336,3 +336,43 @@ class DownloadDetailDeleteUpdateVS(DetailModelVS):
 			data = serializers.MSchoolDownloadListResponse(update_download).data,
 			status = status.HTTP_202_ACCEPTED
 		)
+
+
+
+class CulturalEventDetailDeleteUpdateVS(DetailModelVS):
+	queryset = school_models.CulturalEvent.objects.all()
+	serializer_class = serializers.MSchoolCulturalEventResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.CulturalEventPermissionDetail
+	]
+
+	def get_serializer_class(self):
+		is_update = [
+			"update",
+			"partial_update"
+		]
+
+		if self.action in is_update:
+			return serializers.MSchoolCulturalEventUpdateRequest
+		return self.serializer_class
+
+	def update(self, request, *args, **kwargs):
+		partial = kwargs.get("partial", False)
+		cultural_event = self.get_object()
+		serializer = self.get_serializer(
+			cultural_event, 
+			data=request.data, 
+			partial= partial,
+			context = {"pk": cultural_event.school_id}
+		)
+
+		serializer.is_valid(raise_exception=True)
+
+		self.perform_update(serializer)
+
+		return response.Response(
+			data = serializer.data,
+			status = status.HTTP_200_OK
+		)

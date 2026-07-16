@@ -33,3 +33,9 @@ router.register(
 	viewsets.DownloadDetailDeleteUpdateVS, 
 	basename="download"
 )
+
+router.register(
+	"school/culturalevent", 
+	viewsets.CulturalEventDetailDeleteUpdateVS, 
+	basename="culturalevent"
+)

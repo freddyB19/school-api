@@ -31,6 +31,12 @@ def get_create_list_culturalevent_url(school_id, **extra):
 		**extra
 	)
 
+def get_detail_culturalevent_url(pk):
+	return reverse(
+		"management:culturalevent-detail",
+		kwargs={"pk": pk},
+	)
+
 
 class CulturalEventCreateAPITest(testcases.CulturalEventCreateTestCase):
 	def setUp(self):
@@ -596,6 +602,351 @@ class CulturalEventListAPITest(testcases.CulturalEventTestCase):
 			Validar "GET /culturalevent?month=<...>&year=<...>"
 		"""
 		response = self.client.get(self.URL_CULTURALEVENT_LIST)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CulturalEventDetailAPITest(testcases.CulturalEventDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.cultural_event = create_cultural_event(
+			school = self.school
+		)
+
+		self.URL_CULTURALEVENT_DETAIL = get_detail_culturalevent_url(
+			pk = self.cultural_event.id
+		)
+
+	def test_detail_cultural_event(self):
+		"""
+			Validar "GET /culturalevent/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		response = self.client.get(self.URL_CULTURALEVENT_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.cultural_event.id)
+		self.assertEqual(responseJson["title"], self.cultural_event.title)
+		self.assertEqual(responseJson["description"], self.cultural_event.description)
+		self.assertEqual(len(responseJson["media"]), self.cultural_event.media.count())
+
+	def test_detail_cultural_event_without_school_permission(self):
+		"""
+			Generar [Error 403] "GET /culturalevent/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_all_perm)
+
+		cultural_event = create_cultural_event() 
+
+		response = self.client.get(
+			get_detail_culturalevent_url(pk = cultural_event.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_cultural_event_with_wrong_user(self):
+		"""
+			Generar [Error 403] "GET /culturalevent/:id" por usuario que no pertenece a la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["view_culturalevent"])
+		)
+
+		self.client.force_authenticate(user = user)
+
+		cultural_event = create_cultural_event() 
+
+		response = self.client.get(self.URL_CULTURALEVENT_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_detail_cultural_event_without_authentication(self):
+		"""
+			Generar [Error 401] "GET /culturalevent/:id" sin autenticar
+		"""
+		response = self.client.get(self.URL_CULTURALEVENT_DETAIL)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CulturalEventDeleteAPITest(testcases.CulturalEventDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.cultural_event = create_cultural_event(school = self.school)
+
+		self.URL_CULTURALEVENT_DELETE = get_detail_culturalevent_url(
+			pk = self.cultural_event.id
+		)
+
+	def test_delete_cultural_event(self):
+		"""
+			Validar "DELETE /culturalevent/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.delete(self.URL_CULTURALEVENT_DELETE)
+
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 204)
+
+	def test_delete_cultural_event_without_school_permission(self):
+		"""
+			Generar [Error 403] "DELETE /culturalevent/:id" de escuela que no tiene permiso de acceder 
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		cultural_event = create_cultural_event()
+
+		response = self.client.delete(
+			get_detail_culturalevent_url(pk = cultural_event.id)
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_cultural_event_without_user_permission(self):
+		"""
+			Generar [Error 403] "DELETE /culturalevent/:id" por falta de permiso de usuario
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.delete(self.URL_CULTURALEVENT_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_cultural_event_with_wrong_user(self):
+		"""
+			Generar [Error 403] "DELETE /culturalevent/:id" por usuario que no pertenece a la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["delete_culturalevent"])
+		)
+		
+		self.client.force_authenticate(user = user)
+
+		response = self.client.delete(self.URL_CULTURALEVENT_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_delete_cultural_event_without_authentication(self):
+		"""
+			Generar [Error 401] "DELETE /culturalevent/:id" sin autenticar
+		"""
+		response = self.client.delete(self.URL_CULTURALEVENT_DELETE)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 401)
+
+
+class CulturalEventUpdateAPITest(testcases.CulturalEventDetailDeleteUpdateTestCase):
+	def setUp(self):
+		super().setUp()
+
+		self.cultural_event = create_cultural_event(school = self.school)
+
+		self.URL_CULTURALEVENT_UPDATE = get_detail_culturalevent_url(
+			pk = self.cultural_event.id
+		)
+
+		self.update_cultural_event = {
+			"title": faker.text(max_nb_chars = models.MAX_LENGTH_CULTURALEVENT_TITLE),
+			"description": faker.paragraph(),
+			"date": faker.date_this_year(),
+		}
+
+		self.partial_cultural_event = {
+			"description": faker.paragraph(),
+		}
+
+	def test_update_cultural_event(self):
+		"""
+			Validar "PUT/PATCH /culturalevent/:id"
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		response = self.client.put(
+			self.URL_CULTURALEVENT_UPDATE,
+			self.update_cultural_event
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.cultural_event.id)
+		self.assertEqual(responseJson["title"], self.update_cultural_event["title"])
+		self.assertEqual(responseJson["description"], self.update_cultural_event["description"])
+
+		self.assertNotEqual(responseJson["title"], self.cultural_event.title)
+		self.assertNotEqual(responseJson["description"], self.cultural_event.description)
+		self.assertNotEqual(responseJson["date"], self.cultural_event.date)
+
+		ce = models.CulturalEvent.objects.get(pk = self.cultural_event.id)
+
+		# PATCH /culturalevent/:id
+
+		response = self.client.patch(
+			self.URL_CULTURALEVENT_UPDATE,
+			self.partial_cultural_event
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 200)
+		self.assertEqual(responseJson["id"], self.cultural_event.id)
+		self.assertEqual(responseJson["description"], self.partial_cultural_event["description"])
+
+
+	def test_update_culturalevent_with_data_already_exists(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" por datos duplicados
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		cultural_event = create_cultural_event(
+			school = self.school,
+			title = self.cultural_event.title
+		)
+
+		response = self.client.patch(
+			self.URL_CULTURALEVENT_UPDATE,
+			{"date": cultural_event.date}
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 400)
+
+		cultural_event = create_cultural_event(
+			school = self.school,
+			date = self.cultural_event.date
+		)
+
+		response = self.client.patch(
+			self.URL_CULTURALEVENT_UPDATE,
+			{"title": cultural_event.title}
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 400)
+
+	def test_update_cultural_event_with_wrong_data(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" por datos invalidos
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+	
+		test_case = testcases_data.UPDATE_CULTURAL_EVENT_WITH_WRONG_DATA
+
+		for case in test_case:
+			with self.subTest(case = case):
+				response = self.client.patch(
+					self.URL_CULTURALEVENT_UPDATE,
+					case
+				)
+
+				responseJson = response.data
+				responseStatus = response.status_code
+
+				self.assertEqual(responseStatus, 400)
+
+	def test_update_cultural_event_without_school_permission(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" de escuela que no tiene permiso de acceder
+		"""
+		self.client.force_authenticate(user = self.user_with_change_perm)
+
+		cultural_event = create_cultural_event()
+		
+		response = self.client.patch(
+			get_detail_culturalevent_url(pk = cultural_event.id),
+			self.partial_cultural_event
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_cultural_event_without_user_permission(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" por usuario sin permiso
+		"""
+		self.client.force_authenticate(user = self.user_with_delete_perm)
+
+		response = self.client.patch(
+			self.URL_CULTURALEVENT_UPDATE,
+			self.partial_cultural_event
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_cultural_event_with_wrong_user(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" por usuario que no pertenece a la administración de la escuela
+		"""
+		user = create_user()
+		user.user_permissions.set(
+			get_permissions(codenames = ["change_culturalevent"])
+		)
+		self.client.force_authenticate(user = user)
+
+		response = self.client.put(
+			self.URL_CULTURALEVENT_UPDATE,
+			self.update_cultural_event
+		)
+
+		responseJson = response.data
+		responseStatus = response.status_code
+
+		self.assertEqual(responseStatus, 403)
+
+	def test_update_cultural_event_without_authentication(self):
+		"""
+			Generar [Error 400] "PUT/PATCH /culturalevent/:id" sin autenticar
+		"""
+		response = self.client.put(
+			self.URL_CULTURALEVENT_UPDATE,
+			self.update_cultural_event
+		)
 
 		responseJson = response.data
 		responseStatus = response.status_code
