@@ -1643,3 +1643,76 @@ class MSchoolCulturalEventUpdateRequest(MSchoolCulturalEventSerializer):
 		instance.save()
 
 		return instance
+
+
+PaymentInfo = TypeVar("PaymentInfo", bound = models.PaymentInfo)
+INVALID_MEDIA = "Debe enviar por lo menos algún archivo de 'media'"
+
+class MSchoolPaymentInfoRequest(serializers.ModelSerializer):
+	media = serializers.ListField(
+		child = serializers.FileField(
+			max_length = MAX_LENGTH_FILE_NAME,
+			error_messages = {
+				"max_length": ERROR_MESSAGE_MAX_LENGTH_FILE_NAME
+			}
+		)
+	)
+
+	class Meta:
+		model = models.PaymentInfo
+		fields = ["id", "description", "media"]
+		read_only_fields = ["id"]
+
+	def validate_media(self, value):
+		if not value:
+			raise serializers.ValidationError(
+				INVALID_MEDIA,
+				code = "invalid-data"
+			)
+		return value
+
+	def create(self, validated_data: dict[str, str | ListUploadedFile]) -> PaymentInfo:
+
+		command = commands.create_payment_info(
+			school_id = self.context.get("pk"),
+			payment_info = validated_data
+		)
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True),
+				code = "invalid"
+			)
+
+		return command.query
+
+
+class MSchoolPaymentInfoMediaResponse(serializers.ModelSerializer):
+	class Meta:
+		model = models.PaymentInfoMedia
+		fields = "__all__"
+
+
+class MSchoolPaymentInfoResponse(serializers.ModelSerializer):
+	media = MSchoolPaymentInfoMediaResponse(many = True)
+
+	class Meta:
+		model = models.PaymentInfo
+		exclude = ["school"]
+
+
+class MSchoolPaymentInfoListResponse(serializers.ModelSerializer):
+	media = serializers.SerializerMethodField()
+
+	class Meta:
+		model = models.PaymentInfo
+		fields = ["id", "media"]
+
+	def get_media(self, obj):
+
+		images = getattr(obj, "prefetched_media", [])
+		if not images:
+			return None
+		return images[0].photo	

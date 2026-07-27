@@ -722,8 +722,24 @@ class News(models.Model):
 		return f"News(id = {self.id}, title = {self.title}, status = {self.status})"
 
 
+class PaymentInfoMedia(SchoolPhoto):
 
-class PaymentInfo(SchoolPhoto):
+	class Meta:
+		verbose_name = "Foto de recibo de pago"
+		verbose_name_plural = "Fotos sobre los recibos de pago"
+
+	def __str__(self):
+		return self.title if self.title else "Archivo de imagen"
+
+	def __repr__(self):
+		return f"PaymentInfoMedia(id = {self.id}, title = {self.title}, photo = {self.photo})"
+
+
+
+class PaymentInfo(models.Model):
+
+	media = models.ManyToManyField(PaymentInfoMedia)
+	
 	description = models.TextField(blank = True, null = True)
 	
 	school = models.ForeignKey(
@@ -741,10 +757,10 @@ class PaymentInfo(SchoolPhoto):
 		db_table = "payment_info"
 
 	def __str__(self):
-		return f"Escuela[{self.school.name}] - Información de pago: {self.photo}"
+		return f"Escuela: [{self.school.name}] - ID del pago: {self.id}"
 
 	def __repr__(self):
-		return f"PaymentInfo(id = {self.id}, photo = {self.photo})"
+		return f"PaymentInfo(id = {self.id})"
 
 
 

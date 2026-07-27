@@ -118,4 +118,14 @@ urlpatterns = [
 		views.CulturalEventListCreateAPIView.as_view(),
 		name = "culturalevent-list-create"
 	),
+	path(
+		"paymentinfo/image/<int:pk>",
+		views.PaymentInfoMediaDetailDeleteAPIView.as_view(),
+		name = "paymentinfo-image-detail"
+	),
+	path(
+		"<int:pk>/paymentinfo",
+		views.PaymentInfoListCreateAPIView.as_view(),
+		name = "paymentinfo-list-create"
+	),
 ]

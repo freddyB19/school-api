@@ -738,3 +738,60 @@ class CulturalEventListCreateAPIView(generics.ListCreateAPIView):
 			data = self.serializer_class(cultural_event).data,
 			status = status.HTTP_201_CREATED
 		) 
+
+
+class PaymentInfoMediaDetailDeleteAPIView(generics.RetrieveDestroyAPIView):
+	queryset = models.PaymentInfoMedia.objects.all()
+	serializer_class = serializers.MSchoolPaymentInfoMediaResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission
+	]
+
+
+class PaymentInfoListCreateAPIView(generics.ListCreateAPIView):
+	queryset = models.PaymentInfo.objects.all()
+	serializer_class = serializers.MSchoolPaymentInfoResponse
+	pagination_class = paginations.BasicPaginate
+	permission_classes = [
+	    IsAuthenticated, 
+	    permissions.IsUserPermission,
+	    permissions.BelongToOurAdministrator
+	]
+
+	def get_serializer_class(self):
+		if self.request.method == "POST":
+			return serializers.MSchoolPaymentInfoRequest
+		elif self.request.method == "GET":
+			return serializers.MSchoolPaymentInfoListResponse
+		return self.serializer_class
+
+	def get_queryset(self):
+		return self.queryset.filter(
+			school_id = self.kwargs.get("pk")
+		).prefetch_related(
+			Prefetch(
+				"media",
+				queryset = models.PaymentInfoMedia.objects.all(),
+				to_attr = "prefetched_media"
+			)
+		).order_by("-id")
+
+	def post(self, request, pk = None):
+		serializer = self.get_serializer(
+			data = request.data,
+			context = {"pk": pk}
+		)
+
+		if not serializer.is_valid():
+			return response.Response(
+				data = serializer.errors,
+				status = status.HTTP_400_BAD_REQUEST
+			)
+
+		payment_info = serializer.save()
+
+		return response.Response(
+			data = self.serializer_class(payment_info).data,
+			status = status.HTTP_201_CREATED
+		) 

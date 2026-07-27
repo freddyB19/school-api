@@ -458,12 +458,35 @@ def bulk_create_cultural_event(size:int = 1, **kwargs) -> list[models.CulturalEv
 	return CulturalEventFactory.create_batch(size = size, **kwargs)
 
 
-class PaymentInfoFactory(SchoolMediaPhotoFactory):
+class PaymentInfoMediaFactory(SchoolMediaPhotoFactory):
+	class Meta:
+		model = models.PaymentInfoMedia
+
+
+def bulk_create_payment_info_media(size: int = 1, **kwargs) -> list[models.PaymentInfoMedia]:
+	return PaymentInfoMediaFactory.create_batch(size = size, **kwargs)
+
+
+class PaymentInfoFactory(factory.django.DjangoModelFactory):
 	class Meta:
 		model = models.PaymentInfo
 
 	description = factory.LazyAttribute(lambda x: faker.paragraph())
 	school = factory.SubFactory(SchoolFactory)
+
+	@factory.post_generation
+	def media(self, create, extracted, **kwargs):
+		if not create or not extracted:
+			return
+
+		self.media.add(*(extracted))
+
+	@classmethod
+	def _create(cls, model_class, *args, **kwargs):
+		obj = model_class(*args, **kwargs)
+		obj.save()
+		obj.media.set(bulk_create_payment_info_media(size = 3))
+		return obj
 
 def create_payment_info(**kwargs) -> models.PaymentInfo:
 	return PaymentInfoFactory.create(**kwargs)

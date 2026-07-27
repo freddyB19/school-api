@@ -110,3 +110,10 @@ class CulturalEventParam(BaseModel):
 	date: datetime.date
 	description: str = None
 	media: ListUploadedFile | None = None
+
+
+class PaymentInfoParam(BaseModel):
+	model_config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True)
+	
+	description: str = None
+	media: ListUploadedFile | None = None

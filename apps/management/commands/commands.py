@@ -31,6 +31,7 @@ from .utils.props import (
 	InfraestructureParam,
 	DownloadParam,
 	CulturalEventParam,
+	PaymentInfoParam,
 )
 
 faker = Faker(locale="es")
@@ -617,3 +618,57 @@ def create_cultural_event(school_id: int, cultural_event: CulturalEventParam) ->
 		new_cultural_event.media.set(command.query)
 
 	return ResultCommand(status = True, query = new_cultural_event)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def add_payment_info_media(media: ListUploadedFile) -> ResultCommand:
+	
+	# Conectarme a un servicio para subir los archivos
+	upload_images = [
+		{
+			"title": set_name_file(file_name = image.name),
+			"photo": faker.image_url()
+		}
+		for image in media
+	]
+	# Simulamos: 
+	# Cambiar el nombre de los archivos 
+	# El resultado de la carga de imagenes
+	# Obtener la url del archivo almacenado
+
+	payment_info_media = [
+		models.PaymentInfoMedia(
+			title = file.get("title"),
+			photo = file.get("photo")
+		)
+		for file in upload_images
+	]
+
+	return ResultCommand(
+		status = True, 
+		query = models.PaymentInfoMedia.objects.bulk_create(
+			payment_info_media
+		)
+	)
+
+
+@validate_call(config = ConfigDict(hide_input_in_errors=True, arbitrary_types_allowed = True))
+def create_payment_info(school_id: int, payment_info: PaymentInfoParam) -> ResultCommand:
+	command = get_school_by_id(id = school_id)
+
+	if not command.status:
+		return command
+
+	new_payment_info = models.PaymentInfo.objects.create(
+		school_id = school_id,
+		description = payment_info.description
+	)
+
+	command = add_payment_info_media(media = payment_info.media)
+
+	if not command.status:
+		return command
+
+	new_payment_info.media.set(command.query)
+	
+	return ResultCommand(status = True, query = new_payment_info)
