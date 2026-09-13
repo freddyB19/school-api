@@ -1716,3 +1716,40 @@ class MSchoolPaymentInfoListResponse(serializers.ModelSerializer):
 		if not images:
 			return None
 		return images[0].photo	
+
+
+class MSchoolPaymentInfoUpdateRequest(serializers.ModelSerializer):
+
+	class Meta:
+		model = models.PaymentInfo
+		fields = ["id", "description"]
+		read_only_fields = ["id"]
+
+
+class MSchoolPaymentInfoUpdateMediaRequest(serializers.Serializer):
+	media = serializers.ListField(
+		child = serializers.FileField(max_length = MAX_LENGTH_FILE_NAME)
+	)
+
+	def update(self, instance: PaymentInfo, validated_data: dict[str, ListUploadedFile]) -> PaymentInfo:
+
+		command = commands.add_payment_info_media(media = validated_data.get("media"))
+
+		if not command.status:
+			raise serializers.ValidationError(
+				ResponseError(
+					errors = command.errors
+				).model_dump(exclude_defaults = True)
+			)
+		
+		instance.media.add(*command.query)		
+
+		return instance
+
+
+class MSchoolPaymentInfoShortResponse(serializers.ModelSerializer):
+	media = MSchoolPaymentInfoMediaResponse(many = True)
+
+	class Meta:
+		model = models.PaymentInfo
+		fields = ["id", "media"]

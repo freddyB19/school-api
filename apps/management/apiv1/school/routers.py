@@ -39,3 +39,9 @@ router.register(
 	viewsets.CulturalEventDetailDeleteUpdateVS, 
 	basename="culturalevent"
 )
+
+router.register(
+	"school/paymentinfo", 
+	viewsets.PaymentInfoDetailUpdateDeleteVS, 
+	basename="paymentinfo"
+)

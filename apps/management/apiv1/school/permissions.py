@@ -107,3 +107,6 @@ class DownloadPermissionDetail(BasePermissionDetailObject):
 
 class CulturalEventPermissionDetail(BasePermissionDetailObject):
 	model = school_models.CulturalEvent
+
+class PaymentInfoPermissionDetail(BasePermissionDetailObject):
+	model = school_models.PaymentInfo

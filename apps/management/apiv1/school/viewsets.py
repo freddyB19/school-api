@@ -15,7 +15,9 @@ from .utils import (
 	update_repository_files,
 	delete_repository_files,
 	update_infraestructure_images,
-	delete_infraestructure_images
+	delete_infraestructure_images,
+	update_payment_info_images,
+	delete_payment_info_images,
 )
 
 
@@ -376,3 +378,47 @@ class CulturalEventDetailDeleteUpdateVS(DetailModelVS):
 			data = serializer.data,
 			status = status.HTTP_200_OK
 		)
+
+
+class PaymentInfoDetailUpdateDeleteVS(DetailModelVS):
+	queryset = school_models.PaymentInfo.objects.all()
+	serializer_class = serializers.MSchoolPaymentInfoResponse
+	permission_classes = [
+		IsAuthenticated, 
+		permissions.IsUserPermission,
+		permissions.PaymentInfoPermissionDetail
+	]
+
+	def get_serializer_class(self):
+		is_update = [
+			"update",
+			"partial_update"
+		]
+
+		if self.action in is_update:
+			return serializers.MSchoolPaymentInfoUpdateRequest
+		return self.serializer_class
+
+	@action(detail = True, methods = [HTTPMethod.PATCH, HTTPMethod.DELETE], url_name = "image")
+	def detail_image(self, request, pk = None):
+		payment_info = self.get_object()
+
+		context_response = {
+			HTTPMethod.PATCH: update_payment_info_images,
+			HTTPMethod.DELETE: delete_payment_info_images
+		}
+		
+		process_request = context_response[request.method]
+
+		response_data = process_request(
+			request = request, instance = payment_info
+		)
+
+		if not response_data:
+
+			return response.Response(
+				data = self.error_message_500,
+				status = status.HTTP_500_INTERNAL_SERVER_ERROR
+			)
+
+		return response.Response(**response_data)

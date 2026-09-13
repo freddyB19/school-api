@@ -89,3 +89,40 @@ def delete_infraestructure_images(request: Request, instance: Infraestructure) -
 	return {
 		"status": status.HTTP_204_NO_CONTENT
 	}
+
+
+PaymentInfo = TypeVar("PaymentInfo", bound = models.PaymentInfo)
+
+class PaymentInfoDict(TypedDict):
+	id: int
+	media: ListUploadedFile | None
+
+def update_payment_info_images(request: Request, instance: PaymentInfo) -> dict[str, int | PaymentInfoDict]:
+
+	if request.method != HTTPMethod.PATCH:
+		return None
+
+	serializer = serializers.MSchoolPaymentInfoUpdateMediaRequest(
+		instance,
+		data=request.data,
+		partial = True
+	)
+
+	serializer.is_valid(raise_exception=True)
+
+	update_payment_info = serializer.save()
+
+	return {
+		"data" : serializers.MSchoolPaymentInfoShortResponse(update_payment_info).data,
+		"status" : status.HTTP_202_ACCEPTED
+	}
+
+def delete_payment_info_images(request: Request, instance: PaymentInfo) -> dict[str, int]:
+	if request.method != HTTPMethod.DELETE:
+		return None
+
+	instance.media.all().delete()
+
+	return {
+		"status": status.HTTP_204_NO_CONTENT
+	}

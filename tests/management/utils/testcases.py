@@ -999,3 +999,25 @@ class PaymentInfoCreateTestCase(PaymentInfoTestCase):
 		    self.user_with_add_perm,
 		    self.user_with_change_perm
 		))
+
+
+class PaymentInfoDetailDeleteUpdateTestCase(PaymentInfoTestCase):
+	def setUp(self):
+
+		super().setUp()
+
+		self.user_with_delete_perm = create_user(role = 0, email = faker.email())
+		self.user_with_change_perm = create_user(role = 0, email = faker.email())
+
+		self.user_with_delete_perm.user_permissions.set(
+			get_permissions(codenames = ['delete_paymentinfo'])
+		)
+		self.user_with_change_perm.user_permissions.set(
+			get_permissions(codenames = ['change_paymentinfo'])
+		)
+
+		self.admin = get_administrator(school_id = self.school.id)
+		self.admin.users.add(*(
+			self.user_with_delete_perm,
+			self.user_with_change_perm
+		))
